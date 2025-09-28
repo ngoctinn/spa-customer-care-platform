@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { register } from "../apis/register_api";
 
 export const RegisterForm = () => {
   const [isPending, startTransition] = useTransition();
@@ -42,12 +43,11 @@ export const RegisterForm = () => {
 
   const onSubmit = (values: z.infer<typeof registerSchema>) => {
     startTransition(async () => {
-      // Logic xử lý đăng ký ở đây
+      // Gọi API đăng ký
 
       try {
-        //const data = await register(values.name, values.email, values.password);
-        //console.log("Đăng ký thành công", data);
-        toast.success("Đăng ký thành công!");
+        const data = await register(values.email, values.name, values.password);
+        toast.success("Đăng ký thành công!", data);
       } catch (error: unknown) {
         if (error instanceof Error) {
           toast.error(error.message);
