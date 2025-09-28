@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTransition } from "react";
 import { login } from "@/lib/api";
+import { toast } from "sonner";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
@@ -44,8 +45,10 @@ export const LoginForm = () => {
       try {
         const data = await login(values.email, values.password);
         console.log("Đăng nhập thành công:", data);
+        toast.success("Đăng nhập thành công!", data);
       } catch (error) {
         console.error("Đăng nhập thất bại:", error);
+        toast.error("Đăng nhập thất bại. Vui lòng thử lại.");
       }
       console.log(values);
     });
@@ -58,7 +61,7 @@ export const LoginForm = () => {
   return (
     <>
       <CardHeader className="text-center">
-        <CardTitle>Chào mừng trở lại</CardTitle>
+        <CardTitle>Đăng nhập</CardTitle>
         <CardDescription>
           Nhập thông tin để truy cập vào tài khoản của bạn.
         </CardDescription>
