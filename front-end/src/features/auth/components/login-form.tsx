@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
+import { login } from "@/lib/api";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
@@ -39,8 +40,14 @@ export const LoginForm = () => {
   });
 
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
-    startTransition(() => {
+    startTransition(async () => {
       // Logic xử lý đăng nhập ở đây
+      try {
+        const data = await login(values.email, values.password);
+        console.log("Đăng nhập thành công:", data);
+      } catch (error) {
+        console.error("Đăng nhập thất bại:", error);
+      }
       console.log(values);
     });
   };
