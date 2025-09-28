@@ -8,7 +8,6 @@ import { FcGoogle } from "react-icons/fc";
 
 import { loginSchema } from "@/features/auth/schemas";
 import {
-  Card,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -57,8 +56,8 @@ export const LoginForm = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <>
+      <CardHeader className="text-center">
         <CardTitle>Chào mừng trở lại</CardTitle>
         <CardDescription>
           Nhập thông tin để truy cập vào tài khoản của bạn.
@@ -145,6 +144,6 @@ export const LoginForm = () => {
           Google
         </Button>
       </CardContent>
-    </Card>
+    </>
   );
 };
