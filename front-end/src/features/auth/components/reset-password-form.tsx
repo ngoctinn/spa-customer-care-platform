@@ -4,9 +4,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 import { resetPasswordFormSchema } from "@/features/auth/schemas";
 import {
@@ -33,6 +34,8 @@ export const ResetPasswordForm = () => {
   const token = searchParams.get("token");
 
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof resetPasswordFormSchema>>({
     resolver: zodResolver(resetPasswordFormSchema),
@@ -107,7 +110,19 @@ export const ResetPasswordForm = () => {
                 <FormItem>
                   <FormLabel>Mật khẩu mới</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isPending} />
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      {...field}
+                      disabled={isPending}
+                      icon={
+                        showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )
+                      }
+                      onIconClick={() => setShowPassword(!showPassword)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -120,7 +135,21 @@ export const ResetPasswordForm = () => {
                 <FormItem>
                   <FormLabel>Xác nhận mật khẩu mới</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isPending} />
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      {...field}
+                      disabled={isPending}
+                      icon={
+                        showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )
+                      }
+                      onIconClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

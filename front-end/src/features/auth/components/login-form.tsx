@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { FcGoogle } from "react-icons/fc";
+import { Eye, EyeOff } from "lucide-react";
 
 import { loginSchema } from "@/features/auth/schemas";
 import {
@@ -24,12 +25,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { login } from "@/lib/api";
 import { toast } from "sonner";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -101,9 +103,20 @@ export const LoginForm = () => {
                     </a>
                   </div>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isPending} />
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      {...field}
+                      disabled={isPending}
+                      icon={
+                        showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )
+                      }
+                      onIconClick={() => setShowPassword(!showPassword)}
+                    />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
