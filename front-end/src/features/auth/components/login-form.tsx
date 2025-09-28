@@ -60,6 +60,8 @@ export const LoginForm = () => {
 
   const handleGoogleLogin = () => {
     // Logic xử lý đăng nhập bằng Google
+    // test toast
+    toast("Chức năng đăng nhập bằng Google đang được phát triển.");
   };
 
   const handleShowProfile = () => {
