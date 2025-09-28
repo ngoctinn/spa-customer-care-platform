@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Annotated
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
@@ -18,9 +18,9 @@ from app.schemas.token_schema import Token
 router = APIRouter()
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token")
 def login_for_access_token(
-    # Dùng OAuth2PasswordRequestForm để FastAPI tự động lấy username, password từ form body
+    response: Response, # Thêm dòng này
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_db_session),
 ):
@@ -28,6 +28,7 @@ def login_for_access_token(
     JWT token endpoint.
 
     Hàm này xử lý việc đăng nhập và trả về token JWT nếu thành công.
+    Token sẽ được lưu trong httpOnly cookie.
     """
     user = auth_service.authenticate(
         db_session=session, email=form_data.username, password=form_data.password
@@ -38,26 +39,31 @@ def login_for_access_token(
             detail="Sai email hoặc mật khẩu.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # Kiểm tra xem email đã được xác thực chưa
     if not user.is_email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email chưa được xác thực. Vui lòng kiểm tra hộp thư đến của bạn.",
         )
-    # nếu user không hoạt động
     elif not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Người dùng không hoạt động.",
         )
 
-    # 2. Tạo token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Lưu token vào cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,  # httpOnly flag để bảo vệ cookie khỏi truy cập bởi JavaScript
+        expires=access_token_expires.total_seconds(), # Set thời gian hết hạn cho cookie
+    )
+
+    return {"message": "Login successful"}
 
 
 @router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)

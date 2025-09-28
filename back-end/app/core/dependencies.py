@@ -3,7 +3,7 @@ import email
 from functools import lru_cache
 from typing import Set
 import uuid
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlmodel import Session
 
@@ -24,32 +24,47 @@ def get_db_session():
         yield session
 
 
+# Dependency để đọc token từ cookie
+def get_token_from_cookie(request: Request) -> str | None:
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+    return token
+
+# Cập nhật get_current_user để sử dụng dependency mới
 def get_current_user(
-    session: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)
+    db: Session = Depends(get_db_session), token: str = Depends(get_token_from_cookie)
 ) -> User:
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Tách scheme "Bearer " ra khỏi token
+    scheme, _, param = token.partition(" ")
+    if scheme.lower() != "bearer" or not param:
+         raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication scheme",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id_str: str = payload.get("sub")
-        if user_id_str is None:
+        payload = jwt.decode(param, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
             raise credentials_exception
-
-        try:
-            user_id = uuid.UUID(user_id_str)
-        except ValueError:
-            raise credentials_exception
-
     except JWTError:
         raise credentials_exception
-
-    user = users_service.get_user_by_id(db_session=session, user_id=user_id)
-
+        
+    user = users_service.get_user_by_id(db_session=db, user_id=user_id)
     if user is None:
         raise credentials_exception
     return user

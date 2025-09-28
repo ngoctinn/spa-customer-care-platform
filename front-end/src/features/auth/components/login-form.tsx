@@ -26,7 +26,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useTransition } from "react";
-import { login } from "@/lib/api";
+
+import { login, fetchProfile } from "@/features/auth/apis/auth_api";
+
 import { toast } from "sonner";
 
 export const LoginForm = () => {
@@ -58,6 +60,19 @@ export const LoginForm = () => {
 
   const handleGoogleLogin = () => {
     // Logic xử lý đăng nhập bằng Google
+  };
+
+  const handleShowProfile = () => {
+    startTransition(async () => {
+      try {
+        const profile = await fetchProfile();
+        console.log("Thông tin người dùng:", profile);
+        alert(`Xin chào, ${profile.full_name || profile.email}`);
+      } catch (error: unknown) {
+        console.error("Lỗi khi lấy thông tin:", error);
+        alert((error as Error).message);
+      }
+    });
   };
 
   return (
@@ -123,6 +138,15 @@ export const LoginForm = () => {
 
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? "Đang xử lý..." : "Đăng Nhập"}
+            </Button>
+            {/* Thêm 1 nút để test hiển thị thông tin người dùng */}
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleShowProfile}
+              disabled={isPending}
+            >
+              Hiển thị thông tin người dùng (Sau khi đăng nhập)
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
