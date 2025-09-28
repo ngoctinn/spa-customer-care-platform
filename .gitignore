@@ -1,0 +1,13 @@
+# Python / FastAPI
+__pycache__/
+*.pyc
+.env
+.venv/
+
+# Node.js / Next.js
+node_modules/
+.next/
+.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

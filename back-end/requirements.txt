@@ -1,0 +1,25 @@
+# FastAPI & Server
+fastapi
+uvicorn[standard]
+
+# Database & ORM
+sqlmodel
+asyncpg
+psycopg2-binary
+alembic
+
+# Authentication & Security
+passlib[bcrypt]
+python-jose
+authlib
+itsdangerous
+
+# Configuration & Utilities
+python-dotenv
+pydantic[email]
+pydantic_settings
+
+# Other
+python-multipart
+fastapi_mail
+httpx
