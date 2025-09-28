@@ -8,7 +8,6 @@ import { FcGoogle } from "react-icons/fc";
 
 import { loginSchema } from "@/features/auth/schemas";
 import {
-  Card,
   CardHeader,
   CardTitle,
   CardDescription,
@@ -25,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
@@ -50,8 +49,8 @@ export const LoginForm = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <>
+      <CardHeader className="text-center">
         <CardTitle>Chào mừng trở lại</CardTitle>
         <CardDescription>
           Nhập thông tin để truy cập vào tài khoản của bạn.
@@ -138,6 +137,6 @@ export const LoginForm = () => {
           Google
         </Button>
       </CardContent>
-    </Card>
+    </>
   );
 };
