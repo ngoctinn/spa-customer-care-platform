@@ -28,3 +28,4 @@ app.include_router(router)
 def read_root():
     """Kiểm tra xem API có hoạt động không."""
     return {"status": "ok", "message": "Welcome to my FastAPI application!"}
+
