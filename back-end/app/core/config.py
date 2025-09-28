@@ -1,4 +1,5 @@
 # core/config.py
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +23,9 @@ class Settings(BaseSettings):
     # Google OAuth settings
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
+
+    # CORS settings
+    BACKEND_CORS_ORIGINS: list[str] = []
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

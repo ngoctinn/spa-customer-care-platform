@@ -56,7 +56,6 @@ def get_current_user(
 
 
 # --- DEPENDENCY KIỂM TRA QUYỀN ---
-@lru_cache()
 def get_user_permissions(user: User) -> Set[str]:
     """
     Lấy tất cả tên quyền của một người dùng từ các vai trò của họ.
