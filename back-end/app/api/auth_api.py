@@ -66,8 +66,8 @@ def login_for_access_token(
     return {"message": "Login successful"}
 
 
-@router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
-async def create_user(
+@router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+async def register_user(
     *, session: Session = Depends(get_db_session), user_in: UserCreate, request: Request
 ):
     """
