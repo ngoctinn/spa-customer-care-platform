@@ -9,7 +9,8 @@ psycopg2-binary
 alembic
 
 # Authentication & Security
-passlib[bcrypt]
+passlib
+bcrypt==4.0.1
 python-jose
 authlib
 itsdangerous
