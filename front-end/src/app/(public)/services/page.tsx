@@ -2,7 +2,7 @@ import ServiceCard from "@/features/service/components/ServiceCard";
 import { Input } from "@/components/ui/input";
 
 export default async function ServicesPage() {
-  //   const services = await getServices();
+  const services = await getServices();
 
   return (
     <div className="container mx-auto px-4 py-8">
