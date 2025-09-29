@@ -7,7 +7,7 @@ import { Clock, Tag } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useReviews } from "@/features/review/hooks/useReviews";
-import { FullPageLoader } from "@/components/ui/spinner";
+import FullPageLoader from "@/components/common/FullPageLoader";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
 
@@ -46,7 +46,7 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   }, [primaryImageUrl]);
 
   if (isLoading || isLoadingReviews) {
-    return <FullPageLoader text="Đang tải dịch vụ..." />;
+    return <FullPageLoader />;
   }
 
   if (error || !service) {

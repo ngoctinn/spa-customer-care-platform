@@ -5,7 +5,7 @@ import { getProductById } from "@/features/product/api/product.api";
 import { ReviewList } from "@/features/review/components/ReviewList";
 import { notFound } from "next/navigation";
 import { useState, useEffect } from "react";
-import { FullPageLoader } from "@/components/ui/spinner";
+import FullPageLoader from "@/components/common/FullPageLoader";
 import { Badge } from "@/components/ui/badge";
 import { useReviews } from "@/features/review/hooks/useReviews";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
@@ -42,7 +42,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   }, [primaryImageUrl]);
 
   if (isLoading || isLoadingReviews) {
-    return <FullPageLoader text="Đang tải sản phẩm..." />;
+    return <FullPageLoader />;
   }
 
   if (error || !product) {
