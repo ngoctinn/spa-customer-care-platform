@@ -1,16 +1,17 @@
+// src/components/layout/public/header.tsx
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import {
-  Moon,
-  Sun,
+  Search,
   ShoppingCart,
   LayoutDashboard,
   LogOut,
   LogIn,
   UserPlus,
+  CalendarPlus,
 } from "lucide-react";
 
 import {
@@ -29,36 +30,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Assuming you have an Input component
 
 // Giả sử đây là dữ liệu người dùng bạn lấy được sau khi đăng nhập
-// Trong thực tế, bạn sẽ lấy dữ liệu này từ context, redux, zustand...
 const user = {
   name: "Ngoc Tinn",
   email: "ngoctinn@example.com",
-  avatarUrl: "https://github.com/shadcn.png", // Thay bằng avatar thật
+  avatarUrl: "https://github.com/shadcn.png",
 };
-const isLoggedIn = true; // Thay đổi giá trị này để test giao diện khi đăng nhập/chưa đăng nhập
+const isLoggedIn = true; // Change this to test logged in/out states
 
 const navLinks = [
-  { href: "/booking", label: "Đặt lịch" },
   { href: "/services", label: "Dịch vụ" },
-  { href: "/products", label: "Liệu trình sản phẩm" },
-  { href: "/about", label: "Giới thiệu" },
+  { href: "/treatments", label: "Liệu trình" },
+  { href: "/products", label: "Sản phẩm" },
+  { href: "/promotions", label: "Khuyến mãi" },
 ];
 
 export function Header() {
-  const { setTheme, theme } = useTheme();
-
-  const handleThemeToggle = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         {/* Logo */}
-        <Link href="/" className="mr-8 flex items-center space-x-2">
-          {/* Bạn có thể dùng SVG hoặc component Image của Next.js */}
+        <Link href="/" className="mr-6 flex items-center space-x-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -89,23 +83,36 @@ export function Header() {
           </NavigationMenuList>
         </NavigationMenu>
 
-        {/* Các nút hành động bên phải */}
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          {/* Giỏ hàng */}
-          <Button variant="ghost" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="sr-only">Giỏ hàng</span>
+        {/* Spacer to push items to the right */}
+        <div className="flex-grow" />
+
+        {/* Right side of the header */}
+        <div className="flex items-center gap-4">
+          {/* Search Bar */}
+          <div className="relative hidden lg:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Tìm kiếm dịch vụ..."
+              className="w-64 pl-9"
+            />
+          </div>
+
+          {/* Booking Button */}
+          <Button>
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Đặt lịch ngay
           </Button>
 
-          {/* User Avatar Dropdown */}
+          {/* User Avatar Dropdown or Login/Register */}
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-8 w-8 rounded-full"
+                  className="relative h-9 w-9 rounded-full"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-9 w-9">
                     <AvatarImage src={user.avatarUrl} alt={`@${user.name}`} />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
@@ -117,16 +124,6 @@ export function Header() {
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Trang điều khiển</span>
                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleThemeToggle}>
-                  {theme === "light" ? (
-                    <Moon className="mr-2 h-4 w-4" />
-                  ) : (
-                    <Sun className="mr-2 h-4 w-4" />
-                  )}
-                  <span>
-                    {theme === "light" ? "Chế độ tối" : "Chế độ sáng"}
-                  </span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
@@ -149,6 +146,12 @@ export function Header() {
               </Button>
             </div>
           )}
+
+          {/* Shopping Cart */}
+          <Button variant="ghost" size="icon">
+            <ShoppingCart className="h-5 w-5" />
+            <span className="sr-only">Giỏ hàng</span>
+          </Button>
         </div>
       </div>
     </header>
