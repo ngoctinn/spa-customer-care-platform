@@ -281,10 +281,16 @@ export default function ServiceFormFields() {
             <FormLabel>Thư viện ảnh</FormLabel>
             <FormControl>
               <MultiImageUploader
-                // Giả sử component này được cập nhật để trả về dữ liệu đúng cấu trúc
-                onFilesChange={(newImages) =>
-                  form.setValue("images", newImages)
-                }
+                onFilesSelect={(files) => {
+                  // Logic để chuyển đổi Files thành cấu trúc ImageUrl[] của bạn
+                  // Ví dụ đơn giản:
+                  const newImages = files.map((file, index) => ({
+                    url: URL.createObjectURL(file), // Tạm thời hiển thị, cần logic upload thực tế
+                    isPrimary: index === 0, // Gán ảnh đầu tiên là ảnh chính
+                    altText: file.name,
+                  }));
+                  form.setValue("images", newImages);
+                }}
                 defaultValue={form.getValues("images")}
               />
             </FormControl>

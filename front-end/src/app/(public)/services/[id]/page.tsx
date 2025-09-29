@@ -17,7 +17,8 @@ interface ServiceDetailPageProps {
 
 export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   const { id } = params;
-  const [mainImage, setMainImage] = useState<string | null>(null);
+
+  const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
 
   const {
     data: service,
@@ -28,15 +29,21 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     queryFn: () => getServiceById(id),
   });
 
-  const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
+  // Tìm ảnh chính ngay sau khi có dữ liệu
+  const primaryImageUrl =
+    service?.images?.find((img) => img.isPrimary)?.url ||
+    service?.images?.[0]?.url ||
+    null;
 
+  // Khởi tạo state với giá trị ảnh chính (nếu có)
+  const [mainImage, setMainImage] = useState<string | null>(primaryImageUrl);
+
+  // Cập nhật lại mainImage khi service thay đổi (ví dụ khi cache được update)
   useEffect(() => {
-    if (service?.images && service.images.length > 0) {
-      const primaryImg =
-        service.images.find((img) => img.isPrimary) || service.images[0];
-      setMainImage(primaryImg.url);
+    if (primaryImageUrl) {
+      setMainImage(primaryImageUrl);
     }
-  }, [service]);
+  }, [primaryImageUrl]);
 
   if (isLoading || isLoadingReviews) {
     return <FullPageLoader text="Đang tải dịch vụ..." />;
@@ -51,7 +58,6 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   );
 
   const thumbnailImages = service.images?.map((img) => img.url) || [];
-  const primaryImageUrl = service.images?.find((img) => img.isPrimary)?.url;
   return (
     <DetailPageLayout
       mainImage={mainImage}
