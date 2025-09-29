@@ -25,7 +25,12 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str
 
     # CORS settings
-    BACKEND_CORS_ORIGINS: list[str] 
+    BACKEND_CORS_ORIGINS: list[str]
+
+    # Supabase Settings
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+    SUPABASE_BUCKET_NAME: str
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

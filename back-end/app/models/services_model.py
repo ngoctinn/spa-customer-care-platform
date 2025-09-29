@@ -23,7 +23,7 @@ class ServiceImage(BaseUUIDModel, table=True):
     service_id: uuid.UUID = Field(foreign_key="service.id", nullable=False)
     url: str = Field(nullable=False)
     alt_text: str | None = Field(default=None)
-
+    is_primary: bool = Field(default=False, description="Đánh dấu hình ảnh chính")
     # Mỗi hình ảnh thuộc về một dịch vụ
     service: "Service" = Relationship(back_populates="images")
 
@@ -35,7 +35,6 @@ class Service(BaseUUIDModel, table=True):
     description: str = Field(nullable=False)
     price: float = Field(gt=0, nullable=False)
     duration_minutes: int = Field(gt=0, nullable=False)
-    is_active: bool = Field(default=True, nullable=False)
 
     preparation_notes: str | None = Field(
         default=None, description="Hướng dẫn chuẩn bị trước dịch vụ"

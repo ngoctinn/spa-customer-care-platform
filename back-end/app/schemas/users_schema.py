@@ -52,6 +52,22 @@ class UpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
     new_password: str = Field(min_length=8, max_length=40)
 
+# Schema cho reset mật khẩu
+class ForgotPasswordRequest(SQLModel):
+    email: EmailStr
+
+class ResetPasswordRequest(SQLModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=40)
+
+    @field_validator("new_password")
+    def validate_new_password(cls, v):
+        # Ví dụ: yêu cầu mật khẩu có cả chữ và số
+        if not re.search(r"[A-Za-z]", v) or not re.search(r"[0-9]", v):
+            raise ValueError("Mật khẩu phải chứa cả chữ và số")
+        return v
+    
+
 
 # Schema hiển thị thông tin công khai của người dùng (dùng làm response_model)
 class UserPublic(UserBase):

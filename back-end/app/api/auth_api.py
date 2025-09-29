@@ -10,7 +10,7 @@ from sqlmodel import Session
 from app.core.dependencies import get_db_session
 from app.core.config import settings
 from app.core import security
-from app.schemas.users_schema import UserCreate, UserPublic
+from app.schemas.users_schema import ForgotPasswordRequest, ResetPasswordRequest, UserCreate, UserPublic
 from app.services import users_service, auth_service  # Giả định bạn đã có service
 from app.schemas.token_schema import Token
 
@@ -72,7 +72,6 @@ async def register_user(
 ):
     """
     Tạo người dùng mới.
-
     API này sẽ nhận dữ liệu người dùng, sau đó gọi đến service layer
     để thực hiện logic tạo mới và lưu vào database.
     """
@@ -132,7 +131,7 @@ async def auth_google(request: Request, session: Session = Depends(get_db_sessio
         new_user_data = UserCreate(
             email=email,
             full_name=user_info.get("name"),
-            # Mật khẩu ngẫu nhiên vì user sẽ đăng nhập qua Google
+         # Mật khẩu ngẫu nhiên vì user sẽ đăng nhập qua Google
             password=f"google_oauth_{uuid.uuid4()}",
         )
         user = users_service.create_new_user(db_session=session, user_in=new_user_data)
@@ -146,3 +145,50 @@ async def auth_google(request: Request, session: Session = Depends(get_db_sessio
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+#==================================================================
+# --- Endpoint cho reset mật khẩu  ---
+#==================================================================
+@router.post("/forgot-password")
+async def forgot_password(
+    *, session: Session = Depends(get_db_session), body: ForgotPasswordRequest
+):
+    """
+    Endpoint để yêu cầu reset mật khẩu.
+    """
+    user = users_service.get_user_by_email(db_session=session, email=body.email)
+    
+    # Kể cả khi không tìm thấy user, chúng ta vẫn trả về thông báo thành công
+    # để tránh việc kẻ tấn công có thể dùng API này để dò email tồn tại trong hệ thống.
+    if user:
+        await auth_service.send_password_reset_email(user)
+        
+    return {"message": "Nếu email của bạn tồn tại trong hệ thống, bạn sẽ nhận được một email hướng dẫn đặt lại mật khẩu."}
+
+
+@router.post("/reset-password")
+def reset_password(
+    *, session: Session = Depends(get_db_session), body: ResetPasswordRequest
+):
+    """
+    Endpoint để xác nhận và đặt lại mật khẩu mới.
+    """
+    user_id = auth_service.verify_password_reset_token(body.token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token không hợp lệ hoặc đã hết hạn.",
+        )
+
+    user = users_service.get_user_by_id(db_session=session, user_id=user_id)
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Người dùng không tồn tại hoặc không hoạt động.",
+        )
+
+    auth_service.reset_user_password(
+        db_session=session, user=user, new_password=body.new_password
+    )
+    
+    return {"message": "Mật khẩu đã được đặt lại thành công."}

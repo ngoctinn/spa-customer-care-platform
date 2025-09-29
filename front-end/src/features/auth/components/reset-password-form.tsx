@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/shared/password-input";
 
 export const ResetPasswordForm = () => {
   const router = useRouter();
@@ -34,8 +35,6 @@ export const ResetPasswordForm = () => {
   const token = searchParams.get("token");
 
   const [isPending, startTransition] = useTransition();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof resetPasswordFormSchema>>({
     resolver: zodResolver(resetPasswordFormSchema),
@@ -110,18 +109,10 @@ export const ResetPasswordForm = () => {
                 <FormItem>
                   <FormLabel>Mật khẩu mới</FormLabel>
                   <FormControl>
-                    <Input
-                      type={showPassword ? "text" : "password"}
+                    <PasswordInput
+                      placeholder="••••••••"
                       {...field}
                       disabled={isPending}
-                      icon={
-                        showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )
-                      }
-                      onIconClick={() => setShowPassword(!showPassword)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -135,20 +126,10 @@ export const ResetPasswordForm = () => {
                 <FormItem>
                   <FormLabel>Xác nhận mật khẩu mới</FormLabel>
                   <FormControl>
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
+                    <PasswordInput
+                      placeholder="••••••••"
                       {...field}
                       disabled={isPending}
-                      icon={
-                        showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )
-                      }
-                      onIconClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
                     />
                   </FormControl>
                   <FormMessage />

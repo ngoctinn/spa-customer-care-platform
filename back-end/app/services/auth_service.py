@@ -15,6 +15,11 @@ from app.core.config import settings
 # Cấu hình cho việc tạo token xác thực email
 email_verification_serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
 
+# Cấu hình cho việc tạo token
+email_verification_serializer = URLSafeTimedSerializer(settings.SECRET_KEY, salt="email-confirm-salt")
+password_reset_serializer = URLSafeTimedSerializer(settings.SECRET_KEY, salt="password-reset-salt")
+
+
 # Cấu hình OAuth cho Google
 oauth = OAuth()
 oauth.register(
@@ -109,4 +114,47 @@ def update_password(
     db_session.commit()
     db_session.refresh(user)
 
+    return user
+
+async def send_password_reset_email(user: User):
+    """
+    Tạo token và gửi email reset mật khẩu.
+    """
+    # Token có hiệu lực trong 15 phút (900 giây)
+    token = password_reset_serializer.dumps(str(user.id))
+    reset_link = f"http://localhost:3000/reset-password?token={token}" # Link đến trang reset trên frontend của bạn
+
+    body = f"""
+    <p>Chào {user.full_name},</p>
+    <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấp vào liên kết bên dưới để tiếp tục:</p>
+    <p><a href="{reset_link}">Đặt lại mật khẩu</a></p>
+    <p>Liên kết này sẽ hết hạn sau 15 phút.</p>
+    <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
+    """
+
+    await send_email(
+        subject="Yêu cầu đặt lại mật khẩu", recipients=[user.email], body=body
+    )
+
+def verify_password_reset_token(token: str) -> Optional[str]:
+    """
+    Giải mã token reset mật khẩu. Trả về user_id nếu hợp lệ.
+    """
+    try:
+        # max_age = 900 giây (15 phút)
+        user_id = password_reset_serializer.loads(token, max_age=900)
+        return user_id
+    except (SignatureExpired, BadTimeSignature):
+        return None
+
+
+def reset_user_password(db_session: Session, *, user: User, new_password: str) -> User:
+    """
+    Băm và cập nhật mật khẩu mới cho người dùng mà không cần mật khẩu cũ.
+    """
+    new_hashed_password = get_password_hash(new_password)
+    user.hashed_password = new_hashed_password
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
     return user
