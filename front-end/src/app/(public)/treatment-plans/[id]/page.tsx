@@ -1,0 +1,106 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { getTreatmentPlanById } from "@/features/treatment/api/treatment.api";
+import { ReviewList } from "@/features/review/components/ReviewList";
+import TreatmentSteps from "@/features/treatment/components/TreatmentSteps";
+import { notFound } from "next/navigation";
+import { PackageCheck, Tag } from "lucide-react";
+import { useState, useEffect } from "react";
+import FullPageLoader from "@/components/common/FullPageLoader";
+import { useReviews } from "@/features/review/hooks/useReviews";
+import { useServices } from "@/features/service/hooks/useServices";
+import { PurchaseActions } from "@/components/common/PurchaseActions";
+import { DetailPageLayout } from "@/components/common/DetailPageLayout";
+
+interface TreatmentPlanDetailPageProps {
+  params: { id: string };
+}
+
+export default function TreatmentPlanDetailPage({
+  params,
+}: TreatmentPlanDetailPageProps) {
+  const { id } = params;
+
+  const {
+    data: plan,
+    isLoading: isLoadingPlan,
+    error,
+  } = useQuery({
+    queryKey: ["treatmentPlan", id],
+    queryFn: () => getTreatmentPlanById(id),
+  });
+
+  const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
+  const { data: allServices = [], isLoading: isLoadingServices } =
+    useServices();
+
+  const primaryImageUrl =
+    plan?.images?.find((img) => img.is_primary)?.url ||
+    plan?.images?.[0]?.url ||
+    null;
+
+  // Khởi tạo state với giá trị ảnh chính (nếu có)
+  const [mainImage, setMainImage] = useState<string | null>(primaryImageUrl);
+
+  useEffect(() => {
+    if (primaryImageUrl) {
+      setMainImage(primaryImageUrl);
+    }
+  }, [primaryImageUrl]);
+
+  const isLoading = isLoadingPlan || isLoadingReviews || isLoadingServices;
+
+  if (isLoading) {
+    return <FullPageLoader />;
+  }
+
+  if (error || !plan) {
+    notFound();
+  }
+
+  const planReviews = allReviews.filter((review) => review.item_id === plan.id);
+
+  const thumbnailImages = plan.images?.map((img) => img.url) || [];
+
+  return (
+    <DetailPageLayout
+      mainImage={mainImage}
+      imageAlt={plan.name}
+      thumbnailUrls={thumbnailImages}
+      onThumbnailClick={setMainImage}
+      title={<h1 className="text-4xl font-bold mb-4">{plan.name}</h1>}
+      description={<p className="text-muted-foreground">{plan.description}</p>}
+      details={
+        <>
+          <div className="flex items-center">
+            <PackageCheck className="mr-2 h-5 w-5" />
+            <span>{plan.total_sessions} buổi</span>
+          </div>
+          <div className="flex items-center">
+            <Tag className="mr-2 h-5 w-5" />
+            <span className="font-semibold">
+              {new Intl.NumberFormat("vi-VN").format(plan.price)} VNĐ
+            </span>
+          </div>
+        </>
+      }
+      purchaseActions={
+        <PurchaseActions
+          item={{
+            id: plan.id,
+            name: plan.name,
+            price: plan.price,
+            imageUrl: primaryImageUrl || "/images/placeholder.png",
+            type: "treatment",
+          }}
+        />
+      }
+      treatmentSteps={<TreatmentSteps plan={plan} allServices={allServices} />}
+    >
+      <div className="mt-12">
+        <ReviewList reviews={planReviews} />
+      </div>
+    </DetailPageLayout>
+  );
+}
