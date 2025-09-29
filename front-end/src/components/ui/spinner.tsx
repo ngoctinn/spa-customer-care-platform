@@ -20,7 +20,7 @@ export const FullPageLoader = ({
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
       <Spinner className="w-8 h-8" />
-      <p className="text-muted-foreground">{text}</p>
+      {text && <p className="text-muted-foreground">{text}</p>}
     </div>
   );
 };
