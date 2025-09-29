@@ -1,4 +1,5 @@
 import { UUID } from "crypto";
+import { ImageUrl } from "@/features/shared/types";
 
 export interface Service {
   id: UUID;
@@ -7,7 +8,7 @@ export interface Service {
   price: number;
   duration_minutes: number;
   categories: string[];
-  images: imageUrls[];
+  images: ImageUrl[];
   preparation_notes: string;
   aftercare_instructions: string;
   contraindications: string;
@@ -19,11 +20,4 @@ export interface Service {
 export interface ServiceConsumable {
   productId: UUID;
   quantityUsed: number;
-}
-
-export interface imageUrls {
-  id: UUID;
-  url: string;
-  isPrimary: boolean;
-  altText: string;
 }

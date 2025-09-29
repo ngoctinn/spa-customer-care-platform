@@ -23,7 +23,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="w-4 h-4" />
-            <span>{service.duration} phút</span>
+            <span>{service.duration_minutes} phút</span>
           </div>
           <span className="text-lg font-semibold text-primary">
             {new Intl.NumberFormat("vi-VN", {
