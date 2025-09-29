@@ -72,7 +72,6 @@ async def register_user(
 ):
     """
     Tạo người dùng mới.
-
     API này sẽ nhận dữ liệu người dùng, sau đó gọi đến service layer
     để thực hiện logic tạo mới và lưu vào database.
     """
@@ -132,7 +131,7 @@ async def auth_google(request: Request, session: Session = Depends(get_db_sessio
         new_user_data = UserCreate(
             email=email,
             full_name=user_info.get("name"),
-            # Mật khẩu ngẫu nhiên vì user sẽ đăng nhập qua Google
+         # Mật khẩu ngẫu nhiên vì user sẽ đăng nhập qua Google
             password=f"google_oauth_{uuid.uuid4()}",
         )
         user = users_service.create_new_user(db_session=session, user_in=new_user_data)
