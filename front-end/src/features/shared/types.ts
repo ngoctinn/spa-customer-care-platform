@@ -1,7 +1,5 @@
-import { UUID } from "crypto";
-
 export interface ImageUrl {
-  id: UUID;
+  id: string;
   url: string;
   is_primary: boolean;
   alt_text?: string;

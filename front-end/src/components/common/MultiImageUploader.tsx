@@ -1,4 +1,4 @@
-// src/components/ui/MultiImageUploader.tsx
+// src/components/common/MultiImageUploader.tsx
 "use client";
 
 import { useRef, useState } from "react";
@@ -6,25 +6,30 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UploadCloud, X } from "lucide-react";
 import Image from "next/image";
+import { ImageUrl } from "@/features/shared/types";
 
 interface MultiImageUploaderProps {
   onFilesSelect: (files: File[]) => void;
+  defaultValue?: ImageUrl[];
+  onRemoveImage: (image: ImageUrl) => void;
 }
 
 export const MultiImageUploader = ({
   onFilesSelect,
+  defaultValue = [],
+  onRemoveImage,
 }: MultiImageUploaderProps) => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFilesChange = (files: FileList | null) => {
-    if (files) {
-      const newFiles = Array.from(files);
-      const updatedFiles = [...selectedFiles, ...newFiles];
-      setSelectedFiles(updatedFiles);
-      onFilesSelect(updatedFiles);
+  const handleFileSelection = (selectedFiles: FileList | null) => {
+    if (selectedFiles) {
+      onFilesSelect(Array.from(selectedFiles));
     }
+  };
+
+  const handleRemoveClick = (image: ImageUrl) => {
+    onRemoveImage(image);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -40,16 +45,7 @@ export const MultiImageUploader = ({
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(false);
-    const files = event.dataTransfer.files;
-    handleFilesChange(files);
-  };
-
-  const handleRemoveFile = (indexToRemove: number) => {
-    const updatedFiles = selectedFiles.filter(
-      (_, index) => index !== indexToRemove
-    );
-    setSelectedFiles(updatedFiles);
-    onFilesSelect(updatedFiles);
+    handleFileSelection(event.dataTransfer.files);
   };
 
   return (
@@ -57,7 +53,7 @@ export const MultiImageUploader = ({
       <input
         type="file"
         ref={fileInputRef}
-        onChange={(e) => handleFilesChange(e.target.files)}
+        onChange={(e) => handleFileSelection(e.target.files)}
         className="hidden"
         accept="image/png, image/jpeg, image/gif"
         multiple
@@ -75,19 +71,16 @@ export const MultiImageUploader = ({
         <div className="text-muted-foreground text-center">
           <UploadCloud className="text-3xl mb-2 mx-auto" />
           <p>Nhấp hoặc kéo thả ảnh vào đây</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Bạn có thể chọn nhiều ảnh
-          </p>
         </div>
       </div>
 
-      {selectedFiles.length > 0 && (
+      {defaultValue.length > 0 && (
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {selectedFiles.map((file, index) => (
-            <div key={index} className="relative group aspect-square">
+          {defaultValue.map((image) => (
+            <div key={image.id} className="relative group aspect-square">
               <Image
-                src={URL.createObjectURL(file)}
-                alt={file.name}
+                src={image.url}
+                alt={image.alt_text ?? "Xem trước"}
                 fill
                 className="object-cover rounded-md"
               />
@@ -97,7 +90,7 @@ export const MultiImageUploader = ({
                   variant="destructive"
                   size="icon"
                   className="h-6 w-6 opacity-70 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleRemoveFile(index)}
+                  onClick={() => handleRemoveClick(image)}
                 >
                   <X className="h-4 w-4" />
                 </Button>
