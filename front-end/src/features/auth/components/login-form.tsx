@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { FcGoogle } from "react-icons/fc";
-import { Eye, EyeOff } from "lucide-react";
 
 import { loginSchema } from "@/features/auth/schemas";
 import {
@@ -25,6 +24,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/shared/password-input";
+
 import { useState, useTransition } from "react";
 
 import { login, fetchProfile } from "@/features/auth/apis/auth_api";
@@ -120,18 +121,10 @@ export const LoginForm = () => {
                     </a>
                   </div>
                   <FormControl>
-                    <Input
-                      type={showPassword ? "text" : "password"}
+                    <PasswordInput
+                      placeholder="••••••••"
                       {...field}
                       disabled={isPending}
-                      icon={
-                        showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )
-                      }
-                      onIconClick={() => setShowPassword(!showPassword)}
                     />
                   </FormControl>
                 </FormItem>
@@ -151,7 +144,7 @@ export const LoginForm = () => {
               Hiển thị thông tin người dùng (Sau khi đăng nhập)
             </Button>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 mt-4">
             <p className="text-sm text-muted-foreground text-center w-full">
               Chưa có tài khoản?{" "}
               <a

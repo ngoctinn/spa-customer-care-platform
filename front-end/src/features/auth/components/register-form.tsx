@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { register } from "../apis/register_api";
+import { PasswordInput } from "@/components/shared/password-input";
 
 export const RegisterForm = () => {
   const [isPending, startTransition] = useTransition();
@@ -112,18 +113,10 @@ export const RegisterForm = () => {
                 <FormItem>
                   <FormLabel>Mật khẩu</FormLabel>
                   <FormControl>
-                    <Input
-                      type={showPassword ? "text" : "password"}
+                    <PasswordInput
+                      placeholder="••••••••"
                       {...field}
                       disabled={isPending}
-                      icon={
-                        showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )
-                      }
-                      onIconClick={() => setShowPassword(!showPassword)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -134,7 +127,7 @@ export const RegisterForm = () => {
               {isPending ? "Đang xử lý..." : "Tạo tài khoản"}
             </Button>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col items-center gap-2 mt-4">
             <p className="text-sm text-muted-foreground text-center w-full">
               Đã có tài khoản?{" "}
               <a
