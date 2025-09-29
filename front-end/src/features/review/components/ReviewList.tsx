@@ -23,7 +23,7 @@ const ReviewItem = ({
     <Avatar>
       <AvatarImage
         src={
-          customer?.avatar ||
+          customer?.avatar_url ||
           `https://api.dicebear.com/7.x/notionists/svg?seed=${customer?.id}`
         }
       />
@@ -33,7 +33,7 @@ const ReviewItem = ({
       <div className="flex items-center justify-between">
         <p className="font-semibold">{customer?.name || "Một khách hàng"}</p>
         <span className="text-xs text-muted-foreground">
-          {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+          {new Date(review.created_at).toLocaleDateString("vi-VN")}
         </span>
       </div>
       <div className="flex items-center my-1">
@@ -59,7 +59,7 @@ export const ReviewList = ({ reviews }: ReviewListProps) => {
       {reviews.length > 0 ? (
         <div className="divide-y">
           {reviews.map((review) => {
-            const customer = customers.find((c) => c.id === review.customerId);
+            const customer = customers.find((c) => c.id === review.customer_id);
             return (
               <ReviewItem key={review.id} review={review} customer={customer} />
             );

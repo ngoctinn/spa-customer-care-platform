@@ -8,7 +8,7 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ service }: ServiceCardProps) {
-  const primaryImage = service.images?.find((img) => img.isPrimary === true);
+  const primaryImage = service.images?.find((img) => img.is_primary === true);
   const primaryImageUrl =
     primaryImage?.url ??
     service.images?.[0]?.url ??
