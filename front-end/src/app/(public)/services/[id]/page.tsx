@@ -31,7 +31,7 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
 
   // Tìm ảnh chính ngay sau khi có dữ liệu
   const primaryImageUrl =
-    service?.images?.find((img) => img.isPrimary)?.url ||
+    service?.images?.find((img) => img.is_primary)?.url ||
     service?.images?.[0]?.url ||
     null;
 
@@ -54,7 +54,7 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   }
 
   const serviceReviews = allReviews.filter(
-    (review) => review.serviceId === service.id
+    (review) => review.item_id === service.id
   );
 
   const thumbnailImages = service.images?.map((img) => img.url) || [];

@@ -1,5 +1,6 @@
 "use client";
 
+import { v4 as uuidv4 } from "uuid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addCategory } from "@/features/category/api/category.api";
 import AddCategoryForm from "@/features/category/components/AddCategoryForm";
@@ -43,15 +44,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUrl } from "@/features/shared/types";
 
-export default function ServiceFormFields() {
+export default function ServiceForm() {
   const queryClient = useQueryClient();
   const form = useFormContext<ServiceFormValues>();
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const { data: products = [] } = useProducts();
+  const selectedCategoryIds = form.watch("categories") || [];
 
   // Lọc ra các sản phẩm là hàng tiêu hao
-  const consumableProducts = products.filter((p) => p.isConsumable);
+  const consumableProducts = products.filter((p) => p.is_consumable);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -67,17 +70,15 @@ export default function ServiceFormFields() {
 
   const { data: categories = [] } = useCategories();
   const serviceCategories = categories.filter((c) => c.type === "service");
-  const selectedCategories = form.watch("categories") || [];
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "price" && value.price !== undefined) {
-        const currentNumericPrice =
-          parseFloat(displayPrice.replace(/[^0-9]/g, "")) * 1000;
+        const currentNumericPrice = parseFloat(
+          displayPrice.replace(/[^0-9]/g, "")
+        );
         if (value.price !== currentNumericPrice) {
-          setDisplayPrice(
-            new Intl.NumberFormat("vi-VN").format(value.price / 1000)
-          );
+          setDisplayPrice(value.price.toLocaleString("vi-VN"));
         }
       }
     });
@@ -87,7 +88,8 @@ export default function ServiceFormFields() {
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^0-9]/g, "");
     const numberValue = parseInt(rawValue, 10) || 0;
-    form.setValue("price", numberValue * 1000, { shouldValidate: true });
+    form.setValue("price", numberValue, { shouldValidate: true });
+    setDisplayPrice(numberValue.toLocaleString("vi-VN"));
   };
 
   const addCategoryMutation = useMutation({
@@ -96,7 +98,7 @@ export default function ServiceFormFields() {
       queryClient.invalidateQueries({ queryKey: ["categories", "service"] });
       toast.success(`Đã thêm danh mục "${newCategory.name}"!`);
       const currentCategories = form.getValues("categories") || [];
-      form.setValue("categories", [...currentCategories, newCategory.name]);
+      form.setValue("categories", [...currentCategories, newCategory.id]);
       setIsAddCategoryOpen(false);
     },
     onError: (err) => toast.error(`Thêm thất bại: ${err.message}`),
@@ -145,8 +147,8 @@ export default function ServiceFormFields() {
                     className="w-full justify-between h-auto min-h-9"
                   >
                     <div className="flex gap-1 flex-wrap">
-                      {selectedCategories.length > 0
-                        ? selectedCategories.map((catName) => (
+                      {selectedCategoryIds.length > 0
+                        ? selectedCategoryIds.map((catName) => (
                             <Badge key={catName} variant="secondary">
                               {catName}
                             </Badge>
@@ -240,7 +242,7 @@ export default function ServiceFormFields() {
                   />
                 </FormControl>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-muted-foreground">.000 VND</span>
+                  <span className="text-muted-foreground"> VND</span>
                 </div>
               </div>
               <FormMessage />
@@ -276,22 +278,28 @@ export default function ServiceFormFields() {
 
       <FormField
         name="images"
+        control={form.control}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Thư viện ảnh</FormLabel>
             <FormControl>
               <MultiImageUploader
-                onFilesSelect={(files) => {
-                  // Logic để chuyển đổi Files thành cấu trúc ImageUrl[] của bạn
-                  // Ví dụ đơn giản:
-                  const newImages = files.map((file, index) => ({
-                    url: URL.createObjectURL(file), // Tạm thời hiển thị, cần logic upload thực tế
-                    isPrimary: index === 0, // Gán ảnh đầu tiên là ảnh chính
-                    altText: file.name,
+                defaultValue={field.value}
+                onFilesSelect={(files: File[]) => {
+                  const newImageUrls: ImageUrl[] = files.map((file, index) => ({
+                    id: uuidv4(),
+                    url: URL.createObjectURL(file),
+                    is_primary: (field.value?.length || 0) + index === 0,
+                    alt_text: file.name,
                   }));
-                  form.setValue("images", newImages);
+                  field.onChange([...(field.value || []), ...newImageUrls]);
                 }}
-                defaultValue={form.getValues("images")}
+                onRemoveImage={(imageToRemove) => {
+                  const updatedImages = (field.value || []).filter(
+                    (img) => img.id !== imageToRemove.id
+                  );
+                  field.onChange(updatedImages);
+                }}
               />
             </FormControl>
             <FormMessage />
@@ -395,7 +403,8 @@ export default function ServiceFormFields() {
                   render={({ field: quantityField }) => (
                     <FormItem>
                       <FormLabel>
-                        Số lượng ({selectedProduct?.consumableUnit || "đơn vị"})
+                        Số lượng ({selectedProduct?.consumable_unit || "đơn vị"}
+                        )
                       </FormLabel>
                       <FormControl>
                         <Input

@@ -42,4 +42,3 @@ export interface ScheduleRegistration {
   created_at: Date;
   updated_at: Date;
 }
-s;
