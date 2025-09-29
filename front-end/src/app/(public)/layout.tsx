@@ -1,5 +1,6 @@
 import Footer from "@/components/layout/public/footer";
 import { Header } from "@/components/layout/public/header";
+import QueryProvider from "@/components/providers/query-provider";
 import { ThemeProvider } from "next-themes";
 
 export default function PublicLayout({
@@ -15,10 +16,12 @@ export default function PublicLayout({
         enableSystem
         disableTransitionOnChange
       >
-        <Header />
+        <QueryProvider>
+          <Header />
 
-        <main>{children}</main>
-        <Footer />
+          <main>{children}</main>
+          <Footer />
+        </QueryProvider>
       </ThemeProvider>
     </div>
   );
