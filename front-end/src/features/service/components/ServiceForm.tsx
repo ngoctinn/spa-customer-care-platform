@@ -64,7 +64,7 @@ export default function ServiceForm() {
   // Logic xử lý giá tiền
   const [displayPrice, setDisplayPrice] = useState(() =>
     form.getValues("price")
-      ? new Intl.NumberFormat("vi-VN").format(form.getValues("price") / 1000)
+      ? new Intl.NumberFormat("vi-VN").format(form.getValues("price"))
       : ""
   );
 

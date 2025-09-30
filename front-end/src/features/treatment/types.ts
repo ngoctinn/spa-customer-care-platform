@@ -3,7 +3,7 @@ import { ImageUrl } from "@/features/shared/types";
 
 export interface TreatmentPlanStep {
   step_number: number;
-  service_ids: UUID[];
+  service_id: UUID;
   description?: string;
 }
 
