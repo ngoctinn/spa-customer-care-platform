@@ -41,9 +41,10 @@ const isLoggedIn = true; // Change this to test logged in/out states
 
 const navLinks = [
   { href: "/services", label: "Dịch vụ" },
-  { href: "/treatments", label: "Liệu trình" },
+  { href: "/treatment-plans", label: "Liệu trình" },
   { href: "/products", label: "Sản phẩm" },
   { href: "/promotions", label: "Khuyến mãi" },
+  { href: "/about", label: "Giới thiệu" },
 ];
 
 export function Header() {
@@ -68,7 +69,7 @@ export function Header() {
         </Link>
 
         {/* Navbar */}
-        <NavigationMenu className="hidden md:flex">
+        <NavigationMenu className="hidden md:flex flex-1 justify-center whitespace-nowrap">
           <NavigationMenuList>
             {navLinks.map((link) => (
               <NavigationMenuItem key={link.href}>
@@ -80,12 +81,9 @@ export function Header() {
           </NavigationMenuList>
         </NavigationMenu>
 
-        {/* Spacer to push items to the right */}
-        <div className="flex-grow" />
+        <div className="flex-1" />
 
-        {/* Right side of the header */}
         <div className="flex items-center gap-4">
-          {/* Search Bar */}
           <div className="relative hidden lg:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -95,10 +93,9 @@ export function Header() {
             />
           </div>
 
-          {/* Booking Button */}
           <Button>
             <CalendarPlus className="mr-2 h-4 w-4" />
-            Đặt lịch ngay
+            Đặt lịch
           </Button>
 
           {/* User Avatar Dropdown or Login/Register */}
