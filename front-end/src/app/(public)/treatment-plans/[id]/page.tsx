@@ -6,7 +6,7 @@ import { ReviewList } from "@/features/review/components/ReviewList";
 import TreatmentSteps from "@/features/treatment/components/TreatmentSteps";
 import { notFound } from "next/navigation";
 import { PackageCheck, Tag } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import FullPageLoader from "@/components/common/FullPageLoader";
 import { useReviews } from "@/features/review/hooks/useReviews";
 import { useServices } from "@/features/service/hooks/useServices";
@@ -14,14 +14,13 @@ import { PurchaseActions } from "@/components/common/PurchaseActions";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 
 interface TreatmentPlanDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function TreatmentPlanDetailPage({
   params,
 }: TreatmentPlanDetailPageProps) {
-  const { id } = params;
-
+  const { id } = use(params);
   const {
     data: plan,
     isLoading: isLoadingPlan,

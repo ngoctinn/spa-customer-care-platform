@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProductById } from "@/features/product/api/product.api";
 import { ReviewList } from "@/features/review/components/ReviewList";
 import { notFound } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import FullPageLoader from "@/components/common/FullPageLoader";
 import { Badge } from "@/components/ui/badge";
 import { useReviews } from "@/features/review/hooks/useReviews";
@@ -13,12 +13,11 @@ import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 import { Tag } from "lucide-react";
 
 interface ProductDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const { id } = params;
-
+  const { id } = use(params);
   const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
 
   const {
