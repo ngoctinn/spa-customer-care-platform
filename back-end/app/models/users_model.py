@@ -4,6 +4,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 from app.models.base_model import BaseUUIDModel
+from app.models.schedules_model import DefaultSchedule
 
 
 class UserRole(SQLModel, table=True):
@@ -42,6 +43,11 @@ class User(BaseUUIDModel, table=True):
     is_email_verified: bool = Field(default=False, nullable=False)
 
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRole)
+
+    # Mối quan hệ một-nhiều: một User có thể có nhiều lịch mặc định
+    default_schedules: List["DefaultSchedule"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
 
 
 class Role(BaseUUIDModel, table=True):
