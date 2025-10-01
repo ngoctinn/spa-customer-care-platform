@@ -45,7 +45,42 @@ def get_all_service_categories(session: Session = Depends(get_db_session)):
     return services_service.get_all_service_categories(db=session)
 
 
-# ... (Thêm các endpoint khác cho category: get by id, update, delete)
+@router.get(
+    "/categories/{category_id}", response_model=ServiceCategoryPublicWithServices
+)
+def get_service_category_by_id(
+    category_id: uuid.UUID, session: Session = Depends(get_db_session)
+):
+    """Lấy thông tin chi tiết một danh mục bằng ID."""
+    return services_service.get_category_by_id(db=session, category_id=category_id)
+
+
+@router.put("/categories/{category_id}", response_model=ServiceCategoryPublic)
+def update_service_category(
+    category_id: uuid.UUID,
+    category_in: ServiceCategoryUpdate,
+    session: Session = Depends(get_db_session),
+):
+    """Cập nhật thông tin một danh mục dịch vụ."""
+    db_category = services_service.get_category_by_id(
+        db=session, category_id=category_id
+    )
+    return services_service.update_service_category(
+        db=session, db_category=db_category, category_in=category_in
+    )
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_service_category(
+    category_id: uuid.UUID, session: Session = Depends(get_db_session)
+):
+    """Xóa mềm một danh mục dịch vụ."""
+    db_category = services_service.get_category_by_id(
+        db=session, category_id=category_id
+    )
+    services_service.delete_service_category(db=session, db_category=db_category)
+    return
+
 
 # =================================================================
 # ENDPOINTS CHO DỊCH VỤ (SERVICE)
@@ -53,7 +88,7 @@ def get_all_service_categories(session: Session = Depends(get_db_session)):
 
 
 @router.post(
-    "/services",
+    "/",
     response_model=ServicePublicWithDetails,
     status_code=status.HTTP_201_CREATED,
 )
@@ -109,4 +144,22 @@ def get_service_by_id(
     return service
 
 
-# ... (Thêm các endpoint khác cho service: update, delete)
+@router.put("/{service_id}", response_model=ServicePublicWithDetails)
+def update_service(
+    service_id: uuid.UUID,
+    service_in: ServiceUpdate,
+    session: Session = Depends(get_db_session),
+):
+    """Cập nhật thông tin một dịch vụ."""
+    db_service = services_service.get_service_by_id(db=session, service_id=service_id)
+    return services_service.update_service(
+        db=session, db_service=db_service, service_in=service_in
+    )
+
+
+@router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_service(service_id: uuid.UUID, session: Session = Depends(get_db_session)):
+    """Xóa mềm một dịch vụ."""
+    db_service = services_service.get_service_by_id(db=session, service_id=service_id)
+    services_service.delete_service(db=session, db_service=db_service)
+    return

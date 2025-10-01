@@ -1,5 +1,5 @@
 # app/services/users_service.py
-from typing import Optional
+from typing import List, Optional
 import uuid
 
 from fastapi import HTTPException, status
@@ -7,9 +7,10 @@ from sqlmodel import Session, select
 
 from app.core.security import get_password_hash
 from app.models.users_model import User
-from app.schemas.users_schema import UserCreate, UserUpdateMe
+from app.schemas.users_schema import UserCreate, UserUpdateByAdmin, UserUpdateMe
 from app.services import roles_service
 from app.schemas.roles_schema import RoleCreate
+from app.utils.common import get_object_or_404
 
 # =================================================================
 # CÁC HÀM TRUY VẤN (QUERIES)
@@ -25,7 +26,9 @@ def get_user_by_email(db_session: Session, *, email: str) -> Optional[User]:
 
 def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> Optional[User]:
     """Tìm người dùng bằng ID."""
-    return db_session.exec(select(User).where(User.id == user_id)).first()
+    # Bạn có thể giữ nguyên câu lệnh select hoặc chuyển sang dùng hàm tiện ích
+    # để đảm bảo tính nhất quán
+    return get_object_or_404(db_session, model=User, obj_id=user_id)
 
 
 # =================================================================
@@ -137,3 +140,44 @@ def remove_role_from_user(
     db_session.commit()
     db_session.refresh(user)
     return user
+
+
+# =================================================================
+# CÁC HÀM DÀNH CHO ADMIN
+# =================================================================
+def get_all_users(db_session: Session, skip: int = 0, limit: int = 100) -> List[User]:
+    """
+    Lấy danh sách tất cả người dùng (chưa bị xóa mềm).
+    """
+    users = db_session.exec(
+        select(User).where(User.is_deleted == False).offset(skip).limit(limit)
+    ).all()
+    return users
+
+
+def update_user_by_admin(
+    db_session: Session, *, db_user: User, user_in: UserUpdateByAdmin
+) -> User:
+    """
+    Cập nhật thông tin người dùng bởi admin.
+    """
+    user_data = user_in.model_dump(exclude_unset=True)
+    for key, value in user_data.items():
+        setattr(db_user, key, value)
+
+    db_session.add(db_user)
+    db_session.commit()
+    db_session.refresh(db_user)
+    return db_user
+
+
+def delete_user_by_id(db_session: Session, *, user_to_delete: User) -> User:
+    """
+    Xóa mềm một người dùng.
+    """
+    user_to_delete.is_deleted = True
+    user_to_delete.is_active = False  # Vô hiệu hóa người dùng khi xóa
+    db_session.add(user_to_delete)
+    db_session.commit()
+    db_session.refresh(user_to_delete)
+    return user_to_delete

@@ -1,7 +1,7 @@
 // src/features/service/api/service.api.ts
 import { Service } from "@/features/service/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Lấy danh sách tất cả dịch vụ

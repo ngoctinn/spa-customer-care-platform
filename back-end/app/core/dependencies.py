@@ -31,6 +31,7 @@ def get_token_from_cookie(request: Request) -> str | None:
         return None
     return token
 
+
 # Cập nhật get_current_user để sử dụng dependency mới
 def get_current_user(
     db: Session = Depends(get_db_session), token: str = Depends(get_token_from_cookie)
@@ -41,29 +42,31 @@ def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Tách scheme "Bearer " ra khỏi token
     scheme, _, param = token.partition(" ")
     if scheme.lower() != "bearer" or not param:
-         raise HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(param, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            param, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-        
+
     user = users_service.get_user_by_id(db_session=db, user_id=user_id)
     if user is None:
         raise credentials_exception
@@ -116,3 +119,16 @@ def get_role_by_id_from_path(
             status_code=status.HTTP_404_NOT_FOUND, detail="Vai trò không tồn tại"
         )
     return role
+
+
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency để lấy người dùng hiện tại và kiểm tra xem họ có phải là superuser không.
+    Nếu không, raise HTTPException 403 Forbidden.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Yêu cầu quyền quản trị viên.",
+        )
+    return current_user
