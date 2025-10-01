@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
  * Lấy danh sách tất cả dịch vụ
  */
 export async function getServices(): Promise<Service[]> {
-  const response = await fetch(`${API_URL}/services`);
+  const response = await fetch(`${API_URL}/services/services`);
   if (!response.ok) {
     throw new Error("Không thể tải danh sách dịch vụ");
   }

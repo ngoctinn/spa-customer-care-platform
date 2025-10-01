@@ -1,0 +1,147 @@
+// src/app/(public)/booking/page.tsx
+"use client";
+
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Import các components đã tạo
+import ServiceSelection from "@/features/booking/components/ServiceSelection";
+import TimeSelection from "@/features/booking/components/TimeSelection";
+import CustomerInfoForm from "@/features/booking/components/CustomerInfoForm";
+import Confirmation from "@/features/booking/components/Confirmation";
+
+// Import schemas và types
+import {
+  customerInfoSchema,
+  CustomerInfoValues,
+  BookingState,
+} from "@/features/booking/schemas";
+
+export default function BookingPage() {
+  const searchParams = useSearchParams();
+  const initialServiceId = searchParams.get("serviceId") || undefined;
+
+  const [step, setStep] = useState(initialServiceId ? 2 : 1);
+  const [bookingState, setBookingState] = useState<BookingState>({
+    serviceId: initialServiceId,
+  });
+
+  const form = useForm<CustomerInfoValues>({
+    resolver: zodResolver(customerInfoSchema),
+    defaultValues: { name: "", phone: "", email: "", note: "" },
+  });
+
+  const handleNextStep = () => setStep((prev) => prev + 1);
+  const handlePrevStep = () => setStep((prev) => prev - 1);
+
+  const handleSelectService = (id: string, type: "service" | "treatment") => {
+    // Reset các lựa chọn trước đó khi chọn lại dịch vụ
+    setBookingState({ [type === "service" ? "serviceId" : "treatmentId"]: id });
+    handleNextStep();
+  };
+
+  const handleSelectTime = (date?: Date, time?: string) => {
+    setBookingState((prev) => ({
+      ...prev,
+      selectedDate: date ?? prev.selectedDate,
+      selectedTime: time ?? prev.selectedTime,
+    }));
+  };
+
+  const handleCustomerInfoSubmit = (data: CustomerInfoValues) => {
+    setBookingState((prev) => ({ ...prev, customerInfo: data }));
+    handleNextStep();
+  };
+
+  const handleConfirmBooking = () => {
+    // Logic gửi dữ liệu `bookingState` lên API
+    console.log("Booking Confirmed:", bookingState);
+    toast.success("Đặt lịch thành công!", {
+      description:
+        "Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi. Chúng tôi sẽ sớm liên hệ để xác nhận.",
+    });
+    // Reset state hoặc chuyển hướng về trang chủ
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 2000);
+  };
+
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return <ServiceSelection onSelect={handleSelectService} />;
+      case 2:
+        return (
+          <TimeSelection
+            selectedDate={bookingState.selectedDate}
+            onDateChange={(date) =>
+              handleSelectTime(date, bookingState.selectedTime)
+            }
+            selectedTime={bookingState.selectedTime}
+            onTimeChange={(time) =>
+              handleSelectTime(bookingState.selectedDate, time)
+            }
+          />
+        );
+      case 3:
+        return <CustomerInfoForm />;
+      case 4:
+        return <Confirmation bookingState={bookingState} />;
+      default:
+        return <ServiceSelection onSelect={handleSelectService} />;
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold tracking-tight">Đặt Lịch Hẹn</h1>
+        <p className="text-muted-foreground mt-2">
+          Chỉ với vài bước đơn giản để có ngay một cuộc hẹn chăm sóc sức khỏe và
+          sắc đẹp.
+        </p>
+      </header>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {step > 1 && (
+          <Button variant="ghost" onClick={handlePrevStep}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại
+          </Button>
+        )}
+
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleCustomerInfoSubmit)}>
+            {renderStep()}
+          </form>
+        </FormProvider>
+
+        <div className="flex justify-end pt-4">
+          {step === 2 &&
+            bookingState.selectedDate &&
+            bookingState.selectedTime && (
+              <Button onClick={handleNextStep} size="lg">
+                Tiếp tục
+              </Button>
+            )}
+          {step === 3 && (
+            <Button
+              onClick={form.handleSubmit(handleCustomerInfoSubmit)}
+              size="lg"
+            >
+              Đến bước xác nhận
+            </Button>
+          )}
+          {step === 4 && (
+            <Button onClick={handleConfirmBooking} size="lg">
+              Xác nhận & Hoàn tất
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

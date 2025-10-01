@@ -5,18 +5,18 @@ import { getServiceById } from "@/features/service/api/service.api";
 import { ReviewList } from "@/features/review/components/ReviewList";
 import { Clock, Tag } from "lucide-react";
 import { notFound } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useReviews } from "@/features/review/hooks/useReviews";
 import FullPageLoader from "@/components/common/FullPageLoader";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
 
 interface ServiceDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
-  const { id } = params;
+  const { id } = use(params);
 
   const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
 
