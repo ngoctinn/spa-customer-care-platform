@@ -1,4 +1,5 @@
 "use client";
+import { getPrimaryImageUrl } from "@/lib/image-utils";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { getServiceById } from "@/features/service/api/service.api";
@@ -7,7 +8,7 @@ import { Clock, Tag } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useState, useEffect, use } from "react";
 import { useReviews } from "@/features/review/hooks/useReviews";
-import FullPageLoader from "@/components/common/FullPageLoader";
+import { FullPageLoader } from "@/components/ui/spinner";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
 
@@ -29,14 +30,9 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     queryFn: () => getServiceById(id),
   });
 
-  // Tìm ảnh chính ngay sau khi có dữ liệu
-  const primaryImageUrl =
-    service?.images?.find((img) => img.is_primary)?.url ||
-    service?.images?.[0]?.url ||
-    null;
+  const primaryImageUrl = getPrimaryImageUrl(service?.images);
 
-  // Khởi tạo state với giá trị ảnh chính (nếu có)
-  const [mainImage, setMainImage] = useState<string | null>(primaryImageUrl);
+  const [mainImage, setMainImage] = useState<string>(primaryImageUrl);
 
   // Cập nhật lại mainImage khi service thay đổi (ví dụ khi cache được update)
   useEffect(() => {

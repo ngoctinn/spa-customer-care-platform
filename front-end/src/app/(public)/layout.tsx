@@ -1,6 +1,7 @@
 import Footer from "@/components/layout/public/footer";
 import { Header } from "@/components/layout/public/header";
 import QueryProvider from "@/components/providers/query-provider";
+import { AuthProvider } from "@/contexts/AuthContexts";
 import { ThemeProvider } from "next-themes";
 
 export default function PublicLayout({
@@ -17,10 +18,12 @@ export default function PublicLayout({
         disableTransitionOnChange
       >
         <QueryProvider>
-          <Header />
+          <AuthProvider>
+            <Header />
 
-          <main>{children}</main>
-          <Footer />
+            <main>{children}</main>
+            <Footer />
+          </AuthProvider>
         </QueryProvider>
       </ThemeProvider>
     </div>

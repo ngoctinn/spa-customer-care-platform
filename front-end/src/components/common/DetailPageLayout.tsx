@@ -14,7 +14,6 @@ interface DetailPageLayoutProps {
   details: React.ReactNode;
   purchaseActions: React.ReactNode;
   children: React.ReactNode;
-  treatmentSteps?: React.ReactNode;
 }
 
 export const DetailPageLayout = ({
@@ -27,7 +26,6 @@ export const DetailPageLayout = ({
   details,
   purchaseActions,
   children,
-  treatmentSteps,
 }: DetailPageLayoutProps) => {
   return (
     <div className="container mx-auto py-12">
@@ -63,16 +61,15 @@ export const DetailPageLayout = ({
           </div>
         </div>
 
-        <div>
+        <div className="space-y-6">
           {title}
           {description}
           <div className="flex items-center gap-6 my-6">{details}</div>
           {purchaseActions}
           {/* Hiển thị TreatmentSteps nếu được cung cấp */}
-          {treatmentSteps && <div className="mt-8">{treatmentSteps}</div>}
         </div>
       </div>
-      {children}
+      <div className="mt-12">{children}</div>
     </div>
   );
 };

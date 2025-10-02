@@ -5,8 +5,7 @@ import { useServices } from "@/features/service/hooks/useServices";
 import { useTreatmentPlans } from "@/features/treatment/hooks/useTreatmentPlans";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import FullPageLoader from "@/components/common/FullPageLoader";
-
+import { FullPageLoader } from "@/components/ui/spinner";
 interface ServiceSelectionProps {
   onSelect: (id: string, type: "service" | "treatment") => void;
 }

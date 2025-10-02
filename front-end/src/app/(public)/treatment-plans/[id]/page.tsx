@@ -1,5 +1,5 @@
 "use client";
-
+import { getPrimaryImageUrl } from "@/lib/image-utils";
 import { useQuery } from "@tanstack/react-query";
 import { getTreatmentPlanById } from "@/features/treatment/api/treatment.api";
 import { ReviewList } from "@/features/review/components/ReviewList";
@@ -7,7 +7,7 @@ import TreatmentSteps from "@/features/treatment/components/TreatmentSteps";
 import { notFound } from "next/navigation";
 import { PackageCheck, Tag } from "lucide-react";
 import { useState, useEffect, use } from "react";
-import FullPageLoader from "@/components/common/FullPageLoader";
+import { FullPageLoader } from "@/components/ui/spinner";
 import { useReviews } from "@/features/review/hooks/useReviews";
 import { useServices } from "@/features/service/hooks/useServices";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
@@ -34,14 +34,9 @@ export default function TreatmentPlanDetailPage({
   const { data: allServices = [], isLoading: isLoadingServices } =
     useServices();
 
-  const primaryImageUrl =
-    plan?.images?.find((img) => img.is_primary)?.url ||
-    plan?.images?.[0]?.url ||
-    null;
+  const primaryImageUrl = getPrimaryImageUrl(plan?.images);
 
-  // Khởi tạo state với giá trị ảnh chính (nếu có)
-  const [mainImage, setMainImage] = useState<string | null>(primaryImageUrl);
-
+  const [mainImage, setMainImage] = useState<string>(primaryImageUrl);
   useEffect(() => {
     if (primaryImageUrl) {
       setMainImage(primaryImageUrl);
@@ -95,8 +90,8 @@ export default function TreatmentPlanDetailPage({
           }}
         />
       }
-      treatmentSteps={<TreatmentSteps plan={plan} allServices={allServices} />}
     >
+      <TreatmentSteps plan={plan} allServices={allServices} />
       <div className="mt-12">
         <ReviewList reviews={planReviews} />
       </div>

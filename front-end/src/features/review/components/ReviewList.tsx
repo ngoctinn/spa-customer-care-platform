@@ -4,9 +4,8 @@ import { Review } from "@/features/review/types";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import StarRating from "@/features/review/components/StarRating";
-import FullPageLoader from "@/components/common/FullPageLoader";
 import { useCustomers } from "@/features/customer/hooks/useCustomers";
-
+import { FullPageLoader } from "@/components/ui/spinner";
 interface ReviewListProps {
   reviews: Review[];
 }

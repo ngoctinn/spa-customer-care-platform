@@ -12,11 +12,21 @@ export const Spinner = ({ className }: SpinnerProps) => {
 
 interface FullPageLoaderProps {
   text?: string;
+  overlay?: boolean;
 }
 
 export const FullPageLoader = ({
   text = "Đang tải dữ liệu...",
+  overlay = false,
 }: FullPageLoaderProps) => {
+  if (overlay) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <Spinner className="h-12 w-12" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4">
       <Spinner className="w-8 h-8" />

@@ -31,7 +31,7 @@ export interface ShippingAddress {
 export interface Invoice {
   id: UUID;
   customer_id: UUID;
-  appointment_id?: UUID;
+  appointment_id?: string;
   items: InvoiceItem[];
   subtotal: number; // Tổng tiền trước giảm giá
   discount_amount: number;

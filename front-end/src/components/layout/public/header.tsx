@@ -42,6 +42,8 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
+import useCartStore from "@/features/cart/stores/cart-store";
+import { Badge } from "@/components/ui/badge";
 
 // Giả sử đây là dữ liệu người dùng bạn lấy được sau khi đăng nhập
 const user = {
@@ -61,10 +63,13 @@ const navLinks = [
 
 export function Header() {
   const { setTheme, theme } = useTheme();
-
   const handleThemeToggle = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
+
+  const { items } = useCartStore();
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -76,7 +81,7 @@ export function Header() {
                 <span className="sr-only">Mở menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left">
+            <SheetContent side="left" className="overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>
                   <Link href="/" className="flex items-center space-x-2">
@@ -160,8 +165,8 @@ export function Header() {
             />
           </div>
 
-          <Button className="hidden md:flex">
-            <Link href="/booking">
+          <Button className="hidden md:flex items-center gap-2">
+            <Link href="/booking" className="flex items-center gap-2">
               <CalendarPlus className="mr-2 h-4 w-4" />
               Đặt lịch
             </Link>
@@ -221,9 +226,19 @@ export function Header() {
           )}
 
           {/* Shopping Cart */}
-          <Button variant="ghost" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="sr-only">Giỏ hàng</span>
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/cart">
+              <ShoppingCart className="h-5 w-5" />
+              {totalItems > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0"
+                >
+                  {totalItems}
+                </Badge>
+              )}
+              <span className="sr-only">Giỏ hàng</span>
+            </Link>
           </Button>
         </div>
       </div>
