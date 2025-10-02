@@ -19,7 +19,7 @@ export async function getServices(): Promise<Service[]> {
  * @param id ID của dịch vụ
  */
 export async function getServiceById(id: string): Promise<Service> {
-  const response = await fetch(`${API_URL}/services/${id}`);
+  const response = await fetch(`${API_URL}/services/services/${id}`);
   if (!response.ok) {
     if (response.status === 404) {
       throw new Error("Dịch vụ không được tìm thấy.");

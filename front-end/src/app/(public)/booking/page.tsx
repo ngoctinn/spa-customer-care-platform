@@ -1,7 +1,7 @@
 // src/app/(public)/booking/page.tsx
 "use client";
-
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -22,14 +22,18 @@ import {
   BookingState,
 } from "@/features/booking/schemas";
 
+import { createAppointment } from "@/features/appointment/api/appointment.api";
+
 export default function BookingPage() {
   const searchParams = useSearchParams();
   const initialServiceId = searchParams.get("serviceId") || undefined;
-
+  const router = useRouter();
   const [step, setStep] = useState(initialServiceId ? 2 : 1);
   const [bookingState, setBookingState] = useState<BookingState>({
     serviceId: initialServiceId,
   });
+
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<CustomerInfoValues>({
     resolver: zodResolver(customerInfoSchema),
@@ -40,8 +44,13 @@ export default function BookingPage() {
   const handlePrevStep = () => setStep((prev) => prev - 1);
 
   const handleSelectService = (id: string, type: "service" | "treatment") => {
-    // Reset các lựa chọn trước đó khi chọn lại dịch vụ
-    setBookingState({ [type === "service" ? "serviceId" : "treatmentId"]: id });
+    // Nếu là liệu trình, chuyển hướng đến trang chi tiết của nó
+    if (type === "treatment") {
+      router.push(`/treatment-plans/${id}`);
+      return; // Dừng hàm tại đây
+    }
+    // Nếu là service, tiếp tục logic như cũ
+    setBookingState({ serviceId: id });
     handleNextStep();
   };
 
@@ -59,16 +68,33 @@ export default function BookingPage() {
   };
 
   const handleConfirmBooking = () => {
-    // Logic gửi dữ liệu `bookingState` lên API
-    console.log("Booking Confirmed:", bookingState);
-    toast.success("Đặt lịch thành công!", {
-      description:
-        "Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi. Chúng tôi sẽ sớm liên hệ để xác nhận.",
+    startTransition(async () => {
+      try {
+        // Gọi API để tạo lịch hẹn
+        await createAppointment(bookingState);
+
+        toast.success("Đặt lịch thành công!", {
+          description:
+            "Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi. Chúng tôi sẽ sớm liên hệ để xác nhận.",
+        });
+
+        // Chuyển hướng về trang chủ sau 2 giây
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+      } catch (error) {
+        console.error("Lỗi khi đặt lịch:", error);
+        if (error instanceof Error) {
+          toast.error("Đặt lịch thất bại", {
+            description: error.message,
+          });
+        } else {
+          toast.error("Đặt lịch thất bại", {
+            description: "Đã có lỗi không mong muốn xảy ra.",
+          });
+        }
+      }
     });
-    // Reset state hoặc chuyển hướng về trang chủ
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 2000);
   };
 
   const renderStep = () => {
@@ -136,8 +162,12 @@ export default function BookingPage() {
             </Button>
           )}
           {step === 4 && (
-            <Button onClick={handleConfirmBooking} size="lg">
-              Xác nhận & Hoàn tất
+            <Button
+              onClick={handleConfirmBooking}
+              size="lg"
+              disabled={isPending}
+            >
+              {isPending ? "Đang xử lý..." : "Xác nhận & Hoàn tất"}
             </Button>
           )}
         </div>

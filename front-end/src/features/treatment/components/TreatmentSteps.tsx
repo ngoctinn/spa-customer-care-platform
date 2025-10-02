@@ -6,6 +6,7 @@ import { Service } from "@/features/service/types";
 import { CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { useMemo } from "react";
 
 interface TreatmentStepsProps {
   plan: TreatmentPlan;
@@ -16,6 +17,13 @@ export default function TreatmentSteps({
   plan,
   allServices,
 }: TreatmentStepsProps) {
+  const servicesMap = useMemo(() => {
+    const map = new Map<string, Service>();
+    allServices.forEach((service) => {
+      map.set(service.id, service);
+    });
+    return map;
+  }, [allServices]);
   return (
     <Card>
       <CardHeader>
@@ -25,7 +33,7 @@ export default function TreatmentSteps({
         <div className="relative pl-6 after:absolute after:inset-y-0 after:w-px after:bg-border after:left-0">
           {/* highlight-start */}
           {plan.steps.map((step) => {
-            const service = allServices.find((s) => s.id === step.service_id);
+            const service = servicesMap.get(step.service_id);
 
             return (
               <div
