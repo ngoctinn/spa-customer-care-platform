@@ -1,5 +1,3 @@
-import { UUID } from "crypto";
-
 export type InvoiceItemType = "service" | "product" | "treatment" | "other";
 export type PaymentMethod =
   | "cash"
@@ -11,7 +9,7 @@ export type PaymentMethod =
 export type InvoiceStatus = "pending" | "paid" | "cancelled" | "refunded";
 
 export interface InvoiceItem {
-  id: UUID; // ID của service, product...
+  id: string; // ID của service, product...
   name: string;
   quantity: number;
   price_per_unit: number; // Giá tại thời điểm bán
@@ -29,8 +27,8 @@ export interface ShippingAddress {
 }
 
 export interface Invoice {
-  id: UUID;
-  customer_id: UUID;
+  id: string;
+  customer_id: string;
   appointment_id?: string;
   items: InvoiceItem[];
   subtotal: number; // Tổng tiền trước giảm giá

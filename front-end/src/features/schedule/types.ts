@@ -1,5 +1,3 @@
-import { UUID } from "crypto";
-
 export interface DaySchedule {
   is_active: boolean;
   start_time: string; // "HH:mm"
@@ -8,8 +6,8 @@ export interface DaySchedule {
 
 // Lịch làm việc cố định của nhân viên
 export interface WorkSchedule {
-  id: UUID;
-  staff_id: UUID;
+  id: string;
+  staff_id: string;
   schedule: {
     monday: DaySchedule;
     tuesday: DaySchedule;
@@ -26,8 +24,8 @@ export interface WorkSchedule {
 
 // Đăng ký lịch làm việc cho một tuần cụ thể
 export interface ScheduleRegistration {
-  id: UUID;
-  staff_id: UUID;
+  id: string;
+  staff_id: string;
   week_of: Date; // Ngày đầu tuần
   status: "pending" | "approved" | "rejected";
   schedule: {

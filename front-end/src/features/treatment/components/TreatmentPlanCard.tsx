@@ -1,15 +1,17 @@
 import { TreatmentPlan } from "@/features/treatment/types";
 import DisplayCard from "@/components/common/DisplayCard";
 import { PackageCheck } from "lucide-react";
+import { getPrimaryImageUrl } from "@/lib/image-utils";
 
 interface TreatmentPlanCardProps {
   plan: TreatmentPlan;
 }
 
 export default function TreatmentPlanCard({ plan }: TreatmentPlanCardProps) {
-  const primaryImage = plan.images?.find((img) => img.is_primary === true);
-  const primaryImageUrl =
-    primaryImage?.url ?? plan.images?.[0]?.url ?? "/images/default-service.jpg";
+  const primaryImageUrl = getPrimaryImageUrl(
+    plan.images,
+    "/images/default-product.jpg"
+  );
   return (
     <DisplayCard
       href={`/treatment-plans/${plan.id}`}

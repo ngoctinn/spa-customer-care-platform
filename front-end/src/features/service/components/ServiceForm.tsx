@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MultiImageUploader } from "@/components/common/MultiImageUploader";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ServiceFormValues } from "@/features/service/schemas";
 import { useCategories } from "@/features/category/hooks/useCategories";
 import {
@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUrl } from "@/features/shared/types";
+import PriceInput from "@/components/shared/PriceInput";
 
 export default function ServiceForm() {
   const queryClient = useQueryClient();
@@ -61,36 +62,8 @@ export default function ServiceForm() {
     name: "consumables",
   });
 
-  // Logic xử lý giá tiền
-  const [displayPrice, setDisplayPrice] = useState(() =>
-    form.getValues("price")
-      ? new Intl.NumberFormat("vi-VN").format(form.getValues("price"))
-      : ""
-  );
-
   const { data: categories = [] } = useCategories();
   const serviceCategories = categories.filter((c) => c.type === "service");
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "price" && value.price !== undefined) {
-        const currentNumericPrice = parseFloat(
-          displayPrice.replace(/[^0-9]/g, "")
-        );
-        if (value.price !== currentNumericPrice) {
-          setDisplayPrice(value.price.toLocaleString("vi-VN"));
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, displayPrice]);
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^0-9]/g, "");
-    const numberValue = parseInt(rawValue, 10) || 0;
-    form.setValue("price", numberValue, { shouldValidate: true });
-    setDisplayPrice(numberValue.toLocaleString("vi-VN"));
-  };
 
   const addCategoryMutation = useMutation({
     mutationFn: addCategory,
@@ -148,11 +121,18 @@ export default function ServiceForm() {
                   >
                     <div className="flex gap-1 flex-wrap">
                       {selectedCategoryIds.length > 0
-                        ? selectedCategoryIds.map((catName) => (
-                            <Badge key={catName} variant="secondary">
-                              {catName}
-                            </Badge>
-                          ))
+                        ? selectedCategoryIds.map((id) => {
+                            // Tìm đối tượng category đầy đủ từ ID
+                            const category = serviceCategories.find(
+                              (c) => c.id === id
+                            );
+                            return (
+                              <Badge key={id} variant="secondary">
+                                {/* Hiển thị tên, nếu không tìm thấy thì báo lỗi */}
+                                {category ? category.name : "ID không hợp lệ"}
+                              </Badge>
+                            );
+                          })
                         : "Chọn danh mục..."}
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -170,17 +150,17 @@ export default function ServiceForm() {
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(category.name)}
+                              checked={field.value?.includes(category.id)}
                               onCheckedChange={(checked) => {
                                 const currentValues = field.value || [];
                                 return checked
                                   ? field.onChange([
                                       ...currentValues,
-                                      category.name,
+                                      category.id,
                                     ])
                                   : field.onChange(
                                       currentValues.filter(
-                                        (value) => value !== category.name
+                                        (value) => value !== category.id
                                       )
                                     );
                               }}
@@ -230,21 +210,15 @@ export default function ServiceForm() {
         <FormField
           control={form.control}
           name="price"
-          render={() => (
+          render={(
+            { field } // Nhận vào { field }
+          ) => (
             <FormItem>
               <FormLabel>Giá dịch vụ</FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input
-                    value={displayPrice}
-                    onChange={handlePriceChange}
-                    className="pr-12"
-                  />
-                </FormControl>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-muted-foreground"> VND</span>
-                </div>
-              </div>
+              <FormControl>
+                {/* Thay thế bằng PriceInput */}
+                <PriceInput name={field.name} label="Giá dịch vụ" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

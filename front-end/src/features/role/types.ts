@@ -1,5 +1,3 @@
-import { UUID } from "crypto";
-
 export const PERMISSIONS = {
   READ: "read",
   WRITE: "write",
@@ -15,7 +13,7 @@ export const FEATURES = {
 export type Feature = (typeof FEATURES)[keyof typeof FEATURES];
 
 export interface Role {
-  id: UUID;
+  id: string;
   name: string;
   description: string;
   status: "active" | "inactive";

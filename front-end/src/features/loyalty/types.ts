@@ -1,7 +1,6 @@
-import { UUID } from "crypto";
 
 export interface LoyaltyTier {
-  id: UUID;
+  id: string;
   name: string; // Ví dụ: "Đồng", "Bạc", "Vàng"
   point_goal: number; // Số điểm cần đạt để lên hạng này
   color_hex: string; // Mã màu để hiển thị (ví dụ: #cd7f32)

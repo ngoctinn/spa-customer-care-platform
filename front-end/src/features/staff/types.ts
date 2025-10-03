@@ -1,13 +1,12 @@
-import { UUID } from "crypto";
 
 export interface Staff {
-  id: UUID;
-  user_id: UUID;
+  id: string;
+  user_id: string;
   name: string;
   phone: string;
   role: "technician" | "receptionist" | "manager";
   avatar_url?: string;
-  service_ids?: UUID[]; // Dịch vụ mà kỹ thuật viên có thể thực hiện
+  service_ids?: string[]; // Dịch vụ mà kỹ thuật viên có thể thực hiện
   is_deleted: boolean;
   created_at: Date;
   updated_at: Date;

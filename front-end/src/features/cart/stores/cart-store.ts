@@ -48,8 +48,8 @@ const useCartStore = create<CartState>()(
               { ...itemToAdd, quantity: itemToAdd.quantity || 1 },
             ],
           });
-          toast.success("Đã thêm sản phẩm vào giỏ hàng.");
         }
+        toast.success(`Đã thêm "${itemToAdd.name}" vào giỏ hàng.`);
       },
       // Xóa sản phẩm khỏi giỏ
       removeItem: (itemId) => {

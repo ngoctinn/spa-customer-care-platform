@@ -1,11 +1,10 @@
-import { UUID } from "crypto";
 import { ImageUrl } from "@/features/shared/types";
 
 export interface Product {
-  id: UUID;
+  id: string;
   name: string;
   description: string;
-  categories: UUID[];
+  categories: string[];
   price: number;
   stock: number;
   images: ImageUrl[];

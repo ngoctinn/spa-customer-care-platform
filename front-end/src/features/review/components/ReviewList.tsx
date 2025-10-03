@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import StarRating from "@/features/review/components/StarRating";
 import { useCustomers } from "@/features/customer/hooks/useCustomers";
 import { FullPageLoader } from "@/components/ui/spinner";
+import { useMemo } from "react";
+
 interface ReviewListProps {
   reviews: Review[];
 }
@@ -46,6 +48,9 @@ const ReviewItem = ({
 export const ReviewList = ({ reviews }: ReviewListProps) => {
   const { data: customers = [], isLoading } = useCustomers();
 
+  const customersMap = useMemo(() => {
+    return new Map(customers.map((customer) => [customer.id, customer]));
+  }, [customers]);
   if (isLoading) {
     return <FullPageLoader />;
   }
@@ -58,7 +63,7 @@ export const ReviewList = ({ reviews }: ReviewListProps) => {
       {reviews.length > 0 ? (
         <div className="divide-y">
           {reviews.map((review) => {
-            const customer = customers.find((c) => c.id === review.customer_id);
+            const customer = customersMap.get(review.customer_id);
             return (
               <ReviewItem key={review.id} review={review} customer={customer} />
             );

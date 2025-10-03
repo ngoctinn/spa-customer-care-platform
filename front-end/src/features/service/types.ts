@@ -1,8 +1,7 @@
-import { UUID } from "crypto";
 import { ImageUrl } from "@/features/shared/types";
 
 export interface Service {
-  id: UUID;
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -18,6 +17,6 @@ export interface Service {
   updated_at: Date;
 }
 export interface ServiceConsumable {
-  productId: UUID;
+  productId: string;
   quantityUsed: number;
 }

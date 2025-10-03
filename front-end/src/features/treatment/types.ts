@@ -1,17 +1,16 @@
-import { UUID } from "crypto";
 import { ImageUrl } from "@/features/shared/types";
 
 export interface TreatmentPlanStep {
   step_number: number;
-  service_id: UUID;
+  service_id: string;
   description?: string;
 }
 
 export interface TreatmentPlan {
-  id: UUID;
+  id: string;
   name: string;
   description: string;
-  categories: UUID[];
+  categories: string[];
   steps: TreatmentPlanStep[];
   price: number;
   total_sessions: number;
@@ -23,20 +22,20 @@ export interface TreatmentPlan {
 }
 
 export interface TreatmentSession {
-  id: UUID;
+  id: string;
   treatment_plan_step: number;
-  appointment_id?: UUID; // Liên kết tới lịch hẹn cụ thể
+  appointment_id?: string; // Liên kết tới lịch hẹn cụ thể
   status: "completed" | "upcoming" | "cancelled";
   notes?: string;
   completed_at?: Date;
 }
 
 export interface TreatmentPackage {
-  id: UUID;
-  customer_id: UUID;
-  treatment_plan_id: UUID;
+  id: string;
+  customer_id: string;
+  treatment_plan_id: string;
   purchase_date: Date;
-  purchase_invoice_id: UUID;
+  purchase_invoice_id: string;
   total_sessions: number;
   completed_sessions: number;
   sessions: TreatmentSession[];
