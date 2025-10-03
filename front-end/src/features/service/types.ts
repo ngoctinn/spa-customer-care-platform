@@ -1,4 +1,5 @@
 import { ImageUrl } from "@/features/shared/types";
+import { Category } from "@/features/category/types";
 
 export interface Service {
   id: string;
@@ -6,8 +7,9 @@ export interface Service {
   description: string;
   price: number;
   duration_minutes: number;
-  categories: string[];
+  categories: Category[];
   images: ImageUrl[];
+  status: "active" | "inactive";
   preparation_notes: string;
   aftercare_instructions: string;
   contraindications: string;

@@ -43,6 +43,9 @@ export const ResetPasswordForm = () => {
   });
 
   const onSubmit = (values: z.infer<typeof resetPasswordFormSchema>) => {
+    alert(values.password);
+    alert(token);
+
     if (!token) {
       toast.error("Đường dẫn không hợp lệ hoặc đã hết hạn.");
       console.error("Không tìm thấy token trong URL.");
@@ -54,7 +57,6 @@ export const ResetPasswordForm = () => {
         await resetPassword({
           token,
           password: values.password,
-          confirmPassword: values.confirmPassword,
         });
 
         toast.success("Thiết lập mật khẩu thành công!", {

@@ -13,7 +13,6 @@ import { ArrowLeft } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContexts";
 import useCartStore from "@/features/cart/stores/cart-store";
-import { useCustomers } from "@/features/customer/hooks/useCustomers";
 import {
   createInvoice,
   InvoiceCreationData,
@@ -26,6 +25,7 @@ import {
   PaymentMethod,
   InvoiceItem,
   InvoiceItemType,
+  ShippingAddress,
 } from "@/features/checkout/types";
 
 import { Button } from "@/components/ui/button";
@@ -43,29 +43,62 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
+import { useCustomerProfile } from "@/features/customer/hooks/useCustomerProfile";
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { items, clearCart } = useCartStore();
-  const { data: customers = [], isLoading: isLoadingCustomers } =
-    useCustomers();
+  const { data: currentUserProfile, isLoading: isLoadingProfile } =
+    useCustomerProfile();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     null
   );
 
-  const hasShippableItems = items.some((item) => item.type === "product");
-
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
-    defaultValues: { address: "", notes: "" },
+    defaultValues: {
+      name: "",
+      phone: "",
+      address: "",
+      notes: "",
+    },
   });
 
-  const currentUserProfile = customers.find((c) => c.user_id === user?.id);
+  useEffect(() => {
+    if (currentUserProfile) {
+      form.reset({
+        name: currentUserProfile.full_name,
+        phone: currentUserProfile.phone || "",
+        address: "",
+        notes: "",
+      });
+    }
+  }, [currentUserProfile, form]);
+
+  const createInvoiceMutation = useMutation({
+    mutationFn: createInvoice,
+    onSuccess: (newInvoice) => {
+      // SỬA: Sử dụng biến newInvoice
+      toast.success(
+        `Tạo hóa đơn #${newInvoice.id.substring(0, 6)} thành công!`,
+        {
+          description: "Cảm ơn bạn đã mua hàng.",
+        }
+      );
+      clearCart();
+      router.push("/");
+    },
+    onError: (error: unknown) => {
+      console.error("Create invoice failed:", error);
+      toast.error("Thanh toán thất bại!", {
+        description: "Đã có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+      });
+    },
+  });
 
   useEffect(() => {
-    if (!isLoadingCustomers) {
+    if (!isAuthLoading) {
       if (!user) {
         toast.error("Vui lòng đăng nhập để tiến hành thanh toán.");
         router.push("/auth/login?redirectTo=/cart");
@@ -74,28 +107,9 @@ export default function CheckoutPage() {
         router.push("/products");
       }
     }
-  }, [user, items, isLoadingCustomers, router]);
+  }, [user, items, isAuthLoading, router]);
 
-  const createInvoiceMutation = useMutation({
-    mutationFn: createInvoice,
-    onSuccess: (newInvoice) => {
-      toast.success(`Tạo hóa đơn thành công!`, {
-        description: "Cảm ơn bạn đã mua hàng.",
-      });
-      clearCart();
-      router.push("/");
-    },
-    onError: (error: unknown) => {
-      // Log lỗi chi tiết cho dev
-      console.error("Create invoice failed:", error);
-
-      // Hiển thị thông báo thân thiện cho người dùng
-      toast.error("Thanh toán thất bại!", {
-        description:
-          "Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
-      });
-    },
-  });
+  const hasShippableItems = items.some((item) => item.type === "product");
 
   const handleConfirmPayment = (shippingData: ShippingFormValues) => {
     if (!currentUserProfile || items.length === 0 || !paymentMethod) {
@@ -109,8 +123,6 @@ export default function CheckoutPage() {
       (acc, item) => acc + item.price * item.quantity,
       0
     );
-
-    // <-- SỬA LỖI MAP INVOICEITEM
     const invoiceItems: InvoiceItem[] = items.map((item) => ({
       id: item.id,
       name: item.name,
@@ -118,16 +130,18 @@ export default function CheckoutPage() {
       price_per_unit: item.price,
       total_price: item.price * item.quantity,
       type: item.type as InvoiceItemType,
-      discount_amount: 0, // Mặc định không giảm giá cho từng sản phẩm
+      discount_amount: 0,
     }));
 
-    const invoiceData: InvoiceCreationData = {
-      customer_id: currentUserProfile.id,
+    const invoiceData: InvoiceCreationData & {
+      shipping_address?: ShippingAddress;
+    } = {
+      customer_id: currentUserProfile.customer_profile.id,
       items: invoiceItems,
       subtotal,
       discount_amount: 0,
       tax_amount: 0,
-      total_amount: subtotal, // Giả sử không có giảm giá, thuế
+      total_amount: subtotal,
       payment_method: paymentMethod,
       status: "paid",
       is_deleted: false,
@@ -136,10 +150,9 @@ export default function CheckoutPage() {
     };
 
     if (hasShippableItems) {
-      // <-- SỬA LỖI TÊN THUỘC TÍNH
       invoiceData.shipping_address = {
-        name: currentUserProfile.name,
-        phone: currentUserProfile.phone,
+        name: shippingData.name,
+        phone: shippingData.phone,
         address: shippingData.address,
         city: "TP. Hồ Chí Minh",
         notes: shippingData.notes,
@@ -160,8 +173,23 @@ export default function CheckoutPage() {
     0
   );
 
-  if (isLoadingCustomers || !currentUserProfile) {
+  // Câu lệnh return sớm cho trạng thái loading
+  if (isAuthLoading || isLoadingProfile) {
     return <FullPageLoader text="Đang tải thông tin thanh toán..." />;
+  }
+
+  // Nếu không có profile sau khi đã tải xong (ví dụ user không phải customer)
+  // hoặc giỏ hàng trống, useEffect ở trên sẽ xử lý chuyển hướng.
+  // Render null để tránh hiển thị giao diện lỗi trước khi chuyển hướng.
+  if (!user || !currentUserProfile || items.length === 0) {
+    return null;
+  }
+
+  if (!currentUserProfile) {
+    // Có thể chuyển hướng hoặc hiển thị lỗi
+    toast.error("Không thể tải thông tin khách hàng.");
+    router.push("/");
+    return null;
   }
 
   return (
@@ -185,7 +213,7 @@ export default function CheckoutPage() {
                 <CardTitle>Thông tin khách hàng</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="font-semibold">{currentUserProfile.name}</p>
+                <p className="font-semibold">{currentUserProfile.full_name}</p>
                 <p className="text-sm text-muted-foreground">
                   {currentUserProfile.email}
                 </p>
@@ -201,6 +229,32 @@ export default function CheckoutPage() {
                   <CardTitle>Thông tin nhận hàng</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tên người nhận</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nguyễn Văn A" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Số điện thoại nhận hàng</FormLabel>
+                        <FormControl>
+                          <Input placeholder="09xxxxxxxx" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="address"

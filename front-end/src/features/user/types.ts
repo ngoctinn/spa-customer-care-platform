@@ -28,3 +28,7 @@ export interface User {
   is_email_verified: boolean;
   roles: Role[];
 }
+export type UserPublic = Pick<
+  User,
+  "id" | "email" | "phone" | "full_name" | "is_active" | "is_superuser"
+>;

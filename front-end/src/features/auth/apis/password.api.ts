@@ -1,6 +1,3 @@
-import { z } from "zod";
-import { resetPasswordFormSchema } from "@/features/auth/schemas";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /**
@@ -27,9 +24,10 @@ export async function forgotPassword(
  * Gửi thông tin để đặt lại mật khẩu mới
  * @param data Dữ liệu bao gồm token và mật khẩu mới
  */
-export async function resetPassword(
-  data: z.infer<typeof resetPasswordFormSchema> & { token: string }
-): Promise<{ message: string }> {
+export async function resetPassword(data: {
+  token: string;
+  password: string;
+}): Promise<{ message: string }> {
   const response = await fetch(`${API_URL}/auth/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

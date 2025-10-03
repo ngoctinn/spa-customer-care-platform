@@ -9,6 +9,6 @@ export interface Staff {
   updated_at: Date;
 }
 
-export type FullStaffProfile = Omit<User, "roles"> & {
+export type FullStaffProfile = User & {
   staff_profile: Staff;
 };
