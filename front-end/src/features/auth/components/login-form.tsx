@@ -1,18 +1,19 @@
 // src/features/auth/components/login-form.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useForm } from "react-hook-form";
 import { FcGoogle } from "react-icons/fc";
+import * as z from "zod";
 
-import { loginSchema } from "@/features/auth/schemas";
+import { PasswordInput } from "@/components/common/password-input";
+import { Button } from "@/components/ui/button";
 import {
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Form,
@@ -23,9 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/shared/password-input";
 import { useAuth } from "@/contexts/AuthContexts";
+import { loginSchema } from "@/features/auth/schemas";
 
 import { useTransition } from "react";
 
@@ -48,8 +48,6 @@ export const LoginForm = () => {
       // Logic xử lý đăng nhập ở đây
       try {
         await login(values);
-        console.log("Đăng nhập thành công", values);
-
         toast.success("Đăng nhập thành công!", {
           description: "Chào mừng bạn đã quay trở lại.",
         });

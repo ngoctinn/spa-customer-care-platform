@@ -17,7 +17,6 @@ export interface User {
   email: string;
   full_name: string;
   avatar_url?: string;
-  role: Role[];
   status: UserStatus;
   last_login?: Date;
   is_deleted: boolean;
@@ -25,5 +24,5 @@ export interface User {
   updated_at: Date;
   is_active: boolean;
   is_superuser: boolean;
-  roles: Role[]; // <-- Sửa từ 'role: UserRole' thành một mảng các Role
+  roles: Role[];
 }
