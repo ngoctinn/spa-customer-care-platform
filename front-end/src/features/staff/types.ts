@@ -1,3 +1,4 @@
+import { User } from "@/features/user/types";
 
 export interface Staff {
   id: string;
@@ -13,7 +14,7 @@ export interface Staff {
 }
 
 // Dùng khi cần kết hợp thông tin từ bảng `users`
-export type FullStaffProfile = Staff & {
-  email: string;
-  status: "active" | "inactive";
+
+export type FullStaffProfile = Omit<User, "roles"> & {
+  staff_profile: Staff;
 };
