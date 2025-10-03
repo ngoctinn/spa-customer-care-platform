@@ -1,11 +1,14 @@
+import { nameSchema, phoneSchema } from "@/lib/schemas";
 import { z } from "zod";
 
 // Schema cho form thông tin nhận hàng
 export const shippingSchema = z.object({
+  name: nameSchema,
   address: z
     .string()
     .trim()
     .min(5, { message: "Địa chỉ phải có ít nhất 5 ký tự." }),
+  phone: phoneSchema,
   notes: z.string().optional(),
 });
 

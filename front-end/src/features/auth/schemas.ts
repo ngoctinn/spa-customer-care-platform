@@ -27,7 +27,9 @@ export const resetPasswordFormSchema = z
   .object({
     password: z
       .string()
-      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." }),
+      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." })
+      // chứa ít nhât một số',
+      .regex(/[0-9]/, { message: "Mật khẩu phải chứa ít nhất một số." }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -46,7 +48,8 @@ export const changePasswordSchema = z
   .object({
     oldPassword: z
       .string()
-      .min(1, { message: "Mật khẩu không được để trống." }),
+      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." })
+      .regex(/[0-9]/, { message: "Mật khẩu phải chứa ít nhất một số." }),
     newPassword: passwordSchema,
     confirmPassword: z.string(),
   })

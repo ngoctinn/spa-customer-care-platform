@@ -25,49 +25,16 @@ export type InvoiceCreationData = Omit<
 export const createInvoice = async (
   invoiceData: InvoiceCreationData
 ): Promise<Invoice> => {
+  // Chỉ giữ lại một lời gọi API duy nhất, sạch sẽ và nhất quán
+  // Backend nên tự xử lý việc tạo ID và timestamps
   try {
-    const newInvoiceId = `inv-${uuidv4()}`;
-    // const { customerId, pointsToRedeem, prepaidCardId, prepaidAmountToUse } =
-    //   invoiceData;
-
-    // BƯỚC 1: XỬ LÝ CÁC KHOẢN THANH TOÁN ĐẶC BIỆT TRƯỚC (Tạm thời vô hiệu hóa)
-    // if (pointsToRedeem && pointsToRedeem > 0) {
-    //   await redeemLoyaltyPoints(customerId, pointsToRedeem);
-    // }
-    // if (prepaidCardId && prepaidAmountToUse && prepaidAmountToUse > 0) {
-    //   await debitPrepaidCard(prepaidCardId, prepaidAmountToUse, newInvoiceId);
-    // }
-
-    // BƯỚC 2: TẠO HÓA ĐƠN
-    const response = await fetch(INVOICES_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...invoiceData,
-        id: newInvoiceId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to create invoice.");
-    }
-
     const newInvoice = await apiClient<Invoice>("/invoices", {
       method: "POST",
-      body: JSON.stringify({
-        ...invoiceData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }),
+      body: JSON.stringify(invoiceData),
     });
-    // CÁC BƯỚC 3, 4, 5... (Cập nhật kho, điểm thưởng, v.v...)
-    // Giữ nguyên logic cập nhật của bạn ở đây
-
     return newInvoice;
   } catch (error) {
     console.error("Error creating invoice:", error);
-    throw error;
+    throw error; // Ném lỗi để React Query có thể xử lý
   }
 };

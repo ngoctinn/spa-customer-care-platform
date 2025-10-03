@@ -1,27 +1,61 @@
+// src/features/staff/components/columns.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { FullStaffProfile } from "@/features/staff/types";
-import { MoreHorizontal } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 
-const roleMapping = {
-  technician: "Kỹ thuật viên",
-  receptionist: "Lễ tân",
-  manager: "Quản lý",
+// Component này giờ chỉ nhận props và gọi hàm, không quản lý state
+const StaffRowActions = ({
+  staff,
+  onEdit,
+  onDelete,
+}: {
+  staff: FullStaffProfile;
+  onEdit: (staff: FullStaffProfile) => void;
+  onDelete: (staff: FullStaffProfile) => void;
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Mở menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => onEdit(staff)}>
+          <Edit className="mr-2 h-4 w-4" />
+          Chỉnh sửa
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive focus:bg-destructive/10"
+          onClick={() => onDelete(staff)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Xóa
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };
 
-export const columns: ColumnDef<FullStaffProfile>[] = [
+// Xuất ra một hàm để tạo columns, giúp truyền các hàm xử lý từ page vào
+export const getStaffColumns = (
+  onEdit: (staff: FullStaffProfile) => void,
+  onDelete: (staff: FullStaffProfile) => void
+): ColumnDef<FullStaffProfile>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -45,7 +79,7 @@ export const columns: ColumnDef<FullStaffProfile>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
+    accessorKey: "full_name",
     header: "Họ và tên",
   },
   {
@@ -55,23 +89,26 @@ export const columns: ColumnDef<FullStaffProfile>[] = [
   {
     accessorKey: "phone",
     header: "Số điện thoại",
+    cell: ({ row }) => row.getValue("phone") || "N/A",
   },
   {
-    accessorKey: "role",
+    accessorKey: "roles",
     header: "Vai trò",
     cell: ({ row }) => {
-      const role = row.getValue("role") as keyof typeof roleMapping;
-      return <span>{roleMapping[role] || "Không xác định"}</span>;
+      const roles = row.original.roles;
+      if (!roles || roles.length === 0) {
+        return <Badge variant="outline">Chưa có vai trò</Badge>;
+      }
+      return <Badge>{roles[0].name}</Badge>;
     },
   },
   {
-    accessorKey: "status",
+    accessorKey: "is_active",
     header: "Trạng thái",
     cell: ({ row }) => {
-      const status = row.getValue("status") as string;
-      const isActive = status === "active";
+      const isActive = row.getValue("is_active");
       return (
-        <Badge variant={isActive ? "default" : "outline"}>
+        <Badge variant={isActive ? "default" : "secondary"}>
           {isActive ? "Hoạt động" : "Tạm ngưng"}
         </Badge>
       );
@@ -79,33 +116,12 @@ export const columns: ColumnDef<FullStaffProfile>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const staff = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Mở menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(staff.id)}
-            >
-              Sao chép ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-            <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              Xóa
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => (
+      <StaffRowActions
+        staff={row.original}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
 ];

@@ -61,16 +61,17 @@ function HeroSection() {
 // --- MAIN HOMEPAGE COMPONENT ---
 export default async function HomePage() {
   // Lấy dữ liệu đồng thời để tối ưu tốc độ tải trang
-  const [services, treatmentPlans, products] = await Promise.all([
-    getServices(),
-    getTreatmentPlans(),
-    getProducts(),
-  ]);
+  // const [services, treatmentPlans, products] = await Promise.all([
+  //   getServices(),
+  //   getTreatmentPlans(),
+  //   getProducts(),
+  // ]);
+  const services = await getServices();
 
   // Lấy 3 mục đầu tiên để hiển thị
   const featuredServices = services.slice(0, 3);
-  const featuredTreatmentPlans = treatmentPlans.slice(0, 3);
-  const featuredProducts = products.slice(0, 3);
+  // const featuredTreatmentPlans = treatmentPlans.slice(0, 3);
+  // const featuredProducts = products.slice(0, 3);
 
   return (
     <div>
@@ -91,7 +92,7 @@ export default async function HomePage() {
       <div className="border-b" />
 
       {/* Featured Treatment Plans */}
-      <FeaturedSection
+      {/* <FeaturedSection
         title="Liệu Trình Chuyên Sâu"
         description="Đầu tư cho vẻ đẹp dài lâu với các gói liệu trình được thiết kế khoa học và chuyên biệt."
         viewAllLink="/treatment-plans"
@@ -99,13 +100,13 @@ export default async function HomePage() {
         {featuredTreatmentPlans.map((plan) => (
           <TreatmentPlanCard key={plan.id} plan={plan} />
         ))}
-      </FeaturedSection>
+      </FeaturedSection> */}
 
       {/* Divider */}
-      <div className="border-b" />
+      {/* <div className="border-b" /> */}
 
       {/* Featured Products */}
-      <FeaturedSection
+      {/* <FeaturedSection
         title="Sản Phẩm Cao Cấp"
         description="Mang trải nghiệm spa về nhà với các sản phẩm được chuyên gia của chúng tôi tin dùng."
         viewAllLink="/products"
@@ -113,7 +114,7 @@ export default async function HomePage() {
         {featuredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
-      </FeaturedSection>
+      </FeaturedSection> */}
     </div>
   );
 }
