@@ -1,64 +1,68 @@
-from fastapi import APIRouter
-from sqlmodel import Session
-from typing import List
+# app/api/products_api.py
 import uuid
+from typing import List
+from fastapi import APIRouter
 
-# ==================================================================
-# ENDPOINTS CHO SẢN PHẨM (PRODUCT)
-# ==================================================================
-
-# dữ liệu giả để lấy toàn bộ sản phẩm
-""" export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  categories: string[];
-  price: number;
-  stock: number;
-  images: ImageUrl[];
-  is_retail: boolean;
-  is_consumable: boolean;
-  base_unit: string; // vd: "chai", "lọ", "hũ"
-  consumable_unit?: string; // vd: "ml", "g"
-  conversion_rate?: number; // Tỷ lệ quy đổi (vd: 500ml/chai)
-  is_deleted: boolean;
-  created_at: Date;
-  updated_at: Date;
-} """
-
-product = {
-    "id": str(uuid.uuid4()),
-    "name": "Sản phẩm mẫu",
-    "description": "Mô tả sản phẩm mẫu",
-    "categories": ["Chăm sóc da", "Dưỡng ẩm"],
-    "price": 150000,
-    "stock": 50,
-    "images": [
-        {
-            "url": "https://place-hold.it/300x200",
-            "alt": "Hình ảnh sản phẩm mẫu",
-            "is_primary": True,
-        },
-        {
-            "url": "https://place-hold.it/300x200",
-            "alt": "Hình ảnh phụ sản phẩm mẫu",
-            "is_primary": False,
-        },
-    ],
-    "is_retail": True,
-    "is_consumable": True,
-    "base_unit": "chai",
-    "consumable_unit": "ml",
-    "conversion_rate": 500,
-    "is_deleted": False,
-    "created_at": "2024-01-01T10:00:00Z",
-    "updated_at": "2024-01-10T15:30:00Z",
-}
+# THAY ĐỔI: Import schema mới
+from app.schemas.products_schema import ProductPublicWithDetails
 
 router = APIRouter()
 
+# Dữ liệu giả được cấu trúc theo schema ProductPublicWithDetails
+mock_product_category = {
+    "id": str(uuid.uuid4()),
+    "name": "Sản phẩm Dưỡng da",
+    "description": "Các sản phẩm chăm sóc và dưỡng da chuyên sâu.",
+    "category_type": "product",
+}
 
-@router.get("/products", response_model=List[str])
-def get_all_products(session: Session):
-    """Lấy danh sách tất cả sản phẩm."""
-    return [product["id"] for _ in range(5)]  # Trả về danh sách ID sản phẩm giả
+mock_products_data = [
+    {
+        "id": str(uuid.uuid4()),
+        "name": "Kem chống nắng SPF 50+",
+        "description": "Kem chống nắng vật lý lai hóa học, bảo vệ da toàn diện.",
+        "price": 550000,
+        "stock": 100,
+        "is_retail": True,
+        "is_consumable": False,
+        "base_unit": "tuýp",
+        "category_id": mock_product_category["id"],
+        "category": mock_product_category,
+        "images": [
+            {
+                "id": str(uuid.uuid4()),
+                "url": "https://place-hold.it/300x300/a8dadc/457b9d?text=KemChongNang",
+                "alt_text": "Hình ảnh Kem chống nắng",
+                "is_primary": True,
+            }
+        ],
+    },
+    {
+        "id": str(uuid.uuid4()),
+        "name": "Serum cấp ẩm Hyaluronic Acid",
+        "description": "Serum chứa HA đa phân tử giúp cấp ẩm sâu cho da.",
+        "price": 720000,
+        "stock": 75,
+        "is_retail": True,
+        "is_consumable": True,
+        "base_unit": "chai",
+        "consumable_unit": "ml",
+        "conversion_rate": 30,
+        "category_id": mock_product_category["id"],
+        "category": mock_product_category,
+        "images": [
+            {
+                "id": str(uuid.uuid4()),
+                "url": "https://place-hold.it/300x300/f1faee/1d3557?text=SerumHA",
+                "alt_text": "Hình ảnh Serum HA",
+                "is_primary": True,
+            }
+        ],
+    },
+]
+
+
+@router.get("", response_model=List[ProductPublicWithDetails])
+def get_all_products():
+    """Lấy danh sách tất cả sản phẩm (dữ liệu mô phỏng)."""
+    return mock_products_data

@@ -17,7 +17,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from sqlmodel import SQLModel
 from app.models.users_model import User, Role, Permission
 from app.models.base_model import BaseUUIDModel
-from app.models.services_model import Service, ServiceCategory, ServiceImage
+from app.models.services_model import Service
+from app.models.products_model import Product
+from app.models.catalog_model import Category, Image
+from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
 
 
 # this is the Alembic Config object, which provides
