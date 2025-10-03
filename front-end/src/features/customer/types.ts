@@ -20,17 +20,14 @@ export interface CustomerPreferences {
 export interface Customer {
   id: string;
   user_id: string;
-  name: string;
-  phone: string;
-  avatar_url?: string;
   total_appointments: number;
-  last_visit: Date;
+  last_visit: Date | null;
   notes?: string;
   purchased_services?: PurchasedService[];
   preferences?: CustomerPreferences;
   notification_settings?: NotificationSettings;
   loyalty_points?: number;
-  rank?: "Bronze" | "Silver" | "Gold"; // Sẽ liên kết với LoyaltyTier
+  rank?: string;
   joined_date: Date;
   is_deleted: boolean;
   created_at: Date;
