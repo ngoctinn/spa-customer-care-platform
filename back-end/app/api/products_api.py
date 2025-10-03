@@ -55,10 +55,11 @@ product = {
     "updated_at": "2024-01-10T15:30:00Z",
 }
 
+
 router = APIRouter()
 
 
 @router.get("/products", response_model=List[str])
 def get_all_products(session: Session):
     """Lấy danh sách tất cả sản phẩm."""
-    return [product["id"] for _ in range(5)]  # Trả về danh sách ID sản phẩm giả
+    return [product for _ in range(10)]  # Trả về danh sách ID sản phẩm giả

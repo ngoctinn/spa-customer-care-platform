@@ -15,7 +15,6 @@ export interface TreatmentPlan {
   price: number;
   total_sessions: number;
   images: ImageUrl[];
-  status: "active" | "inactive";
   is_deleted: boolean;
   created_at: Date;
   updated_at: Date;

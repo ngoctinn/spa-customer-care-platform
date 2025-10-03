@@ -7,6 +7,7 @@ from app.api import (
     users_api,
     services_api,
     schedules_api,
+    products_api,
 )
 
 router = APIRouter()
@@ -22,3 +23,4 @@ router.include_router(
 router.include_router(
     schedules_api.router, prefix="/admin", tags=["Schedules Management"]
 )
+router.include_router(products_api.router, prefix="/products", tags=["Products"])
