@@ -4,11 +4,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
-
 import { resetPasswordFormSchema } from "@/features/auth/schemas";
 import {
   CardHeader,
@@ -24,9 +22,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/shared/password-input";
+import { resetPassword } from "@/features/auth/apis/password.api";
 
 export const ResetPasswordForm = () => {
   const router = useRouter();
@@ -53,28 +51,27 @@ export const ResetPasswordForm = () => {
 
     startTransition(async () => {
       try {
-        // Gửi token và mật khẩu mới đến backend
-        // const data = await resetPassword({
-        //   token,
-        //   password: values.password,
-        // });
-        toast.success("Đặt lại mật khẩu thành công!", {
-          description: "Bạn sẽ được chuyển đến trang đăng nhập.",
+        await resetPassword({
+          token,
+          password: values.password,
+          confirmPassword: values.confirmPassword,
         });
-        //console.log("Đặt lại mật khẩu thành công:", data);
+
+        toast.success("Thiết lập mật khẩu thành công!", {
+          description: "Bây giờ bạn có thể đăng nhập với mật khẩu mới.",
+        });
+
         setTimeout(() => {
           router.push("/auth/login");
         }, 1500);
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-          console.error("Lỗi đặt lại mật khẩu:", error.message);
-        } else {
-          toast.error("Đã xảy ra lỗi không xác định. Vui lòng thử lại.");
-          console.error("Lỗi không xác định:", error);
-        }
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Đã xảy ra lỗi không xác định. Vui lòng thử lại.";
+        toast.error("Thao tác thất bại", { description: errorMessage });
+        console.error("Lỗi khi đặt lại/thiết lập mật khẩu:", error);
       }
-      console.log(values);
     });
   };
 
@@ -84,8 +81,8 @@ export const ResetPasswordForm = () => {
       <CardHeader className="text-center">
         <CardTitle>Yêu cầu không hợp lệ</CardTitle>
         <CardDescription>
-          Đường dẫn đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu
-          cầu lại từ trang quên mật khẩu.
+          Đường dẫn này không hợp lệ hoặc đã hết hạn. Vui lòng thử lại hoặc yêu
+          cầu một liên kết mới.
         </CardDescription>
       </CardHeader>
     );
