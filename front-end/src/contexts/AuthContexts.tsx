@@ -1,19 +1,19 @@
 // src/contexts/AuthContexts.tsx
 "use client";
 
+import { login as apiLogin, fetchProfile } from "@/features/auth/apis/auth_api";
+import { loginSchema } from "@/features/auth/schemas";
+import { User } from "@/features/user/types";
+import { useRouter } from "next/navigation";
 import {
   createContext,
-  useContext,
   ReactNode,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
-import { User } from "@/features/user/types";
-import { fetchProfile, login as apiLogin } from "@/features/auth/apis/auth_api";
 import { z } from "zod";
-import { loginSchema } from "@/features/auth/schemas";
-import { useRouter } from "next/navigation";
 
 // Định nghĩa một hàm logout giả, sau này bạn có thể gọi API logout ở đây
 const apiLogout = async () => {
