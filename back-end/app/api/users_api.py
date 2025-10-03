@@ -12,6 +12,7 @@ from app.core.dependencies import (
 )
 from app.models.users_model import User
 from app.schemas.users_schema import (
+    AdminCreateUserRequest,
     UpdatePassword,
     UserPublicWithRolesAndPermissions,
     UserPublic,
@@ -78,6 +79,26 @@ def update_password_me(
 # =================================================================
 # ENDPOINTS CHO QUẢN TRỊ VIÊN (ADMIN)
 # =================================================================
+
+
+@router.post(
+    "/",
+    response_model=UserPublic,
+    dependencies=[Depends(get_current_admin_user)],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_user_by_admin(
+    *,
+    session: Session = Depends(get_db_session),
+    user_in: AdminCreateUserRequest,
+):
+    """
+    [Admin] Tạo một tài khoản người dùng mới (ví dụ: nhân viên) và gửi email kích hoạt.
+    """
+    new_user = users_service.create_user_by_admin(db_session=session, user_in=user_in)
+    # Gửi email chào mừng và yêu cầu đặt mật khẩu
+    await auth_service.send_welcome_and_set_password_email(new_user)
+    return new_user
 
 
 @router.get(
