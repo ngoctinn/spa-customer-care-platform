@@ -1,31 +1,13 @@
 # app/models/services_model.py
 import uuid
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
-
-# danh mục dịch vụ
-class ServiceCategory(BaseUUIDModel, table=True):
-    __tablename__ = "service_category"
-
-    name: str = Field(index=True, nullable=False, unique=True)
-    description: str | None = Field(default=None)
-
-    # Một danh mục có thể có nhiều dịch vụ
-    services: List["Service"] = Relationship(back_populates="category")
-
-
-# hình ảnh cho dịch vụ
-class ServiceImage(BaseUUIDModel, table=True):
-    __tablename__ = "service_image"
-
-    service_id: uuid.UUID = Field(foreign_key="service.id", nullable=False)
-    url: str = Field(nullable=False)
-    alt_text: str | None = Field(default=None)
-    is_primary: bool = Field(default=False, description="Đánh dấu hình ảnh chính")
-    # Mỗi hình ảnh thuộc về một dịch vụ
-    service: "Service" = Relationship(back_populates="images")
+# Import các model chung thay vì định nghĩa lại
+if TYPE_CHECKING:
+    from app.models.catalog_model import Category, Image
+    from app.models.treatment_plans_model import TreatmentPlanStep
 
 
 # dịch vụ
@@ -46,9 +28,9 @@ class Service(BaseUUIDModel, table=True):
         default=None, description="Chống chỉ định dịch vụ"
     )
 
-    category_id: uuid.UUID = Field(foreign_key="service_category.id")
+    # THAY ĐỔI: Khóa ngoại trỏ đến bảng 'category' chung
+    category_id: uuid.UUID = Field(foreign_key="category.id")
 
-    # Mỗi dịch vụ thuộc về một danh mục
-    category: ServiceCategory = Relationship(back_populates="services")
-    # Một dịch vụ có thể có nhiều hình ảnh
-    images: List[ServiceImage] = Relationship(back_populates="service")
+    # THAY ĐỔI: Quan hệ trỏ đến model 'Category' và 'Image'
+    category: "Category" = Relationship(back_populates="services")
+    images: List["Image"] = Relationship(back_populates="service")

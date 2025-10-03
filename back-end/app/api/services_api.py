@@ -1,21 +1,23 @@
-# back-end/app/api/services_api.py
+# app/api/services_api.py
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File, status
 from sqlmodel import Session
 
 from app.core.dependencies import get_db_session
-from app.models.services_model import Service, ServiceCategory
+
+# THAY ĐỔI: Model Service vẫn được sử dụng
+from app.models.services_model import Service
+
+# THAY ĐỔI: Import các schema đã được cập nhật/chuẩn hóa
 from app.schemas.services_schema import (
     ServiceCreate,
     ServicePublic,
     ServicePublicWithDetails,
     ServiceUpdate,
-    ServiceCategoryCreate,
-    ServiceCategoryPublic,
-    ServiceCategoryUpdate,
-    ServiceCategoryPublicWithServices,
 )
+
+# Giữ lại service để xử lý logic
 from app.services import services_service
 
 router = APIRouter()
@@ -24,62 +26,29 @@ router = APIRouter()
 # ENDPOINTS CHO DANH MỤC DỊCH VỤ (SERVICE CATEGORY)
 # =================================================================
 
+# PHẦN NÀY ĐÃ ĐƯỢC CHUYỂN GIAO CHO catalog_api.py (sẽ tạo sau)
+# Tạm thời xóa hoặc comment lại các endpoint này để tránh lỗi
+# và đảm bảo logic quản lý danh mục được tập trung.
 
-@router.post(
-    "/categories",
-    response_model=ServiceCategoryPublic,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_service_category(
-    *,
-    session: Session = Depends(get_db_session),
-    category_in: ServiceCategoryCreate,
-):
-    """Tạo một danh mục dịch vụ mới."""
-    return services_service.create_service_category(db=session, category_in=category_in)
+# @router.post("/categories", ...)
+# def create_service_category(...):
+#     ...
 
+# @router.get("/categories", ...)
+# def get_all_service_categories(...):
+#     ...
 
-@router.get("/categories", response_model=List[ServiceCategoryPublicWithServices])
-def get_all_service_categories(session: Session = Depends(get_db_session)):
-    """Lấy danh sách tất cả danh mục và các dịch vụ thuộc về chúng."""
-    return services_service.get_all_service_categories(db=session)
+# @router.get("/categories/{category_id}", ...)
+# def get_service_category_by_id(...):
+#     ...
 
+# @router.put("/categories/{category_id}", ...)
+# def update_service_category(...):
+#     ...
 
-@router.get(
-    "/categories/{category_id}", response_model=ServiceCategoryPublicWithServices
-)
-def get_service_category_by_id(
-    category_id: uuid.UUID, session: Session = Depends(get_db_session)
-):
-    """Lấy thông tin chi tiết một danh mục bằng ID."""
-    return services_service.get_category_by_id(db=session, category_id=category_id)
-
-
-@router.put("/categories/{category_id}", response_model=ServiceCategoryPublic)
-def update_service_category(
-    category_id: uuid.UUID,
-    category_in: ServiceCategoryUpdate,
-    session: Session = Depends(get_db_session),
-):
-    """Cập nhật thông tin một danh mục dịch vụ."""
-    db_category = services_service.get_category_by_id(
-        db=session, category_id=category_id
-    )
-    return services_service.update_service_category(
-        db=session, db_category=db_category, category_in=category_in
-    )
-
-
-@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_service_category(
-    category_id: uuid.UUID, session: Session = Depends(get_db_session)
-):
-    """Xóa mềm một danh mục dịch vụ."""
-    db_category = services_service.get_category_by_id(
-        db=session, category_id=category_id
-    )
-    services_service.delete_service_category(db=session, db_category=db_category)
-    return
+# @router.delete("/categories/{category_id}", ...)
+# def delete_service_category(...):
+#     ...
 
 
 # =================================================================
@@ -88,14 +57,14 @@ def delete_service_category(
 
 
 @router.post(
-    "/",
+    "",  # THAY ĐỔI: prefix đã được định nghĩa trong routers.py, để trống là "/"
     response_model=ServicePublicWithDetails,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_new_service(
     *,
     session: Session = Depends(get_db_session),
-    # Sử dụng Form(...) để nhận dữ liệu form-data
+    # Dữ liệu form không thay đổi
     name: str = Form(...),
     description: str = Form(...),
     price: float = Form(...),
@@ -104,7 +73,6 @@ async def create_new_service(
     preparation_notes: str = Form(None),
     aftercare_instructions: str = Form(None),
     contraindications: str = Form(None),
-    # Nhận danh sách file tải lên
     images: List[UploadFile] = File(None, description="Hình ảnh cho dịch vụ"),
 ):
     """
@@ -120,12 +88,13 @@ async def create_new_service(
         aftercare_instructions=aftercare_instructions,
         contraindications=contraindications,
     )
+    # Logic gọi service không đổi
     return await services_service.create_service(
         db=session, service_in=service_in, images=images
     )
 
 
-@router.get("/services", response_model=List[ServicePublicWithDetails])
+@router.get("", response_model=List[ServicePublicWithDetails])
 def get_all_services(
     session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
@@ -133,7 +102,7 @@ def get_all_services(
     return services_service.get_all_services(db=session, skip=skip, limit=limit)
 
 
-@router.get("/services/{service_id}", response_model=ServicePublicWithDetails)
+@router.get("/{service_id}", response_model=ServicePublicWithDetails)
 def get_service_by_id(
     service_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):

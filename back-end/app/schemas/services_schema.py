@@ -1,43 +1,12 @@
-# back-end/app/schemas/services_schema.py
+# app/schemas/services_schema.py
 from typing import Optional, List
 from sqlmodel import SQLModel, Field
 import uuid
 
+# THAY ĐỔI: Import schema chung
+from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
-# =================================================================
-# SCHEMAS CHO HÌNH ẢNH DỊCH VỤ
-# =================================================================
-class ServiceImageBase(SQLModel):
-    alt_text: str | None = Field(
-        default=None, description="Văn bản thay thế cho hình ảnh"
-    )
-    is_primary: bool = Field(default=False, description="Đánh dấu hình ảnh chính")
-
-
-class ServiceImagePublic(ServiceImageBase):
-    id: uuid.UUID
-    url: str
-
-
-# =================================================================
-# SCHEMAS CHO DANH MỤC DỊCH VỤ
-# =================================================================
-class ServiceCategoryBase(SQLModel):
-    name: str = Field(max_length=100, description="Tên danh mục dịch vụ")
-    description: str | None
-
-
-class ServiceCategoryCreate(ServiceCategoryBase):
-    pass
-
-
-class ServiceCategoryUpdate(SQLModel):
-    name: Optional[str] = Field(default=None, max_length=100)
-    description: Optional[str] = None
-
-
-class ServiceCategoryPublic(ServiceCategoryBase):
-    id: uuid.UUID
+# XÓA BỎ: Các class ServiceImageBase, ServiceImagePublic, ServiceCategory...
 
 
 # =================================================================
@@ -53,11 +22,11 @@ class ServiceBase(SQLModel):
     preparation_notes: str | None
     aftercare_instructions: str | None
     contraindications: str | None
-    category_id: uuid.UUID = Field(foreign_key="service_category.id")
+    # Vẫn giữ category_id để tạo/cập nhật dịch vụ
+    category_id: uuid.UUID = Field(foreign_key="category.id")
 
 
 class ServiceCreate(ServiceBase):
-    # Không cần trường images ở đây vì file sẽ được xử lý riêng
     pass
 
 
@@ -78,10 +47,12 @@ class ServicePublic(ServiceBase):
 
 # Schema hiển thị đầy đủ thông tin dịch vụ kèm theo danh mục và hình ảnh
 class ServicePublicWithDetails(ServicePublic):
-    category: ServiceCategoryPublic
-    images: List[ServiceImagePublic] = []
+    # THAY ĐỔI: Sử dụng schema chung
+    category: CategoryPublic
+    images: List[ImagePublic] = []
 
 
-# Schema hiển thị danh mục kèm theo các dịch vụ
-class ServiceCategoryPublicWithServices(ServiceCategoryPublic):
-    services: List[ServicePublic] = []
+# Cần forward reference cho treatment plan schema
+from . import treatment_plans_schema
+
+treatment_plans_schema.TreatmentPlanStepPublic.model_rebuild()
