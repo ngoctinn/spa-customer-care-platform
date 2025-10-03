@@ -8,7 +8,6 @@ export interface Product {
   price: number;
   stock: number;
   images: ImageUrl[];
-  status: "active" | "inactive";
   is_retail: boolean;
   is_consumable: boolean;
   base_unit: string; // vd: "chai", "lọ", "hũ"

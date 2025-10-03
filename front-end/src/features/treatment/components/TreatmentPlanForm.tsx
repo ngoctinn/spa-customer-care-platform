@@ -1,7 +1,9 @@
 "use client";
 
-import { useFieldArray, useFormContext } from "react-hook-form";
-import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
+import { MultiImageUploader } from "@/components/common/MultiImageUploader";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ChevronsUpDown, Plus, PlusCircle, Trash2 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import {
   FormControl,
   FormField,
@@ -20,23 +19,25 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { addCategory } from "@/features/category/api/category.api";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MultiImageUploader } from "@/components/common/MultiImageUploader";
-import { useServices } from "@/features/service/hooks/useServices";
-import { useCategories } from "@/features/category/hooks/useCategories";
+import { Textarea } from "@/components/ui/textarea";
+import { addCategory } from "@/features/category/api/category.api";
 import AddCategoryForm from "@/features/category/components/AddCategoryForm";
+import { useCategories } from "@/features/category/hooks/useCategories";
+import { useServices } from "@/features/service/hooks/useServices";
+import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronsUpDown, Plus, PlusCircle, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { toast } from "sonner";
 // highlight-start
+import PriceInput from "@/components/common/PriceInput";
 import {
   Select,
   SelectContent,
@@ -44,9 +45,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { v4 as uuidv4 } from "uuid";
 import { ImageUrl } from "@/features/shared/types";
-import PriceInput from "@/components/shared/PriceInput";
+import { v4 as uuidv4 } from "uuid";
 
 export default function TreatmentPlanFormFields() {
   const queryClient = useQueryClient();

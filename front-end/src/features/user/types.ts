@@ -18,7 +18,6 @@ export interface User {
   phone?: string | null;
   full_name: string;
   avatar_url?: string;
-  role: Role[];
   status: UserStatus;
   last_login?: Date;
   is_deleted: boolean;

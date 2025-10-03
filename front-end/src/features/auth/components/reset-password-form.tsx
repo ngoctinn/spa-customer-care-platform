@@ -1,18 +1,17 @@
 // src/features/auth/components/reset-password-form.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { resetPasswordFormSchema } from "@/features/auth/schemas";
 import {
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
 import {
   Form,
@@ -23,8 +22,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/shared/password-input";
+import { PasswordInput } from "@/components/common/password-input";
 import { resetPassword } from "@/features/auth/apis/password.api";
+import { resetPasswordFormSchema } from "@/features/auth/schemas";
 
 export const ResetPasswordForm = () => {
   const router = useRouter();
