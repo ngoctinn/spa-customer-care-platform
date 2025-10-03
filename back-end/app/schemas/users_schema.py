@@ -37,6 +37,13 @@ class UserCreate(UserBase):
         return v
 
 
+# Schema cho admin tạo người dùng mới (có thể gán vai trò ngay)
+class AdminCreateUserRequest(UserBase):
+    role_id: uuid.UUID | None = Field(
+        default=None, description="ID của vai trò sẽ gán cho người dùng"
+    )
+
+
 class UserUpdateMe(SQLModel):
     email: EmailStr | None = Field(default=None, max_length=255)
     full_name: str | None = Field(default=None, max_length=100)
@@ -52,9 +59,11 @@ class UpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
     new_password: str = Field(min_length=8, max_length=40)
 
+
 # Schema cho reset mật khẩu
 class ForgotPasswordRequest(SQLModel):
     email: EmailStr
+
 
 class ResetPasswordRequest(SQLModel):
     token: str
@@ -66,7 +75,6 @@ class ResetPasswordRequest(SQLModel):
         if not re.search(r"[A-Za-z]", v) or not re.search(r"[0-9]", v):
             raise ValueError("Mật khẩu phải chứa cả chữ và số")
         return v
-    
 
 
 # Schema hiển thị thông tin công khai của người dùng (dùng làm response_model)
@@ -74,6 +82,19 @@ class UserPublic(UserBase):
     id: uuid.UUID
     is_active: bool
     is_superuser: bool
+
+
+# Schema cho admin cập nhật thông tin người dùng khác
+class UserUpdateByAdmin(SQLModel):
+    email: EmailStr | None = Field(default=None)
+    full_name: str | None = Field(default=None, max_length=100)
+    phone: str | None = Field(
+        default=None,
+        max_length=15,
+        pattern=r"^(0|\+84)(\s|\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\d)(\s|\.)?(\d{3})(\s|\.)?(\d{3})$",
+    )
+    is_active: bool | None = Field(default=None)
+    is_superuser: bool | None = Field(default=None)
 
 
 # Schema hiển thị thông tin người dùng KÈM THEO vai trò và quyền của họ

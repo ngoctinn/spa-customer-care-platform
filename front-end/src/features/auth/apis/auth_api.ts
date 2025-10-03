@@ -12,7 +12,7 @@ export async function login(email: string, password: string) {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
-    credentials: "include", // <-- Rất quan trọng: để trình duyệt gửi và nhận cookies
+    credentials: "include",
   });
 
   if (!response.ok) {

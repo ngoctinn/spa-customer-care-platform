@@ -13,6 +13,7 @@ from app.schemas.services_schema import (
 
 from app.core import supabase_client
 from fastapi import UploadFile
+from app.utils.common import get_object_or_404
 
 # =================================================================
 # SERVICE CATEGORY LOGIC
@@ -51,22 +52,9 @@ def get_all_service_categories(db: Session) -> List[ServiceCategory]:
     return categories
 
 
-def get_category_by_id(
-    db: Session, category_id: uuid.UUID
-) -> Optional[ServiceCategory]:
-    """Lấy danh mục bằng ID, miễn là nó CHƯA BỊ XÓA."""
-    # Thay db.get bằng câu lệnh select để thêm điều kiện is_deleted
-    category = db.exec(
-        select(ServiceCategory).where(
-            ServiceCategory.id == category_id, ServiceCategory.is_deleted == False
-        )
-    ).first()
-    if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy danh mục với ID: {category_id}",
-        )
-    return category
+def get_category_by_id(db: Session, category_id: uuid.UUID) -> ServiceCategory:
+    """Lấy danh mục bằng ID, đảm bảo nó tồn tại và chưa bị xóa."""
+    return get_object_or_404(db, model=ServiceCategory, obj_id=category_id)
 
 
 def update_service_category(

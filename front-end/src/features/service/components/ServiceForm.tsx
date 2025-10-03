@@ -1,33 +1,9 @@
 "use client";
 
-import { v4 as uuidv4 } from "uuid";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addCategory } from "@/features/category/api/category.api";
-import AddCategoryForm from "@/features/category/components/AddCategoryForm";
-import { toast } from "sonner";
-import { Separator } from "@/components/ui/separator";
-import { useFieldArray, useFormContext } from "react-hook-form";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { MultiImageUploader } from "@/components/common/MultiImageUploader";
-import { useState } from "react";
-import { ServiceFormValues } from "@/features/service/schemas";
-import { useCategories } from "@/features/category/hooks/useCategories";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import PriceInput from "@/components/common/PriceInput";
 import { Badge } from "@/components/ui/badge";
-import { ChevronsUpDown, Plus, PlusCircle, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -36,7 +12,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useProducts } from "@/features/product/hooks/useProducts";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -44,8 +32,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { addCategory } from "@/features/category/api/category.api";
+import AddCategoryForm from "@/features/category/components/AddCategoryForm";
+import { useCategories } from "@/features/category/hooks/useCategories";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { ServiceFormValues } from "@/features/service/schemas";
 import { ImageUrl } from "@/features/shared/types";
-import PriceInput from "@/components/shared/PriceInput";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronsUpDown, Plus, PlusCircle, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 export default function ServiceForm() {
   const queryClient = useQueryClient();

@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from app.models.users_model import Role, Permission
 from app.schemas.roles_schema import PermissionCreate, RoleCreate, RoleUpdate
+from app.utils.common import get_object_or_404
 
 
 # =================================================================
@@ -43,7 +44,8 @@ def get_role_by_name(db_session: Session, *, name: str) -> Optional[Role]:
 
 def get_role_by_id(db_session: Session, *, role_id: uuid.UUID) -> Optional[Role]:
     """Tìm một vai trò bằng ID."""
-    return db_session.get(Role, role_id)
+    # Thay db.get(Role, role_id) bằng hàm tiện ích để có thông báo lỗi 404 nhất quán
+    return get_object_or_404(db_session, model=Role, obj_id=role_id)
 
 
 def create_role(db_session: Session, *, role_in: "RoleCreate") -> Role:

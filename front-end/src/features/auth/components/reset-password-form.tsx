@@ -1,20 +1,20 @@
 // src/features/auth/components/reset-password-form.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import * as z from "zod";
 
-import { resetPasswordFormSchema } from "@/features/auth/schemas";
+import { PasswordInput } from "@/components/common/password-input";
+import { Button } from "@/components/ui/button";
 import {
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
 import {
   Form,
@@ -24,9 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/shared/password-input";
+import { resetPasswordFormSchema } from "@/features/auth/schemas";
 
 export const ResetPasswordForm = () => {
   const router = useRouter();
