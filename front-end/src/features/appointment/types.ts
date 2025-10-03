@@ -1,5 +1,3 @@
-import { UUID } from "crypto";
-
 export type AppointmentStatus =
   | "upcoming"
   | "completed"
@@ -12,12 +10,12 @@ export type AppointmentStatus =
 export type PaymentStatus = "paid" | "unpaid" | "partial";
 
 export interface Appointment {
-  id: UUID;
-  customer_id: UUID;
-  service_id: UUID;
-  technician_id?: UUID;
-  resource_id?: UUID; // Phòng hoặc thiết bị
-  invoice_id?: UUID;
+  id: string;
+  customer_id: string;
+  service_id: string;
+  technician_id?: string;
+  resource_id?: string; // Phòng hoặc thiết bị
+  invoice_id?: string;
   start_time: Date;
   end_time: Date;
   status: AppointmentStatus;
@@ -35,6 +33,6 @@ export interface Appointment {
   guest_email?: string;
 
   // Liên kết đến liệu trình (nếu có)
-  treatment_package_id?: UUID;
-  treatment_session_id?: UUID;
+  treatment_package_id?: string;
+  treatment_session_id?: string;
 }

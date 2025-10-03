@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MultiImageUploader } from "@/components/common/MultiImageUploader";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ProductFormValues } from "../schemas";
 import { useCategories } from "@/features/category/hooks/useCategories";
 import {
@@ -38,41 +38,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ImageUrl } from "@/features/shared/types";
+import PriceInput from "@/components/shared/PriceInput";
 
 export default function ProductFormFields() {
   const form = useFormContext<ProductFormValues>();
-  const [displayPrice, setDisplayPrice] = useState(() =>
-    form.getValues("price")
-      ? new Intl.NumberFormat("vi-VN").format(form.getValues("price"))
-      : ""
-  );
+
   const isRetail = form.watch("isRetail");
   const { data: categories = [] } = useCategories();
   const productCategories = categories.filter((c) => c.type === "product");
   const selectedCategoryIds = form.watch("categories") || [];
   const isConsumable = form.watch("isConsumable");
   const baseUnit = form.watch("baseUnit");
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "price" && value.price !== undefined) {
-        const currentNumericPrice = parseFloat(
-          displayPrice.replace(/[^0-9]/g, "")
-        );
-        if (value.price !== currentNumericPrice) {
-          setDisplayPrice(value.price.toLocaleString("vi-VN"));
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, displayPrice]);
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^0-9]/g, "");
-    const numberValue = parseInt(rawValue, 10) || 0;
-    form.setValue("price", numberValue, { shouldValidate: true });
-    setDisplayPrice(numberValue.toLocaleString("vi-VN"));
-  };
 
   const queryClient = useQueryClient();
 
@@ -136,12 +112,14 @@ export default function ProductFormFields() {
                     <div className="flex gap-1 flex-wrap">
                       {selectedCategoryIds.length > 0
                         ? selectedCategoryIds.map((id) => {
+                            // Tìm đối tượng category đầy đủ từ ID
                             const category = productCategories.find(
                               (c) => c.id === id
                             );
                             return (
                               <Badge key={id} variant="secondary">
-                                {category ? category.name : "..."}
+                                {/* Hiển thị tên */}
+                                {category ? category.name : "Loading..."}
                               </Badge>
                             );
                           })
@@ -306,21 +284,15 @@ export default function ProductFormFields() {
         <FormField
           control={form.control}
           name="price"
-          render={() => (
+          // SỬA 1: Nhận vào { field }
+          render={({ field }) => (
             <FormItem style={{ display: isRetail ? "block" : "none" }}>
               <FormLabel>Giá bán</FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input
-                    className="pr-12"
-                    value={displayPrice}
-                    onChange={handlePriceChange}
-                  />
-                </FormControl>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-muted-foreground">.000 VND</span>
-                </div>
-              </div>
+              {/* SỬA 2: Đặt PriceInput trực tiếp trong FormControl */}
+              <FormControl>
+                {/* SỬA 3: Truyền `field.name` để kết nối với form state */}
+                <PriceInput name={field.name} label="Giá bán" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

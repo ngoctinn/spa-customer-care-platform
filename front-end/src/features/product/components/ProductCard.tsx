@@ -2,17 +2,17 @@
 import { Product } from "@/features/product/types";
 import DisplayCard from "@/components/common/DisplayCard";
 import { Badge } from "@/components/ui/badge";
+import { getPrimaryImageUrl } from "@/lib/image-utils";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const primaryImage = product.images?.find((img) => img.is_primary === true);
-  const primaryImageUrl =
-    primaryImage?.url ??
-    product.images?.[0]?.url ??
-    "/images/default-product.jpg";
+  const primaryImageUrl = getPrimaryImageUrl(
+    product.images,
+    "/images/default-product.jpg"
+  );
   return (
     <DisplayCard
       href={`/products/${product.id}`}

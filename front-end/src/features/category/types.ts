@@ -1,9 +1,7 @@
-import { UUID } from "crypto";
-
 export type CategoryType = "service" | "product" | "treatment";
 
 export interface Category {
-  id: UUID;
+  id: string;
   name: string;
   description?: string;
   type: CategoryType;

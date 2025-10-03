@@ -25,16 +25,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/shared/password-input";
+import { useAuth } from "@/contexts/AuthContexts";
 
-import { useState, useTransition } from "react";
-
-import { login, fetchProfile } from "@/features/auth/apis/auth_api";
+import { useTransition } from "react";
 
 import { toast } from "sonner";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
-  const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -48,14 +47,20 @@ export const LoginForm = () => {
     startTransition(async () => {
       // Logic xử lý đăng nhập ở đây
       try {
-        const data = await login(values.email, values.password);
-        console.log("Đăng nhập thành công:", data);
-        toast.success("Đăng nhập thành công!", data);
+        await login(values);
+        console.log("Đăng nhập thành công", values);
+
+        toast.success("Đăng nhập thành công!", {
+          description: "Chào mừng bạn đã quay trở lại.",
+        });
       } catch (error) {
         console.error("Đăng nhập thất bại:", error);
-        toast.error("Đăng nhập thất bại. Vui lòng thử lại.");
+        if (error instanceof Error) {
+          toast.error("Đăng nhập thất bại", { description: error.message });
+        } else {
+          toast.error("Đăng nhập thất bại. Vui lòng thử lại.");
+        }
       }
-      console.log(values);
     });
   };
 
@@ -63,19 +68,6 @@ export const LoginForm = () => {
     // Logic xử lý đăng nhập bằng Google
     // test toast
     toast("Chức năng đăng nhập bằng Google đang được phát triển.");
-  };
-
-  const handleShowProfile = () => {
-    startTransition(async () => {
-      try {
-        const profile = await fetchProfile();
-        console.log("Thông tin người dùng:", profile);
-        alert(`Xin chào, ${profile.full_name || profile.email}`);
-      } catch (error: unknown) {
-        console.error("Lỗi khi lấy thông tin:", error);
-        alert((error as Error).message);
-      }
-    });
   };
 
   return (
@@ -133,15 +125,6 @@ export const LoginForm = () => {
 
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? "Đang xử lý..." : "Đăng Nhập"}
-            </Button>
-            {/* Thêm 1 nút để test hiển thị thông tin người dùng */}
-            <Button
-              type="button"
-              className="w-full"
-              onClick={handleShowProfile}
-              disabled={isPending}
-            >
-              Hiển thị thông tin người dùng (Sau khi đăng nhập)
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 mt-4">

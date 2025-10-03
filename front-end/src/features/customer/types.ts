@@ -1,9 +1,7 @@
-import { UUID } from "crypto";
-
 export interface PurchasedService {
-  service_id: UUID;
+  service_id: string;
   quantity: number;
-  purchase_invoice_id: UUID;
+  purchase_invoice_id: string;
 }
 
 export interface NotificationSettings {
@@ -14,12 +12,12 @@ export interface NotificationSettings {
 export interface CustomerPreferences {
   allergies?: string;
   service_notes?: string;
-  favorite_technician_ids?: UUID[];
+  favorite_technician_ids?: string[];
 }
 
 export interface Customer {
-  id: UUID;
-  user_id: UUID;
+  id: string;
+  user_id: string;
   name: string;
   phone: string;
   avatar_url?: string;

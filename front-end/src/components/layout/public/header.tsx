@@ -15,6 +15,7 @@ import {
   Menu,
   Moon,
   Sun,
+  UserCircle2,
 } from "lucide-react";
 
 import {
@@ -44,14 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import useCartStore from "@/features/cart/stores/cart-store";
 import { Badge } from "@/components/ui/badge";
-
-// Giả sử đây là dữ liệu người dùng bạn lấy được sau khi đăng nhập
-const user = {
-  name: "Ngoc Tinn",
-  email: "ngoctinn@example.com",
-  avatarUrl: "https://github.com/shadcn.png",
-};
-const isLoggedIn = true; // Change this to test logged in/out states
+import { useAuth } from "@/contexts/AuthContexts";
 
 const navLinks = [
   { href: "/services", label: "Dịch vụ" },
@@ -66,6 +60,8 @@ export function Header() {
   const handleThemeToggle = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
+  const { user, logout } = useAuth();
+  const isLoggedIn = !!user;
 
   const { items } = useCartStore();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -173,57 +169,93 @@ export function Header() {
           </Button>
 
           {/* User Avatar Dropdown or Login/Register */}
-          {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-9 w-9 rounded-full"
-                >
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.avatarUrl} alt={`@${user.name}`} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem>
-                  <Link href="/dashboard" className="flex items-center w-full">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Trang điều khiển</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleThemeToggle}>
-                  {theme === "light" ? (
-                    <Moon className="mr-2 h-4 w-4" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
+                  {isLoggedIn ? (
+                    <>
+                      <AvatarImage
+                        src={user?.avatar_url ?? ""}
+                        alt={`@${user?.full_name ?? "user"}`}
+                      />
+                      <AvatarFallback>
+                        {user?.full_name?.charAt(0) ??
+                          user?.email?.charAt(0) ??
+                          "A"}
+                      </AvatarFallback>
+                    </>
                   ) : (
-                    <Sun className="mr-2 h-4 w-4" />
+                    <AvatarFallback>
+                      <UserCircle2 className="h-6 w-6 text-muted-foreground" />
+                    </AvatarFallback>
                   )}
-                  <span>
-                    {theme === "light" ? "Chế độ tối" : "Chế độ sáng"}
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Đăng xuất</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <Button asChild>
-                <Link href="/auth/login">
-                  <LogIn className="mr-2 h-4 w-4" /> Đăng nhập
-                </Link>
+                </Avatar>
               </Button>
-              <Button variant="outline" asChild>
-                <Link href="/auth/register">
-                  <UserPlus className="mr-2 h-4 w-4" /> Đăng ký
-                </Link>
-              </Button>
-            </div>
-          )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {isLoggedIn ? (
+                <>
+                  <DropdownMenuItem>
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center w-full"
+                    >
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Trang điều khiển</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleThemeToggle}>
+                    {theme === "light" ? (
+                      <Moon className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Sun className="mr-2 h-4 w-4" />
+                    )}
+                    <span>
+                      {theme === "light" ? "Chế độ tối" : "Chế độ sáng"}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Đăng xuất</span>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem>
+                    <Link
+                      href="/auth/login"
+                      className="flex items-center w-full"
+                    >
+                      <LogIn className="mr-2 h-4 w-4" />
+                      <span>Đăng nhập</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link
+                      href="/auth/register"
+                      className="flex items-center w-full"
+                    >
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      <span>Đăng ký</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleThemeToggle}>
+                    {theme === "light" ? (
+                      <Moon className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Sun className="mr-2 h-4 w-4" />
+                    )}
+                    <span>
+                      {theme === "light" ? "Chế độ tối" : "Chế độ sáng"}
+                    </span>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Shopping Cart */}
           <Button variant="ghost" size="icon" asChild>

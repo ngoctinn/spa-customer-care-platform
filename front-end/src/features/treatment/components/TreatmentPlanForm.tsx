@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { addCategory } from "@/features/category/api/category.api";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/select";
 import { v4 as uuidv4 } from "uuid";
 import { ImageUrl } from "@/features/shared/types";
-// highlight-end
+import PriceInput from "@/components/shared/PriceInput";
 
 export default function TreatmentPlanFormFields() {
   const queryClient = useQueryClient();
@@ -55,11 +55,6 @@ export default function TreatmentPlanFormFields() {
   const { control, watch, setValue, formState } =
     useFormContext<TreatmentPlanFormValues>();
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [displayPrice, setDisplayPrice] = useState(() =>
-    control._getWatch("price")
-      ? new Intl.NumberFormat("vi-VN").format(control._getWatch("price"))
-      : ""
-  );
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -70,27 +65,6 @@ export default function TreatmentPlanFormFields() {
   const { data: services = [] } = useServices();
   const treatmentCategories = categories.filter((c) => c.type === "treatment");
   const selectedCategoryIds = form.watch("categories") || [];
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "price" && value.price !== undefined) {
-        const currentNumericPrice = parseFloat(
-          displayPrice.replace(/[^0-9]/g, "")
-        );
-        if (value.price !== currentNumericPrice) {
-          setDisplayPrice(value.price.toLocaleString("vi-VN"));
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, displayPrice]);
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^0-9]/g, "");
-    const numberValue = parseInt(rawValue, 10) || 0;
-    form.setValue("price", numberValue, { shouldValidate: true });
-    setDisplayPrice(numberValue.toLocaleString("vi-VN"));
-  };
 
   const addCategoryMutation = useMutation({
     mutationFn: addCategory,
@@ -148,11 +122,18 @@ export default function TreatmentPlanFormFields() {
                   >
                     <div className="flex gap-1 flex-wrap">
                       {selectedCategoryIds.length > 0
-                        ? selectedCategoryIds.map((catName) => (
-                            <Badge key={catName} variant="secondary">
-                              {catName}
-                            </Badge>
-                          ))
+                        ? selectedCategoryIds.map((id) => {
+                            // Tìm đối tượng category đầy đủ từ ID
+                            const category = treatmentCategories.find(
+                              (c) => c.id === id
+                            );
+                            return (
+                              <Badge key={id} variant="secondary">
+                                {/* Hiển thị tên */}
+                                {category ? category.name : "Loading..."}
+                              </Badge>
+                            );
+                          })
                         : "Chọn danh mục..."}
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -170,17 +151,17 @@ export default function TreatmentPlanFormFields() {
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(category.name)}
+                              checked={field.value?.includes(category.id)}
                               onCheckedChange={(checked) => {
                                 const currentValues = field.value || [];
                                 return checked
                                   ? field.onChange([
                                       ...currentValues,
-                                      category.name,
+                                      category.id,
                                     ])
                                   : field.onChange(
                                       currentValues.filter(
-                                        (value) => value !== category.name
+                                        (value) => value !== category.id
                                       )
                                     );
                               }}
@@ -230,21 +211,15 @@ export default function TreatmentPlanFormFields() {
         <FormField
           control={control}
           name="price"
-          render={() => (
+          render={(
+            { field } // Nhận vào { field }
+          ) => (
             <FormItem>
               <FormLabel>Giá liệu trình</FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input
-                    value={displayPrice}
-                    onChange={handlePriceChange}
-                    className="pr-12"
-                  />
-                </FormControl>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-muted-foreground">VND</span>
-                </div>
-              </div>
+              <FormControl>
+                {/* Thay thế bằng PriceInput */}
+                <PriceInput name={field.name} label="Giá liệu trình" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -43,7 +43,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UUID } from "crypto";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -113,7 +112,7 @@ export default function CheckoutPage() {
 
     // <-- SỬA LỖI MAP INVOICEITEM
     const invoiceItems: InvoiceItem[] = items.map((item) => ({
-      id: item.id as UUID,
+      id: item.id,
       name: item.name,
       quantity: item.quantity,
       price_per_unit: item.price,
