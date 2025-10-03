@@ -16,8 +16,12 @@ from app.core.config import settings
 email_verification_serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
 
 # Cấu hình cho việc tạo token
-email_verification_serializer = URLSafeTimedSerializer(settings.SECRET_KEY, salt="email-confirm-salt")
-password_reset_serializer = URLSafeTimedSerializer(settings.SECRET_KEY, salt="password-reset-salt")
+email_verification_serializer = URLSafeTimedSerializer(
+    settings.SECRET_KEY, salt="email-confirm-salt"
+)
+password_reset_serializer = URLSafeTimedSerializer(
+    settings.SECRET_KEY, salt="password-reset-salt"
+)
 
 
 # Cấu hình OAuth cho Google
@@ -69,6 +73,31 @@ async def send_verification_email(user: User):
     )
 
 
+# gửi email chào mừng và yêu cầu đặt mật khẩu cho user mới do admin tạo
+async def send_welcome_and_set_password_email(user: User):
+    """
+    Tạo token reset mật khẩu và gửi email chào mừng cho người dùng mới (do admin tạo).
+    """
+    # Token có hiệu lực trong 7 ngày (phù hợp cho việc kích hoạt tài khoản)
+    token = password_reset_serializer.dumps(str(user.id))
+    # Link đến trang đặt mật khẩu trên frontend của bạn
+    set_password_link = f"http://localhost:3000/auth/reset-password?token={token}"
+
+    body = f"""
+    <p>Chào {user.full_name},</p>
+    <p>Một tài khoản đã được tạo cho bạn trên hệ thống của chúng tôi. Vui lòng nhấp vào liên kết bên dưới để đặt mật khẩu và kích hoạt tài khoản:</p>
+    <p><a href="{set_password_link}">Đặt mật khẩu và Kích hoạt</a></p>
+    <p>Liên kết này sẽ có hiệu lực trong 7 ngày.</p>
+    <p>Nếu bạn không mong muốn điều này, vui lòng bỏ qua email này.</p>
+    """
+
+    await send_email(
+        subject="Chào mừng bạn! Vui lòng kích hoạt tài khoản",
+        recipients=[user.email],
+        body=body,
+    )
+
+
 def verify_email_token(token: str) -> Optional[str]:
     """
     Giải mã token xác thực email. Trả về user_id nếu hợp lệ.
@@ -116,13 +145,14 @@ def update_password(
 
     return user
 
+
 async def send_password_reset_email(user: User):
     """
     Tạo token và gửi email reset mật khẩu.
     """
     # Token có hiệu lực trong 15 phút (900 giây)
     token = password_reset_serializer.dumps(str(user.id))
-    reset_link = f"http://localhost:3000/reset-password?token={token}" # Link đến trang reset trên frontend của bạn
+    reset_link = f"http://localhost:3000/reset-password?token={token}"  # Link đến trang reset trên frontend của bạn
 
     body = f"""
     <p>Chào {user.full_name},</p>
@@ -135,6 +165,7 @@ async def send_password_reset_email(user: User):
     await send_email(
         subject="Yêu cầu đặt lại mật khẩu", recipients=[user.email], body=body
     )
+
 
 def verify_password_reset_token(token: str) -> Optional[str]:
     """

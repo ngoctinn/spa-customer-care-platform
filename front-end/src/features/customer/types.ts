@@ -1,3 +1,5 @@
+import { User } from "@/features/user/types";
+
 export interface PurchasedService {
   service_id: string;
   quantity: number;
@@ -18,25 +20,20 @@ export interface CustomerPreferences {
 export interface Customer {
   id: string;
   user_id: string;
-  name: string;
-  phone: string;
-  avatar_url?: string;
   total_appointments: number;
-  last_visit: Date;
+  last_visit: Date | null;
   notes?: string;
   purchased_services?: PurchasedService[];
   preferences?: CustomerPreferences;
   notification_settings?: NotificationSettings;
   loyalty_points?: number;
-  rank?: "Bronze" | "Silver" | "Gold"; // Sẽ liên kết với LoyaltyTier
+  rank?: string;
   joined_date: Date;
   is_deleted: boolean;
   created_at: Date;
   updated_at: Date;
 }
 
-// Dùng khi cần kết hợp thông tin từ bảng `users`
-export type FullCustomerProfile = Customer & {
-  email: string;
-  status: "active" | "inactive";
+export type FullCustomerProfile = Omit<User, "roles"> & {
+  customer_profile: Customer; // Lồng thông tin customer vào
 };

@@ -66,3 +66,4 @@ mock_products_data = [
 def get_all_products():
     """Lấy danh sách tất cả sản phẩm (dữ liệu mô phỏng)."""
     return mock_products_data
+

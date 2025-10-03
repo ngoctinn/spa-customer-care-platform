@@ -37,6 +37,13 @@ class UserCreate(UserBase):
         return v
 
 
+# Schema cho admin tạo người dùng mới (có thể gán vai trò ngay)
+class AdminCreateUserRequest(UserBase):
+    role_id: uuid.UUID | None = Field(
+        default=None, description="ID của vai trò sẽ gán cho người dùng"
+    )
+
+
 class UserUpdateMe(SQLModel):
     email: EmailStr | None = Field(default=None, max_length=255)
     full_name: str | None = Field(default=None, max_length=100)

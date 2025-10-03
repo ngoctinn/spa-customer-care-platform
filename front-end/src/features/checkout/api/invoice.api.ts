@@ -5,6 +5,7 @@ import { Customer } from "@/features/customer/types";
 import { Product } from "@/features/product/types";
 // import { redeemLoyaltyPoints } from "@/features/customer/api/customer.api";
 // import { debitPrepaidCard } from "@/features/prepaid-card/api/prepaid-card.api";
+import apiClient from "@/lib/apiClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const INVOICES_API_URL = `${API_URL}/invoices`;
@@ -53,8 +54,14 @@ export const createInvoice = async (
       throw new Error("Failed to create invoice.");
     }
 
-    const newInvoice: Invoice = await response.json();
-
+    const newInvoice = await apiClient<Invoice>("/invoices", {
+      method: "POST",
+      body: JSON.stringify({
+        ...invoiceData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+    });
     // CÁC BƯỚC 3, 4, 5... (Cập nhật kho, điểm thưởng, v.v...)
     // Giữ nguyên logic cập nhật của bạn ở đây
 

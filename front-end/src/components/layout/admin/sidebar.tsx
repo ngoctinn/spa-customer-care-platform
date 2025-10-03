@@ -10,6 +10,7 @@ import {
   Tag,
   Sparkles,
   Scissors,
+  UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +18,7 @@ const navLinks = [
   { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/dashboard/orders", label: "Đơn hàng", icon: ShoppingCart },
   { href: "/dashboard/customers", label: "Khách hàng", icon: Users },
+  { href: "/dashboard/staff", label: "Nhân viên", icon: UserCog },
   { href: "/dashboard/services", label: "Dịch vụ", icon: Scissors },
   { href: "/dashboard/products", label: "Sản phẩm", icon: Tag },
   { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
