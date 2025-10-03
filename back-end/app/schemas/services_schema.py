@@ -3,15 +3,9 @@ from typing import Optional, List
 from sqlmodel import SQLModel, Field
 import uuid
 
-# THAY ĐỔI: Import schema chung
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
-# XÓA BỎ: Các class ServiceImageBase, ServiceImagePublic, ServiceCategory...
 
-
-# =================================================================
-# SCHEMAS CHO DỊCH VỤ
-# =================================================================
 class ServiceBase(SQLModel):
     name: str = Field(max_length=100)
     description: str
@@ -22,8 +16,9 @@ class ServiceBase(SQLModel):
     preparation_notes: str | None
     aftercare_instructions: str | None
     contraindications: str | None
-    # Vẫn giữ category_id để tạo/cập nhật dịch vụ
-    category_id: uuid.UUID = Field(foreign_key="category.id")
+
+    # THAY ĐỔI: Chấp nhận một danh sách các ID danh mục
+    category_ids: List[uuid.UUID] = Field(description="Danh sách ID của các danh mục")
 
 
 class ServiceCreate(ServiceBase):
@@ -38,17 +33,17 @@ class ServiceUpdate(SQLModel):
     preparation_notes: str | None = Field(default=None)
     aftercare_instructions: str | None = Field(default=None)
     contraindications: str | None = Field(default=None)
-    category_id: uuid.UUID | None = Field(default=None)
+    # THAY ĐỔI: Cho phép cập nhật danh sách danh mục
+    category_ids: List[uuid.UUID] | None = Field(default=None)
 
 
 class ServicePublic(ServiceBase):
     id: uuid.UUID
 
 
-# Schema hiển thị đầy đủ thông tin dịch vụ kèm theo danh mục và hình ảnh
 class ServicePublicWithDetails(ServicePublic):
-    # THAY ĐỔI: Sử dụng schema chung
-    category: CategoryPublic
+    # THAY ĐỔI: Hiển thị danh sách các danh mục
+    categories: List[CategoryPublic] = []
     images: List[ImagePublic] = []
 
 
