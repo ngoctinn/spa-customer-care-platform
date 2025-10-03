@@ -1,8 +1,7 @@
 // src/features/appointment/api/appointment.api.ts
 import { BookingState } from "@/features/booking/schemas";
 import { Appointment } from "@/features/appointment/types";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import apiClient from "@/lib/apiClient";
 
 /**
  * Gửi thông tin đặt lịch hẹn mới lên server
@@ -27,19 +26,8 @@ export async function createAppointment(
     customer_note: bookingData.customerInfo?.note,
   };
 
-  const response = await fetch(`${API_URL}/appointments`, {
-    // Giả sử endpoint là /appointments
+  return apiClient<Appointment>("/appointments", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(payload),
   });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || "Tạo lịch hẹn thất bại");
-  }
-
-  return response.json();
 }

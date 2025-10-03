@@ -64,7 +64,7 @@ export default function TimeSelection({
                     />
                     <Label
                       htmlFor={time}
-                      className="flex h-12 w-full items-center justify-center rounded-md border-2 border-muted bg-popover text-center text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                      className="flex min-h-12 w-full items-center justify-center rounded-md border-2 border-muted bg-popover text-center text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer py-2 px-1"
                     >
                       {time}
                     </Label>

@@ -15,6 +15,7 @@ export type UserStatus = "active" | "inactive" | "pending_verification";
 export interface User {
   id: string;
   email: string;
+  phone?: string | null;
   full_name: string;
   avatar_url?: string;
   role: Role[];
@@ -25,5 +26,6 @@ export interface User {
   updated_at: Date;
   is_active: boolean;
   is_superuser: boolean;
-  roles: Role[]; // <-- Sửa từ 'role: UserRole' thành một mảng các Role
+  is_email_verified: boolean;
+  roles: Role[];
 }

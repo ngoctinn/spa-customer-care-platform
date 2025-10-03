@@ -1,3 +1,5 @@
+import { User } from "@/features/user/types";
+
 export interface PurchasedService {
   service_id: string;
   quantity: number;
@@ -35,8 +37,6 @@ export interface Customer {
   updated_at: Date;
 }
 
-// Dùng khi cần kết hợp thông tin từ bảng `users`
-export type FullCustomerProfile = Customer & {
-  email: string;
-  status: "active" | "inactive";
+export type FullCustomerProfile = Omit<User, "roles"> & {
+  customer_profile: Customer; // Lồng thông tin customer vào
 };
