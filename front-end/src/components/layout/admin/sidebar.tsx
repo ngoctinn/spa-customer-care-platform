@@ -2,58 +2,78 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  Users,
-  ClipboardList,
-  Tag,
-  Sparkles,
-  Scissors,
-  UserCog,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { adminBrand, adminNavigation } from "@/config/admin-navigation";
+import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/dashboard/orders", label: "Đơn hàng", icon: ShoppingCart },
-  { href: "/dashboard/customers", label: "Khách hàng", icon: Users },
-  { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
-  { href: "/dashboard/staff", label: "Nhân viên", icon: UserCog },
-  { href: "/dashboard/services", label: "Dịch vụ", icon: Scissors },
-  { href: "/dashboard/products", label: "Sản phẩm", icon: Tag },
-  { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
-  { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
-];
+type AdminSidebarProps = {
+  /**
+   * Desktop sidebar is hidden on smaller breakpoints while mobile variant is
+   * rendered inside a sheet/drawer.
+   */
+  variant?: "desktop" | "mobile";
+  className?: string;
+  onNavigate?: () => void;
+};
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  variant = "desktop",
+  className,
+  onNavigate,
+}: AdminSidebarProps) {
   const pathname = usePathname();
+  const BrandIcon = adminBrand.icon;
+
+  const getIsActive = (href: string, exact?: boolean) => {
+    if (exact) {
+      return pathname === href;
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 border-r bg-background">
-      <div className="p-4 border-b">
+    <aside
+      className={cn(
+        "flex w-64 flex-col bg-background",
+        variant === "desktop"
+          ? "hidden border-r lg:flex"
+          : "flex border-r border-border/60 lg:hidden",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2 border-b p-4 font-semibold text-lg">
         <Link
-          href="/dashboard"
-          className="flex items-center gap-2 font-bold text-lg"
+          href={adminBrand.href}
+          className="flex items-center gap-2"
+          onClick={() => onNavigate?.()}
         >
-          <Sparkles className="h-6 w-6 text-primary" />
-          <span>Serenity Spa</span>
+          <BrandIcon className="h-6 w-6 text-primary" aria-hidden="true" />
+          <span>{adminBrand.name}</span>
         </Link>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
-        {navLinks.map((link) => (
-          <Button
-            key={link.href}
-            asChild
-            variant={pathname === link.href ? "secondary" : "ghost"}
-            className="w-full justify-start"
-          >
-            <Link href={link.href}>
-              <link.icon className="mr-2 h-4 w-4" />
-              {link.label}
-            </Link>
-          </Button>
-        ))}
+      <nav aria-label="Điều hướng quản trị" className="flex-1 space-y-2 p-4">
+        {adminNavigation.map((item) => {
+          const isActive = getIsActive(item.href, item.exact);
+          const Icon = item.icon;
+
+          return (
+            <Button
+              key={item.href}
+              asChild
+              variant={isActive ? "secondary" : "ghost"}
+              className="w-full justify-start gap-2"
+            >
+              <Link href={item.href} onClick={() => onNavigate?.()}>
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span>{item.label}</span>
+                {isActive && (
+                  <span className="sr-only">(đang chọn)</span>
+                )}
+              </Link>
+            </Button>
+          );
+        })}
       </nav>
     </aside>
   );
