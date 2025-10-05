@@ -10,14 +10,13 @@ export interface Service {
   categories: Category[];
   images: ImageUrl[];
   primary_image_id?: string | null;
-  status: "active" | "inactive";
-  preparation_notes: string;
-  aftercare_instructions: string;
-  contraindications: string;
-  is_deleted: boolean;
+  preparation_notes?: string | null;
+  aftercare_instructions?: string | null;
+  contraindications?: string | null;
+  is_deleted?: boolean;
   consumables?: ServiceConsumable[];
-  created_at: Date;
-  updated_at: Date;
+  created_at?: string;
+  updated_at?: string;
 }
 export interface ServiceConsumable {
   productId: string;

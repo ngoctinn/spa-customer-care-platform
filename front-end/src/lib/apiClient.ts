@@ -2,49 +2,98 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+export class ApiError<T = unknown> extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly data?: T
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+function isFormData(body: BodyInit | null | undefined): body is FormData {
+  if (typeof FormData === "undefined" || !body) {
+    return false;
+  }
+
+  return body instanceof FormData;
+}
+
 /**
  * Một trình bao bọc (wrapper) cho hàm fetch() để đơn giản hóa việc gọi API.
  * @param endpoint Đường dẫn API (ví dụ: '/services')
  * @param options Các tùy chọn của RequestInit (method, body, headers...)
  * @returns Dữ liệu JSON từ API trả về
- * @throws {Error} Ném ra lỗi nếu yêu cầu thất bại
+ * @throws {ApiError} Ném ra lỗi nếu yêu cầu thất bại
  */
 async function apiClient<T>(
   endpoint: string,
-  options?: RequestInit
+  options: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    // Thêm dấu / để đảm bảo đường dẫn đúng
-    // Mặc định headers, có thể được ghi đè bởi options
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    credentials: "include", // Giữ lại để xử lý cookie
-    ...options,
-  });
+  const { headers, body, cache, ...restOptions } = options;
 
-  // Xử lý lỗi tập trung
-  if (!response.ok) {
-    let errorData;
-    try {
-      errorData = await response.json();
-    } catch (e) {
-      // Nếu không thể parse JSON, dùng status text
-      throw new Error(response.statusText || "Đã có lỗi xảy ra từ máy chủ.");
-    }
-    // Ưu tiên thông báo lỗi chi tiết từ backend
-    throw new Error(errorData.detail || "Yêu cầu API thất bại.");
+  const defaultHeaders: HeadersInit = {};
+
+  if (!isFormData(body)) {
+    defaultHeaders["Content-Type"] = "application/json";
+    defaultHeaders["Accept"] = "application/json";
   }
 
-  // Nếu request thành công và có nội dung trả về
-  if (response.status !== 204) {
-    // 204 No Content
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, {
+      credentials: "include",
+      cache: cache ?? "no-store",
+      headers: {
+        ...defaultHeaders,
+        ...headers,
+      },
+      body,
+      ...restOptions,
+    });
+  } catch (error) {
+    throw new ApiError(
+      "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.",
+      0,
+      error
+    );
+  }
+
+  if (!response.ok) {
+    let errorData: unknown = null;
+
+    try {
+      errorData = await response.json();
+    } catch (error) {
+      // Không parse được JSON, giữ nguyên errorData = null
+    }
+
+    const message =
+      (typeof errorData === "object" && errorData && "detail" in errorData
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (errorData as any).detail
+        : undefined) ||
+      response.statusText ||
+      "Yêu cầu API thất bại.";
+
+    throw new ApiError(message, response.status, errorData ?? undefined);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
     return response.json();
   }
 
-  // Trả về undefined nếu không có nội dung (ví dụ: phương thức DELETE)
-  return undefined as T;
+  // Nếu không phải JSON, trả về response text
+  const text = await response.text();
+  return text as unknown as T;
 }
 
 export default apiClient;

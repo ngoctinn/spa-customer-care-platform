@@ -1,6 +1,7 @@
 // src/features/treatment/api/treatment.api.ts
 import { TreatmentPlan } from "@/features/treatment/types";
 import apiClient from "@/lib/apiClient";
+import { buildQueryString } from "@/lib/queryString";
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { ImageUrl } from "@/features/shared/types";
 import { uploadFile } from "@/features/upload/upload.api";
@@ -78,8 +79,17 @@ export async function updateTreatmentPlan({
 /**
  * Lấy danh sách tất cả các liệu trình
  */
-export const getTreatmentPlans = async (): Promise<TreatmentPlan[]> => {
-  return apiClient<TreatmentPlan[]>("/treatment-plans");
+export interface GetTreatmentPlansParams {
+  skip?: number;
+  limit?: number;
+  search?: string;
+}
+
+export const getTreatmentPlans = async (
+  params?: GetTreatmentPlansParams
+): Promise<TreatmentPlan[]> => {
+  const query = buildQueryString(params);
+  return apiClient<TreatmentPlan[]>(`/treatment-plans${query}`);
 };
 
 /**

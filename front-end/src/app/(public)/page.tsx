@@ -1,12 +1,15 @@
 // src/app/(public)/page.tsx
 import { Button } from "@/components/ui/button";
+import { DataStateMessage } from "@/components/common/DataStateMessage";
+import { FeaturedSection } from "@/components/common/FeaturedSection";
+import ProductCard from "@/features/product/components/ProductCard";
+import { getProducts } from "@/features/product/api/product.api";
+import PromotionCard from "@/features/promotion/components/PromotionCard";
+import { getPromotions } from "@/features/promotion/api/promotion.api";
 import { getServices } from "@/features/service/api/service.api";
 import ServiceCard from "@/features/service/components/ServiceCard";
-import { getProducts } from "@/features/product/api/product.api";
-import ProductCard from "@/features/product/components/ProductCard";
 import { getTreatmentPlans } from "@/features/treatment/api/treatment.api";
 import TreatmentPlanCard from "@/features/treatment/components/TreatmentPlanCard";
-import { FeaturedSection } from "@/components/common/FeaturedSection";
 import Link from "next/link";
 import { CalendarPlus } from "lucide-react";
 import type { Metadata } from "next";
@@ -58,20 +61,41 @@ function HeroSection() {
   );
 }
 
+interface SectionState<T> {
+  items: T[];
+  error?: string;
+}
+
+function parseSettledResult<T>(
+  result: PromiseSettledResult<T[]>
+): SectionState<T> {
+  if (result.status === "fulfilled") {
+    return { items: result.value ?? [] };
+  }
+
+  const reason = result.reason;
+  const errorMessage =
+    reason instanceof Error
+      ? reason.message
+      : "Không thể tải dữ liệu. Vui lòng thử lại.";
+
+  return { items: [], error: errorMessage };
+}
+
 // --- MAIN HOMEPAGE COMPONENT ---
 export default async function HomePage() {
-  // Lấy dữ liệu đồng thời để tối ưu tốc độ tải trang
-  // const [services, treatmentPlans, products] = await Promise.all([
-  //   getServices(),
-  //   getTreatmentPlans(),
-  //   getProducts(),
-  // ]);
-  const services = await getServices();
+  const [servicesResult, treatmentPlansResult, productsResult, promotionsResult] =
+    await Promise.allSettled([
+      getServices({ limit: 3 }),
+      getTreatmentPlans({ limit: 3 }),
+      getProducts({ limit: 4 }),
+      getPromotions(),
+    ]);
 
-  // Lấy 3 mục đầu tiên để hiển thị
-  const featuredServices = services.slice(0, 3);
-  // const featuredTreatmentPlans = treatmentPlans.slice(0, 3);
-  // const featuredProducts = products.slice(0, 3);
+  const servicesState = parseSettledResult(servicesResult);
+  const treatmentPlansState = parseSettledResult(treatmentPlansResult);
+  const productsState = parseSettledResult(productsResult);
+  const promotionsState = parseSettledResult(promotionsResult);
 
   return (
     <div>
@@ -83,38 +107,108 @@ export default async function HomePage() {
         description="Khám phá các dịch vụ được yêu thích nhất, mang lại hiệu quả tức thì và cảm giác thư thái."
         viewAllLink="/services"
       >
-        {featuredServices.map((service) => (
-          <ServiceCard key={service.id} service={service} />
-        ))}
+        {servicesState.error ? (
+          <DataStateMessage
+            variant="error"
+            message="Không thể tải danh sách dịch vụ"
+            description={servicesState.error}
+            className="col-span-full"
+          />
+        ) : servicesState.items.length === 0 ? (
+          <DataStateMessage
+            message="Hiện chưa có dịch vụ nổi bật để hiển thị."
+            className="col-span-full"
+          />
+        ) : (
+          servicesState.items.slice(0, 3).map((service) => (
+            <ServiceCard key={service.id} service={service} />
+          ))
+        )}
       </FeaturedSection>
 
       {/* Divider */}
       <div className="border-b" />
 
       {/* Featured Treatment Plans */}
-      {/* <FeaturedSection
+      <FeaturedSection
         title="Liệu Trình Chuyên Sâu"
         description="Đầu tư cho vẻ đẹp dài lâu với các gói liệu trình được thiết kế khoa học và chuyên biệt."
         viewAllLink="/treatment-plans"
       >
-        {featuredTreatmentPlans.map((plan) => (
-          <TreatmentPlanCard key={plan.id} plan={plan} />
-        ))}
-      </FeaturedSection> */}
+        {treatmentPlansState.error ? (
+          <DataStateMessage
+            variant="error"
+            message="Không thể tải danh sách liệu trình"
+            description={treatmentPlansState.error}
+            className="col-span-full"
+          />
+        ) : treatmentPlansState.items.length === 0 ? (
+          <DataStateMessage
+            message="Hiện chưa có liệu trình nào được giới thiệu."
+            className="col-span-full"
+          />
+        ) : (
+          treatmentPlansState.items.slice(0, 3).map((plan) => (
+            <TreatmentPlanCard key={plan.id} plan={plan} />
+          ))
+        )}
+      </FeaturedSection>
 
       {/* Divider */}
-      {/* <div className="border-b" /> */}
+      <div className="border-b" />
 
       {/* Featured Products */}
-      {/* <FeaturedSection
+      <FeaturedSection
         title="Sản Phẩm Cao Cấp"
         description="Mang trải nghiệm spa về nhà với các sản phẩm được chuyên gia của chúng tôi tin dùng."
         viewAllLink="/products"
+        viewAllText="Xem tất cả sản phẩm"
       >
-        {featuredProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </FeaturedSection> */}
+        {productsState.error ? (
+          <DataStateMessage
+            variant="error"
+            message="Không thể tải danh sách sản phẩm"
+            description={productsState.error}
+            className="col-span-full"
+          />
+        ) : productsState.items.length === 0 ? (
+          <DataStateMessage
+            message="Hiện chưa có sản phẩm nào được cập nhật."
+            className="col-span-full"
+          />
+        ) : (
+          productsState.items.slice(0, 4).map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
+        )}
+      </FeaturedSection>
+
+      <div className="border-b" />
+
+      <FeaturedSection
+        title="Ưu Đãi Đang Diễn Ra"
+        description="Tiết kiệm chi phí với các chương trình khuyến mãi được cập nhật liên tục."
+        viewAllLink="/promotions"
+        viewAllText="Xem tất cả khuyến mãi"
+      >
+        {promotionsState.error ? (
+          <DataStateMessage
+            variant="error"
+            message="Không thể tải danh sách khuyến mãi"
+            description={promotionsState.error}
+            className="col-span-full"
+          />
+        ) : promotionsState.items.length === 0 ? (
+          <DataStateMessage
+            message="Hiện chưa có chương trình khuyến mãi nào."
+            className="col-span-full"
+          />
+        ) : (
+          promotionsState.items.slice(0, 3).map((promotion) => (
+            <PromotionCard key={promotion.id} promotion={promotion} />
+          ))
+        )}
+      </FeaturedSection>
     </div>
   );
 }

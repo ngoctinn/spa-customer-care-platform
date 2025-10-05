@@ -9,8 +9,13 @@ interface PromotionCardProps {
 }
 
 export default function PromotionCard({ promotion }: PromotionCardProps) {
-  const formatDate = (dateString: Date) => {
-    return new Date(dateString).toLocaleDateString("vi-VN");
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return "Đang cập nhật";
+    }
+
+    return date.toLocaleDateString("vi-VN");
   };
 
   return (
