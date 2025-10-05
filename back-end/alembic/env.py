@@ -20,6 +20,7 @@ from app.models.base_model import BaseUUIDModel
 from app.models.services_model import Service
 from app.models.products_model import Product
 from app.models.catalog_model import Category, Image
+from app.models.association_tables import ServiceCategoryLink, ProductCategoryLink
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
 
 

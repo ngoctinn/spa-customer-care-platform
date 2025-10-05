@@ -23,5 +23,10 @@ pydantic_settings
 # Other
 python-multipart
 fastapi_mail
-httpx
 supabase
+
+# Development & Testing
+pytest
+pytest-asyncio
+httpx
+TestClient
