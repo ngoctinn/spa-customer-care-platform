@@ -1,6 +1,6 @@
 # app/schemas/treatment_plans_schema.py
 import uuid
-from typing import List, Optional
+from typing import Optional
 from sqlmodel import SQLModel, Field
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
@@ -28,7 +28,7 @@ class TreatmentPlanBase(SQLModel):
 
 
 class TreatmentPlanCreate(TreatmentPlanBase):
-    steps: List[TreatmentPlanStepBase] = []
+    steps: list[TreatmentPlanStepBase] = Field(default_factory=list)
 
 
 class TreatmentPlanUpdate(SQLModel):
@@ -44,6 +44,8 @@ class TreatmentPlanPublic(TreatmentPlanBase):
 
 
 class TreatmentPlanPublicWithDetails(TreatmentPlanPublic):
+    model_config = {"from_attributes": True}
+
     category: CategoryPublic
-    images: List[ImagePublic] = []
-    steps: List[TreatmentPlanStepPublic] = []
+    images: list[ImagePublic] = Field(default_factory=list)
+    steps: list[TreatmentPlanStepPublic] = Field(default_factory=list)

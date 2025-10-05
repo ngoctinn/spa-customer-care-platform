@@ -1,6 +1,6 @@
 # app/schemas/products_schema.py
 import uuid
-from typing import List, Optional
+from typing import Optional
 from sqlmodel import SQLModel, Field
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
@@ -36,5 +36,7 @@ class ProductPublic(ProductBase):
 
 
 class ProductPublicWithDetails(ProductPublic):
+    model_config = {"from_attributes": True}
+
     category: CategoryPublic
-    images: List[ImagePublic] = []
+    images: list[ImagePublic] = Field(default_factory=list)

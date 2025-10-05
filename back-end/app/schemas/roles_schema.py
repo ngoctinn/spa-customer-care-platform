@@ -1,6 +1,6 @@
 # app/schemas/roles_schema.py
 import uuid
-from typing import List
+
 from sqlmodel import Field, SQLModel
 
 
@@ -42,7 +42,9 @@ class RolePublic(RoleBase):
 
 
 class RolePublicWithPermissions(RolePublic):
-    permissions: List[PermissionPublic] = []
+    model_config = {"from_attributes": True}
+
+    permissions: list[PermissionPublic] = Field(default_factory=list)
 
 
 class AssignPermissionToRole(SQLModel):
