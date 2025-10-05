@@ -6,6 +6,8 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import Link from "next/link";
+
 import { PasswordInput } from "@/components/common/password-input";
 import { Button } from "@/components/ui/button";
 import {
@@ -128,12 +130,12 @@ export const RegisterForm = () => {
           <CardFooter className="flex flex-col items-center gap-2 mt-4">
             <p className="text-sm text-muted-foreground text-center w-full">
               Đã có tài khoản?{" "}
-              <a
+              <Link
                 className="text-primary hover:underline font-medium"
                 href="/auth/login"
               >
                 Đăng nhập tại đây
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </form>

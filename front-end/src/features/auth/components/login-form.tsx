@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { FcGoogle } from "react-icons/fc";
 import * as z from "zod";
 
+import Link from "next/link";
+
 import { PasswordInput } from "@/components/common/password-input";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,12 +105,12 @@ export const LoginForm = () => {
                 <FormItem>
                   <div className="flex items-center justify-between">
                     <FormLabel>Mật khẩu</FormLabel>
-                    <a
+                    <Link
                       href="/auth/forgot-password"
                       className="text-sm font-medium text-primary hover:underline"
                     >
                       Quên mật khẩu?
-                    </a>
+                    </Link>
                   </div>
                   <FormControl>
                     <PasswordInput
@@ -128,12 +130,12 @@ export const LoginForm = () => {
           <CardFooter className="flex flex-col gap-4 mt-4">
             <p className="text-sm text-muted-foreground text-center w-full">
               Chưa có tài khoản?{" "}
-              <a
+              <Link
                 className="text-primary hover:underline font-medium"
                 href="/auth/register"
               >
                 Đăng ký tại đây
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </form>
