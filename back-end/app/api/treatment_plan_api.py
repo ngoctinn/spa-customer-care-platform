@@ -22,14 +22,14 @@ router = APIRouter()
     response_model=TreatmentPlanPublicWithDetails,
     status_code=status.HTTP_201_CREATED,
 )
-def create_treatment_plan(
+async def create_treatment_plan(
     *,
     session: Session = Depends(get_db_session),
     treatment_plan_in: TreatmentPlanCreate,
 ):
     """Tạo mới một liệu trình cùng các bước."""
 
-    return treatment_plans_service.create_treatment_plan(
+    return await treatment_plans_service.create_treatment_plan(
         db=session, treatment_plan_in=treatment_plan_in
     )
 
@@ -57,7 +57,7 @@ def get_treatment_plan_by_id(
 
 
 @router.put("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
-def update_treatment_plan(
+async def update_treatment_plan(
     *,
     treatment_plan_id: uuid.UUID,
     treatment_plan_in: TreatmentPlanUpdate,
@@ -68,7 +68,7 @@ def update_treatment_plan(
     db_treatment_plan = treatment_plans_service.get_treatment_plan_by_id(
         db=session, treatment_plan_id=treatment_plan_id
     )
-    return treatment_plans_service.update_treatment_plan(
+    return await treatment_plans_service.update_treatment_plan(
         db=session,
         db_treatment_plan=db_treatment_plan,
         treatment_plan_in=treatment_plan_in,

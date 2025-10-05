@@ -11,6 +11,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const primaryImageUrl = getPrimaryImageUrl(
     product.images,
+    product.primary_image_id,
     "/images/default-product.jpg"
   );
   return (

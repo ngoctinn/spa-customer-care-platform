@@ -1,4 +1,5 @@
 # app/models/products_model.py
+import uuid
 from typing import List, Optional, TYPE_CHECKING
 from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
@@ -23,4 +24,16 @@ class Product(BaseUUIDModel, table=True):
     categories: List["Category"] = Relationship(
         back_populates="products", link_model=ProductCategoryLink
     )
-    images: List["Image"] = Relationship(back_populates="product")
+    images: List["Image"] = Relationship(
+        back_populates="product",
+        sa_relationship_kwargs={"foreign_keys": "Image.product_id"},
+    )
+    primary_image_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="image.id", nullable=True
+    )
+    primary_image: Optional["Image"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "Product.primary_image_id",
+        }
+    )

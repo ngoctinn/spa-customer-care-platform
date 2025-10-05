@@ -30,5 +30,17 @@ class TreatmentPlan(BaseUUIDModel, table=True):
 
     category_id: uuid.UUID = Field(foreign_key="category.id")
     category: "Category" = Relationship(back_populates="treatment_plans")
-    images: List["Image"] = Relationship(back_populates="treatment_plan")
+    images: List["Image"] = Relationship(
+        back_populates="treatment_plan",
+        sa_relationship_kwargs={"foreign_keys": "Image.treatment_plan_id"},
+    )
+    primary_image_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="image.id", nullable=True
+    )
+    primary_image: Optional["Image"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "TreatmentPlan.primary_image_id",
+        }
+    )
     steps: List["TreatmentPlanStep"] = Relationship(back_populates="treatment_plan")

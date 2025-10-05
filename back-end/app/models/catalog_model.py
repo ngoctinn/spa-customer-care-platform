@@ -35,12 +35,21 @@ class Image(BaseUUIDModel, table=True):
     __tablename__ = "image"
     url: str = Field(nullable=False)
     alt_text: Optional[str] = Field(default=None)
-    is_primary: bool = Field(default=False)
     service_id: Optional[uuid.UUID] = Field(default=None, foreign_key="service.id")
     product_id: Optional[uuid.UUID] = Field(default=None, foreign_key="product.id")
     treatment_plan_id: Optional[uuid.UUID] = Field(
         default=None, foreign_key="treatment_plan.id"
     )
-    service: Optional["Service"] = Relationship(back_populates="images")
-    product: Optional["Product"] = Relationship(back_populates="images")
-    treatment_plan: Optional["TreatmentPlan"] = Relationship(back_populates="images")
+    service: Optional["Service"] = Relationship(
+        back_populates="images",
+        sa_relationship_kwargs={"foreign_keys": "Image.service_id"},
+    )
+    product: Optional["Product"] = Relationship(
+        back_populates="images",
+        sa_relationship_kwargs={"foreign_keys": "Image.product_id"},
+    )
+    treatment_plan: Optional["TreatmentPlan"] = Relationship(
+        back_populates="images",
+        sa_relationship_kwargs={"foreign_keys": "Image.treatment_plan_id"},
+    )
+

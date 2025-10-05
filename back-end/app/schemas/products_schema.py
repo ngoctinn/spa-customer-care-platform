@@ -31,6 +31,10 @@ class ProductCreate(ProductBase):
         default_factory=list,
         description="Danh sách ID hình ảnh cần liên kết với sản phẩm",
     )
+    primary_image_id: uuid.UUID | None = Field(
+        default=None,
+        description="ID của hình ảnh sẽ được đặt làm ảnh chính",
+    )
     new_images: List[UploadFile] = Field(default_factory=list, exclude=True)
 
 
@@ -48,6 +52,10 @@ class ProductUpdate(SQLModel):
     # Thêm các trường khác nếu muốn cho phép cập nhật
     existing_image_ids: Optional[List[uuid.UUID]] = Field(default=None, exclude=True)
     new_images: Optional[List[UploadFile]] = Field(default=None, exclude=True)
+    primary_image_id: uuid.UUID | None = Field(
+        default=None,
+        description="ID của hình ảnh sẽ được đặt làm ảnh chính",
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -61,3 +69,4 @@ class ProductPublicWithDetails(ProductPublic):
 
     categories: list[CategoryPublic] = Field(default_factory=list)
     images: list[ImagePublic] = Field(default_factory=list)
+    primary_image_id: uuid.UUID | None = None

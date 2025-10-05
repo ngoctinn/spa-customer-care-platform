@@ -1,5 +1,4 @@
 import uuid
-
 from app.models.catalog_model import Category, Image
 from app.models.services_model import Service
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
@@ -66,10 +65,14 @@ def test_get_all_treatment_plans_returns_data(client, session):
     image = Image(
         url="https://example.com/treatment.jpg",
         alt_text="Liệu trình",
-        is_primary=True,
         treatment_plan_id=treatment_plan.id,
     )
     session.add(image)
+    session.commit()
+    session.refresh(image)
+
+    treatment_plan.primary_image_id = image.id
+    session.add(treatment_plan)
     session.commit()
 
     response = client.get("/treatment-plans")
@@ -80,6 +83,7 @@ def test_get_all_treatment_plans_returns_data(client, session):
     assert plan["id"] == str(treatment_plan.id)
     assert plan["category"]["id"] == str(tp_category.id)
     assert plan["images"][0]["url"] == image.url
+    assert plan["primary_image_id"] == str(image.id)
     assert plan["steps"][0]["service"]["id"] == str(service.id)
 
 
