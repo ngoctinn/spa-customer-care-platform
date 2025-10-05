@@ -1,68 +1,72 @@
 # app/api/products_api.py
 import uuid
 from typing import List
-from fastapi import APIRouter
 
-# THAY ĐỔI: Import schema mới
-from app.schemas.products_schema import ProductPublicWithDetails
+from fastapi import APIRouter, Depends, status
+from sqlmodel import Session
+
+from app.core.dependencies import get_db_session
+from app.schemas.products_schema import (
+    ProductCreate,
+    ProductPublicWithDetails,
+    ProductUpdate,
+)
+from app.services import products_service
+
 
 router = APIRouter()
 
-# Dữ liệu giả được cấu trúc theo schema ProductPublicWithDetails
-mock_product_category = {
-    "id": str(uuid.uuid4()),
-    "name": "Sản phẩm Dưỡng da",
-    "description": "Các sản phẩm chăm sóc và dưỡng da chuyên sâu.",
-    "category_type": "product",
-}
 
-mock_products_data = [
-    {
-        "id": str(uuid.uuid4()),
-        "name": "Kem chống nắng SPF 50+",
-        "description": "Kem chống nắng vật lý lai hóa học, bảo vệ da toàn diện.",
-        "price": 550000,
-        "stock": 100,
-        "is_retail": True,
-        "is_consumable": False,
-        "base_unit": "tuýp",
-        "category_id": mock_product_category["id"],
-        "category": mock_product_category,
-        "images": [
-            {
-                "id": str(uuid.uuid4()),
-                "url": "https://place-hold.it/300x300/a8dadc/457b9d?text=KemChongNang",
-                "alt_text": "Hình ảnh Kem chống nắng",
-                "is_primary": True,
-            }
-        ],
-    },
-    {
-        "id": str(uuid.uuid4()),
-        "name": "Serum cấp ẩm Hyaluronic Acid",
-        "description": "Serum chứa HA đa phân tử giúp cấp ẩm sâu cho da.",
-        "price": 720000,
-        "stock": 75,
-        "is_retail": True,
-        "is_consumable": True,
-        "base_unit": "chai",
-        "consumable_unit": "ml",
-        "conversion_rate": 30,
-        "category_id": mock_product_category["id"],
-        "category": mock_product_category,
-        "images": [
-            {
-                "id": str(uuid.uuid4()),
-                "url": "https://place-hold.it/300x300/f1faee/1d3557?text=SerumHA",
-                "alt_text": "Hình ảnh Serum HA",
-                "is_primary": True,
-            }
-        ],
-    },
-]
+@router.post(
+    "",
+    response_model=ProductPublicWithDetails,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_product(
+    *, session: Session = Depends(get_db_session), product_in: ProductCreate
+):
+    """Tạo mới một sản phẩm."""
+
+    return products_service.create_product(db=session, product_in=product_in)
 
 
 @router.get("", response_model=List[ProductPublicWithDetails])
-def get_all_products():
-    """Lấy danh sách tất cả sản phẩm (dữ liệu mô phỏng)."""
-    return mock_products_data
+def get_all_products(
+    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
+):
+    """Lấy danh sách tất cả sản phẩm chưa bị xóa mềm."""
+
+    return products_service.get_all_products(db=session, skip=skip, limit=limit)
+
+
+@router.get("/{product_id}", response_model=ProductPublicWithDetails)
+def get_product_by_id(
+    product_id: uuid.UUID, session: Session = Depends(get_db_session)
+):
+    """Lấy thông tin chi tiết của một sản phẩm."""
+
+    return products_service.get_product_by_id(db=session, product_id=product_id)
+
+
+@router.put("/{product_id}", response_model=ProductPublicWithDetails)
+def update_product(
+    *,
+    product_id: uuid.UUID,
+    product_in: ProductUpdate,
+    session: Session = Depends(get_db_session),
+):
+    """Cập nhật thông tin một sản phẩm."""
+
+    db_product = products_service.get_product_by_id(db=session, product_id=product_id)
+    return products_service.update_product(
+        db=session, db_product=db_product, product_in=product_in
+    )
+
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: uuid.UUID, session: Session = Depends(get_db_session)):
+    """Xóa mềm một sản phẩm."""
+
+    db_product = products_service.get_product_by_id(db=session, product_id=product_id)
+    products_service.delete_product(db=session, db_product=db_product)
+    return
