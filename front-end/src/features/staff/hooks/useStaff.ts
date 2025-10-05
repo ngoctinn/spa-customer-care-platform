@@ -5,6 +5,8 @@ import {
   addStaff,
   updateStaff,
   deleteStaff,
+  getStaffById,
+  getTechniciansByService,
 } from "@/features/staff/api/staff.api";
 import { FullStaffProfile } from "@/features/staff/types";
 import { toast } from "sonner";
@@ -64,5 +66,21 @@ export const useDeleteStaff = () => {
         description: error.message,
       });
     },
+  });
+};
+
+export const useStaffById = (staffId: string) => {
+  return useQuery<FullStaffProfile>({
+    queryKey: ["staff", staffId],
+    queryFn: () => getStaffById(staffId),
+    enabled: !!staffId, // Chỉ chạy khi có staffId
+  });
+};
+
+export const useTechniciansByService = (serviceId?: string) => {
+  return useQuery<FullStaffProfile[]>({
+    queryKey: ["technicians", serviceId],
+    queryFn: () => getTechniciansByService(serviceId!),
+    enabled: !!serviceId,
   });
 };

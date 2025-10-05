@@ -31,13 +31,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { addCategory } from "@/features/category/api/category.api";
 import AddCategoryForm from "@/features/category/components/AddCategoryForm";
 import { useCategories } from "@/features/category/hooks/useCategories";
-import { ImageUrl } from "@/features/shared/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, Plus } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
 import { ProductFormValues } from "../schemas";
 
 export default function ProductFormFields() {
@@ -325,18 +323,14 @@ export default function ProductFormFields() {
             <FormLabel>Hình ảnh sản phẩm (Tùy chọn)</FormLabel>
             <FormControl>
               <MultiImageUploader
-                defaultValue={field.value}
+                value={field.value || []}
                 onFilesSelect={(files: File[]) => {
-                  const newImageUrls: ImageUrl[] = files.map((file) => ({
-                    id: uuidv4(),
-                    url: URL.createObjectURL(file),
-                    alt_text: file.name,
-                  }));
-                  field.onChange([...(field.value || []), ...newImageUrls]);
+                  // This is the correct logic to keep
+                  field.onChange([...(field.value || []), ...files]);
                 }}
                 onRemoveImage={(imageToRemove) => {
                   const updatedImages = (field.value || []).filter(
-                    (img) => img.id !== imageToRemove.id
+                    (img) => img !== imageToRemove
                   );
                   field.onChange(updatedImages);
                 }}

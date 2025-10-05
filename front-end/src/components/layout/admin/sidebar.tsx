@@ -18,6 +18,7 @@ const navLinks = [
   { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/dashboard/orders", label: "Đơn hàng", icon: ShoppingCart },
   { href: "/dashboard/customers", label: "Khách hàng", icon: Users },
+  { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
   { href: "/dashboard/staff", label: "Nhân viên", icon: UserCog },
   { href: "/dashboard/services", label: "Dịch vụ", icon: Scissors },
   { href: "/dashboard/products", label: "Sản phẩm", icon: Tag },

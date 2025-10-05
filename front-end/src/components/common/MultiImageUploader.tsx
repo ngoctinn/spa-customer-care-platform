@@ -7,16 +7,17 @@ import { Button } from "@/components/ui/button";
 import { UploadCloud, X } from "lucide-react";
 import Image from "next/image";
 import { ImageUrl } from "@/features/shared/types";
+import { v4 as uuidv4 } from "uuid";
 
 interface MultiImageUploaderProps {
   onFilesSelect: (files: File[]) => void;
-  defaultValue?: ImageUrl[];
-  onRemoveImage: (image: ImageUrl) => void;
+  value?: (File | ImageUrl)[];
+  onRemoveImage: (image: File | ImageUrl) => void;
 }
 
 export const MultiImageUploader = ({
   onFilesSelect,
-  defaultValue = [],
+  value = [],
   onRemoveImage,
 }: MultiImageUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -28,7 +29,7 @@ export const MultiImageUploader = ({
     }
   };
 
-  const handleRemoveClick = (image: ImageUrl) => {
+  const handleRemoveClick = (image: File | ImageUrl) => {
     onRemoveImage(image);
   };
 
@@ -74,29 +75,47 @@ export const MultiImageUploader = ({
         </div>
       </div>
 
-      {defaultValue.length > 0 && (
+      {value.length > 0 && (
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {defaultValue.map((image) => (
-            <div key={image.id} className="relative group aspect-square">
-              <Image
-                src={image.url}
-                alt={image.alt_text ?? "Xem trước"}
-                fill
-                className="object-cover rounded-md"
-              />
-              <div className="absolute top-1 right-1">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="h-6 w-6 opacity-70 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleRemoveClick(image)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+          {value.map((image) => {
+            // Xác định URL và alt text dựa trên loại đối tượng
+            const imageUrl =
+              image instanceof File ? URL.createObjectURL(image) : image.url;
+            const altText =
+              image instanceof File
+                ? image.name
+                : image.alt_text ?? "Xem trước";
+            // Tạo key duy nhất
+            const key = image instanceof File ? uuidv4() : image.id;
+
+            return (
+              <div key={key} className="relative group aspect-square">
+                <Image
+                  src={imageUrl}
+                  alt={altText}
+                  fill
+                  className="object-cover rounded-md"
+                  // Clean up blob URL khi component unmount để tránh memory leak
+                  onLoad={() => {
+                    if (image instanceof File) {
+                      URL.revokeObjectURL(imageUrl);
+                    }
+                  }}
+                />
+                <div className="absolute top-1 right-1">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="h-6 w-6 opacity-70 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleRemoveClick(image)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

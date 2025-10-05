@@ -39,13 +39,11 @@ import AddCategoryForm from "@/features/category/components/AddCategoryForm";
 import { useCategories } from "@/features/category/hooks/useCategories";
 import { useProducts } from "@/features/product/hooks/useProducts";
 import { ServiceFormValues } from "@/features/service/schemas";
-import { ImageUrl } from "@/features/shared/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, Plus, PlusCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
 
 export default function ServiceForm() {
   const queryClient = useQueryClient();
@@ -258,18 +256,15 @@ export default function ServiceForm() {
             <FormLabel>Hình ảnh dịch vụ (Tùy chọn)</FormLabel>
             <FormControl>
               <MultiImageUploader
-                defaultValue={field.value}
+                value={field.value || []}
                 onFilesSelect={(files: File[]) => {
-                  const newImageUrls: ImageUrl[] = files.map((file) => ({
-                    id: uuidv4(),
-                    url: URL.createObjectURL(file),
-                    alt_text: file.name,
-                  }));
-                  field.onChange([...(field.value || []), ...newImageUrls]);
+                  // === FIX CONFLICT: GIỮ LẠI PHIÊN BẢN NÀY ===
+                  // Thêm trực tiếp các đối tượng File mới vào state của form
+                  field.onChange([...(field.value || []), ...files]);
                 }}
                 onRemoveImage={(imageToRemove) => {
                   const updatedImages = (field.value || []).filter(
-                    (img) => img.id !== imageToRemove.id
+                    (img) => img !== imageToRemove
                   );
                   field.onChange(updatedImages);
                 }}

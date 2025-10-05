@@ -28,11 +28,13 @@ const ReviewItem = ({
           `https://api.dicebear.com/7.x/notionists/svg?seed=${customer?.id}`
         }
       />
-      <AvatarFallback>{customer?.name?.[0] || "A"}</AvatarFallback>
+      <AvatarFallback>{customer?.full_name?.[0] || "A"}</AvatarFallback>
     </Avatar>
     <div className="flex-1">
       <div className="flex items-center justify-between">
-        <p className="font-semibold">{customer?.name || "Một khách hàng"}</p>
+        <p className="font-semibold">
+          {customer?.full_name || "Một khách hàng"}
+        </p>
         <span className="text-xs text-muted-foreground">
           {new Date(review.created_at).toLocaleDateString("vi-VN")}
         </span>

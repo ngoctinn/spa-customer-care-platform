@@ -14,6 +14,7 @@ import ServiceSelection from "@/features/booking/components/ServiceSelection";
 import TimeSelection from "@/features/booking/components/TimeSelection";
 import CustomerInfoForm from "@/features/booking/components/CustomerInfoForm";
 import Confirmation from "@/features/booking/components/Confirmation";
+import TechnicianSelection from "@/features/booking/components/TechnicianSelection";
 
 // Import schemas và types
 import {
@@ -22,7 +23,7 @@ import {
   BookingState,
 } from "@/features/booking/schemas";
 
-import { createAppointment } from "@/features/appointment/api/appointment.api";
+import { createAppointment } from "@/features/appointment/apis/appointment.api";
 
 export default function BookingPage() {
   const searchParams = useSearchParams();
@@ -31,6 +32,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(initialServiceId ? 2 : 1);
   const [bookingState, setBookingState] = useState<BookingState>({
     serviceId: initialServiceId,
+    technicianId: "any", // Mặc định là 'any'
   });
 
   const [isPending, startTransition] = useTransition();
@@ -50,8 +52,13 @@ export default function BookingPage() {
       return; // Dừng hàm tại đây
     }
     // Nếu là service, tiếp tục logic như cũ
-    setBookingState({ serviceId: id });
+    setBookingState({ serviceId: id, technicianId: "any" });
     handleNextStep();
+  };
+
+  const handleSelectTechnician = (techId: string) => {
+    setBookingState((prev) => ({ ...prev, technicianId: techId }));
+    handleNextStep(); // Tự động qua bước tiếp theo
   };
 
   const handleSelectTime = (date?: Date, time?: string) => {
@@ -101,9 +108,23 @@ export default function BookingPage() {
     switch (step) {
       case 1:
         return <ServiceSelection onSelect={handleSelectService} />;
-      case 2:
+      case 2: // Bước mới
+        return (
+          <TechnicianSelection
+            serviceId={bookingState.serviceId!}
+            selectedValue={bookingState.technicianId}
+            onValueChange={handleSelectTechnician}
+          />
+        );
+      case 3:
         return (
           <TimeSelection
+            serviceId={bookingState.serviceId}
+            technicianId={
+              bookingState.technicianId === "any"
+                ? undefined
+                : bookingState.technicianId
+            }
             selectedDate={bookingState.selectedDate}
             onDateChange={(date) =>
               handleSelectTime(date, bookingState.selectedTime)
@@ -114,9 +135,9 @@ export default function BookingPage() {
             }
           />
         );
-      case 3:
-        return <CustomerInfoForm />;
       case 4:
+        return <CustomerInfoForm />;
+      case 5:
         return <Confirmation bookingState={bookingState} />;
       default:
         return <ServiceSelection onSelect={handleSelectService} />;
@@ -146,14 +167,14 @@ export default function BookingPage() {
         </FormProvider>
 
         <div className="flex justify-end pt-4">
-          {step === 2 &&
+          {step === 3 &&
             bookingState.selectedDate &&
             bookingState.selectedTime && (
               <Button onClick={handleNextStep} size="lg">
                 Tiếp tục
               </Button>
             )}
-          {step === 3 && (
+          {step === 4 && (
             <Button
               onClick={form.handleSubmit(handleCustomerInfoSubmit)}
               size="lg"
@@ -161,7 +182,7 @@ export default function BookingPage() {
               Đến bước xác nhận
             </Button>
           )}
-          {step === 4 && (
+          {step === 5 && (
             <Button
               onClick={handleConfirmBooking}
               size="lg"

@@ -1,4 +1,3 @@
-// src/app/(admin)/layout.tsx
 import { AdminHeader } from "@/components/layout/admin/header";
 import { AdminSidebar } from "@/components/layout/admin/sidebar";
 

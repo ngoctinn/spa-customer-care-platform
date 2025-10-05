@@ -12,7 +12,7 @@ interface PriceInputProps {
 }
 
 export default function PriceInput({ name, ...props }: PriceInputProps) {
-  const { control, setValue, getValues, watch } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
   const [displayPrice, setDisplayPrice] = useState(() =>
     getValues(name)
       ? new Intl.NumberFormat("vi-VN").format(getValues(name))

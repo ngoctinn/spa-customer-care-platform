@@ -45,8 +45,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ImageUrl } from "@/features/shared/types";
-import { v4 as uuidv4 } from "uuid";
 
 export default function TreatmentPlanFormFields() {
   const queryClient = useQueryClient();
@@ -291,7 +289,6 @@ export default function TreatmentPlanFormFields() {
         </FormMessage>
       </div>
 
-      {/* Field cho các Ảnh phụ */}
       <FormField
         name="images"
         control={form.control}
@@ -300,18 +297,14 @@ export default function TreatmentPlanFormFields() {
             <FormLabel>Hình ảnh liệu trình (Tùy chọn)</FormLabel>
             <FormControl>
               <MultiImageUploader
-                defaultValue={field.value}
+                value={field.value || []}
                 onFilesSelect={(files: File[]) => {
-                  const newImageUrls: ImageUrl[] = files.map((file) => ({
-                    id: uuidv4(),
-                    url: URL.createObjectURL(file),
-                    alt_text: file.name,
-                  }));
-                  field.onChange([...(field.value || []), ...newImageUrls]);
+                  // === FIX CONFLICT: Giữ lại phiên bản này ===
+                  field.onChange([...(field.value || []), ...files]);
                 }}
                 onRemoveImage={(imageToRemove) => {
                   const updatedImages = (field.value || []).filter(
-                    (img) => img.id !== imageToRemove.id
+                    (img) => img !== imageToRemove
                   );
                   field.onChange(updatedImages);
                 }}

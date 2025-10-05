@@ -51,3 +51,23 @@ export async function deleteStaff(staffId: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+/**
+ * Lấy thông tin chi tiết một nhân viên bằng ID
+ * @param staffId ID của nhân viên
+ */
+export async function getStaffById(staffId: string): Promise<FullStaffProfile> {
+  return apiClient<FullStaffProfile>(`/users/${staffId}`);
+}
+
+/**
+ * Lấy danh sách kỹ thuật viên có thể thực hiện một dịch vụ
+ * @param serviceId ID của dịch vụ
+ */
+export async function getTechniciansByService(
+  serviceId: string
+): Promise<FullStaffProfile[]> {
+  return apiClient<FullStaffProfile[]>(
+    `/staff/technicians-by-service/${serviceId}`
+  );
+}

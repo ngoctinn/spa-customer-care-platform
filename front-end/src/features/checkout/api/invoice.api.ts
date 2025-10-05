@@ -1,17 +1,50 @@
 // src/features/billing/api/invoice.api.ts
-import { Invoice } from "@/features/checkout/types";
+import { Invoice, ShippingAddress } from "@/features/checkout/types";
 import { v4 as uuidv4 } from "uuid";
 import { Customer } from "@/features/customer/types";
 import { Product } from "@/features/product/types";
 // import { redeemLoyaltyPoints } from "@/features/customer/api/customer.api";
 // import { debitPrepaidCard } from "@/features/prepaid-card/api/prepaid-card.api";
 import apiClient from "@/lib/apiClient";
+import { CartItem } from "@/features/cart/stores/cart-store";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const INVOICES_API_URL = `${API_URL}/invoices`;
 const CUSTOMERS_API_URL = `${API_URL}/customers`;
 const PRODUCTS_API_URL = `${API_URL}/products`;
 const POINTS_PER_VND = 1 / 10000;
+
+interface CreateOrderPayload {
+  items: CartItem[];
+  payment_method: string;
+  shipping_address?: ShippingAddress;
+  notes?: string;
+}
+/**
+ * Gọi API backend để tạo một hóa đơn/đơn hàng mới.
+ * Backend sẽ tự quyết định trạng thái (pending, processing...)
+ * @param payload Dữ liệu giỏ hàng, phương thức thanh toán, địa chỉ...
+ * @returns Promise chứa thông tin hóa đơn đã được tạo.
+ */
+export async function createOrder(
+  payload: CreateOrderPayload
+): Promise<Invoice> {
+  // Giả sử endpoint của bạn là /orders
+  return apiClient<Invoice>("/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Lấy thông tin chi tiết của một hóa đơn bằng ID.
+ * @param invoiceId ID của hóa đơn cần lấy.
+ * @returns Promise chứa thông tin chi tiết hóa đơn.
+ */
+export async function getInvoiceById(invoiceId: string): Promise<Invoice> {
+  // Giả sử endpoint của bạn là /invoices/:id
+  return apiClient<Invoice>(`/invoices/${invoiceId}`);
+}
 
 export type InvoiceCreationData = Omit<
   Invoice,
