@@ -23,7 +23,7 @@ def test_get_all_products_returns_data(client, session):
         is_retail=True,
         is_consumable=False,
         base_unit="chai",
-        category_id=category.id,
+        categories=[category],
     )
     session.add(product)
     session.commit()
@@ -43,7 +43,8 @@ def test_get_all_products_returns_data(client, session):
     data = response.json()
     assert len(data) == 1
     assert data[0]["id"] == str(product.id)
-    assert data[0]["category"]["id"] == str(category.id)
+    assert len(data[0]["categories"]) == 1
+    assert data[0]["categories"][0]["id"] == str(category.id)
     assert data[0]["images"][0]["url"] == image.url
 
 

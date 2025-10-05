@@ -13,3 +13,15 @@ class ServiceCategoryLink(SQLModel, table=True):
         foreign_key="category.id",
         primary_key=True,
     )
+
+
+class ProductCategoryLink(SQLModel, table=True):
+    __tablename__ = "product_category_link"
+    product_id: uuid.UUID = Field(
+        foreign_key="product.id",
+        primary_key=True,
+    )
+    category_id: uuid.UUID = Field(
+        foreign_key="category.id",
+        primary_key=True,
+    )

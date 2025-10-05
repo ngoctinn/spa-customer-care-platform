@@ -5,7 +5,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
 # Import bảng liên kết mới
-from app.models.association_tables import ServiceCategoryLink
+from app.models.association_tables import ProductCategoryLink, ServiceCategoryLink
 
 if TYPE_CHECKING:
     from app.models.services_model import Service
@@ -24,7 +24,9 @@ class Category(BaseUUIDModel, table=True):
         back_populates="categories", link_model=ServiceCategoryLink
     )
 
-    products: List["Product"] = Relationship(back_populates="category")
+    products: List["Product"] = Relationship(
+        back_populates="categories", link_model=ProductCategoryLink
+    )
     treatment_plans: List["TreatmentPlan"] = Relationship(back_populates="category")
 
 
