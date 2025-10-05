@@ -20,9 +20,13 @@ class ServiceBase(SQLModel):
     # THAY ĐỔI: Chấp nhận một danh sách các ID danh mục
     category_ids: list[uuid.UUID] = Field(description="Danh sách ID của các danh mục")
 
+class ServiceCreatePayload(ServiceBase):
+    """Payload nhận từ request khi tạo dịch vụ mới."""
 
-class ServiceCreate(ServiceBase):
-    pass
+    category_ids: List[UUID] = Field(
+        default_factory=list, description="Danh sách ID của các danh mục"
+    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceUpdate(SQLModel):
@@ -38,7 +42,10 @@ class ServiceUpdate(SQLModel):
 
 
 class ServicePublic(ServiceBase):
-    id: uuid.UUID
+    id: UUID
+    categories: List[CategoryPublic] = Field(default_factory=list)
+    images: List[ImagePublic] = Field(default_factory=list)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServicePublicWithDetails(ServicePublic):
