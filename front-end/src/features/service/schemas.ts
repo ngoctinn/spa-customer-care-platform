@@ -12,6 +12,8 @@ const serviceConsumableSchema = z.object({
   quantityUsed: z.number().min(0.01, "Số lượng phải lớn hơn 0."),
 });
 
+const imageUnionSchema = z.union([imageSchema, z.instanceof(File)]);
+
 export const serviceFormSchema = z.object({
   name: nameSchema,
   description: descriptionSchema,
@@ -22,7 +24,7 @@ export const serviceFormSchema = z.object({
   preparation_notes: z.string().optional(),
   aftercare_instructions: z.string().optional(),
   contraindications: z.string().optional(),
-  images: z.array(imageSchema).optional(),
+  images: z.array(imageUnionSchema).optional(),
   is_deleted: z.boolean().optional(),
 });
 

@@ -3,30 +3,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
-
+import { createOrder } from "@/features/checkout/api/invoice.api";
 import { useAuth } from "@/contexts/AuthContexts";
 import useCartStore from "@/features/cart/stores/cart-store";
-import {
-  createInvoice,
-  InvoiceCreationData,
-} from "@/features/checkout/api/invoice.api";
 import {
   shippingSchema,
   ShippingFormValues,
 } from "@/features/checkout/schemas";
-import {
-  PaymentMethod,
-  InvoiceItem,
-  InvoiceItemType,
-  ShippingAddress,
-} from "@/features/checkout/types";
+import { PaymentMethod, ShippingAddress } from "@/features/checkout/types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,13 +37,14 @@ import { useCustomerProfile } from "@/features/customer/hooks/useCustomerProfile
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
-  const { items, clearCart } = useCartStore();
+  const { items } = useCartStore();
   const { data: currentUserProfile, isLoading: isLoadingProfile } =
     useCustomerProfile();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     null
   );
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
@@ -76,90 +67,50 @@ export default function CheckoutPage() {
     }
   }, [currentUserProfile, form]);
 
-  const createInvoiceMutation = useMutation({
-    mutationFn: createInvoice,
-    onSuccess: (newInvoice) => {
-      // SỬA: Sử dụng biến newInvoice
-      toast.success(
-        `Tạo hóa đơn #${newInvoice.id.substring(0, 6)} thành công!`,
-        {
-          description: "Cảm ơn bạn đã mua hàng.",
-        }
-      );
-      clearCart();
-      router.push("/");
-    },
-    onError: (error: unknown) => {
-      console.error("Create invoice failed:", error);
-      toast.error("Thanh toán thất bại!", {
-        description: "Đã có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
-      });
-    },
-  });
-
   useEffect(() => {
-    if (!isAuthLoading) {
-      if (!user) {
-        toast.error("Vui lòng đăng nhập để tiến hành thanh toán.");
-        router.push("/auth/login?redirectTo=/cart");
-      } else if (items.length === 0) {
-        toast.info("Giỏ hàng của bạn đang trống.");
-        router.push("/products");
-      }
+    // Chỉ kiểm tra giỏ hàng trống khi component vừa tải và không trong quá trình xử lý
+    if (!isAuthLoading && items.length === 0 && !isProcessing) {
+      toast.info("Giỏ hàng của bạn đang trống.");
+      router.push("/products");
     }
-  }, [user, items, isAuthLoading, router]);
+  }, [items, isAuthLoading, router, isProcessing]);
 
   const hasShippableItems = items.some((item) => item.type === "product");
 
-  const handleConfirmPayment = (shippingData: ShippingFormValues) => {
-    if (!currentUserProfile || items.length === 0 || !paymentMethod) {
-      toast.warning(
-        "Vui lòng điền đầy đủ thông tin và chọn phương thức thanh toán."
-      );
+  const handleConfirmPayment = async (shippingData: ShippingFormValues) => {
+    if (!paymentMethod) {
+      toast.warning("Vui lòng chọn phương thức thanh toán.");
       return;
     }
 
-    const subtotal = items.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0
-    );
-    const invoiceItems: InvoiceItem[] = items.map((item) => ({
-      id: item.id,
-      name: item.name,
-      quantity: item.quantity,
-      price_per_unit: item.price,
-      total_price: item.price * item.quantity,
-      type: item.type as InvoiceItemType,
-      discount_amount: 0,
-    }));
+    setIsProcessing(true); // <--- Bắt đầu xử lý
 
-    const invoiceData: InvoiceCreationData & {
-      shipping_address?: ShippingAddress;
-    } = {
-      customer_id: currentUserProfile.customer_profile.id,
-      items: invoiceItems,
-      subtotal,
-      discount_amount: 0,
-      tax_amount: 0,
-      total_amount: subtotal,
-      payment_method: paymentMethod,
-      status: "paid",
-      is_deleted: false,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    if (hasShippableItems) {
-      invoiceData.shipping_address = {
-        name: shippingData.name,
-        phone: shippingData.phone,
-        address: shippingData.address,
-        city: "TP. Hồ Chí Minh",
+    try {
+      // Gọi hàm API mới
+      const newInvoice = await createOrder({
+        items,
+        payment_method: paymentMethod,
+        shipping_address: hasShippableItems
+          ? (shippingData as ShippingAddress)
+          : undefined,
         notes: shippingData.notes,
-      };
-    }
+      });
 
-    createInvoiceMutation.mutate(invoiceData);
+      toast.success("Đã tạo đơn hàng thành công!");
+
+      // Chuyển hướng đến trang success với ID hóa đơn
+      router.push(`/checkout/success?invoiceId=${newInvoice.id}`);
+    } catch (error) {
+      console.error("Create order failed:", error);
+      toast.error("Tạo đơn hàng thất bại!", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Đã có lỗi xảy ra. Vui lòng thử lại.",
+      });
+      setIsProcessing(false); // Dừng xử lý nếu có lỗi
+    }
+    // Không cần finally vì đã chuyển trang nếu thành công
   };
 
   const formatCurrency = (amount: number) =>
@@ -365,11 +316,9 @@ export default function CheckoutPage() {
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={!paymentMethod || createInvoiceMutation.isPending}
+                  disabled={!paymentMethod || isProcessing}
                 >
-                  {createInvoiceMutation.isPending
-                    ? "Đang xử lý..."
-                    : `Hoàn tất đơn hàng`}
+                  {isProcessing ? "Đang xử lý..." : `Hoàn tất đơn hàng`}
                 </Button>
               </CardContent>
             </Card>

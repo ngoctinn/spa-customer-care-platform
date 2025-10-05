@@ -97,16 +97,19 @@ export const getServiceColumns = (
         </div>
       );
     },
+    meta: { headerTitle: "Tên dịch vụ" },
   },
   {
     accessorKey: "price",
     header: "Giá (VND)",
     cell: ({ row }) =>
       new Intl.NumberFormat("vi-VN").format(row.original.price),
+    meta: { headerTitle: "Giá" },
   },
   {
     accessorKey: "duration_minutes",
     header: "Thời lượng (phút)",
+    meta: { headerTitle: "Thời lượng" },
   },
   {
     accessorKey: "categories",
@@ -120,6 +123,11 @@ export const getServiceColumns = (
         ))}
       </div>
     ),
+    filterFn: (row, id, value) => {
+      const categoryNames = row.original.categories.map((c) => c.name);
+      return value.some((val: string) => categoryNames.includes(val));
+    },
+    meta: { headerTitle: "Danh mục" },
   },
   {
     accessorKey: "status",
@@ -131,6 +139,10 @@ export const getServiceColumns = (
         {row.original.status === "active" ? "Hoạt động" : "Tạm ngưng"}
       </Badge>
     ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.original.status);
+    },
+    meta: { headerTitle: "Trạng thái" },
   },
   {
     id: "actions",

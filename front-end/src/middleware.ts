@@ -50,12 +50,12 @@ export async function middleware(req: NextRequest) {
   }
 
   // Nếu chưa đăng nhập mà cố vào trang admin -> đá về trang login
-  if (
-    !accessToken &&
-    ADMIN_ROUTES.some((route) => pathname.startsWith(route))
-  ) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
-  }
+  // if (
+  //   !accessToken &&
+  //   ADMIN_ROUTES.some((route) => pathname.startsWith(route))
+  // ) {
+  //   return NextResponse.redirect(new URL("/auth/login", req.url));
+  // }
 
   return NextResponse.next();
 }

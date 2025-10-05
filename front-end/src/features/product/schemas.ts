@@ -4,8 +4,10 @@ import {
   nameSchema,
   priceSchema,
   descriptionSchema,
-  imageFileSchema,
+  imageSchema,
 } from "@/lib/schemas";
+
+const imageUnionSchema = z.union([imageSchema, z.instanceof(File)]);
 
 // Schema cho form thêm/sửa sản phẩm
 export const productFormSchema = z
@@ -15,7 +17,7 @@ export const productFormSchema = z
     categories: z.array(z.string()).optional(),
     price: priceSchema,
     stock: z.number().min(0, "Số lượng tồn kho không được âm."),
-    images: z.array(z.any()).optional(),
+    images: z.array(imageUnionSchema).optional(),
     isRetail: z.boolean(),
     isConsumable: z.boolean(),
     baseUnit: z.string().trim().min(1, "Đơn vị cơ sở không được để trống."),
@@ -52,3 +54,12 @@ export const addStockSchema = z.object({
 });
 
 export type AddStockFormValues = z.infer<typeof addStockSchema>;
+
+export const stockAdjustmentSchema = z.object({
+  productId: z.string().uuid("Vui lòng chọn một sản phẩm hợp lệ."),
+  // Dùng `union` để chấp nhận cả số dương và âm
+  quantity: z.number().refine((val) => val !== 0, "Số lượng phải khác 0."),
+  notes: z.string().optional(),
+});
+
+export type StockAdjustmentFormValues = z.infer<typeof stockAdjustmentSchema>;

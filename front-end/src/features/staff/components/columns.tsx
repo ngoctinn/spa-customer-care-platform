@@ -2,7 +2,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  CalendarClock,
+  Link,
+} from "lucide-react";
 import { FullStaffProfile } from "@/features/staff/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +44,12 @@ const StaffRowActions = ({
         <DropdownMenuItem onClick={() => onEdit(staff)}>
           <Edit className="mr-2 h-4 w-4" />
           Chỉnh sửa
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/staff/${staff.id}/schedule`}>
+            <CalendarClock className="mr-2 h-4 w-4" />
+            Quản lý lịch
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive focus:bg-destructive/10"
@@ -81,15 +93,18 @@ export const getStaffColumns = (
   {
     accessorKey: "full_name",
     header: "Họ và tên",
+    meta: { headerTitle: "Họ và tên" },
   },
   {
     accessorKey: "email",
     header: "Email",
+    meta: { headerTitle: "Email" },
   },
   {
     accessorKey: "phone",
     header: "Số điện thoại",
     cell: ({ row }) => row.getValue("phone") || "N/A",
+    meta: { headerTitle: "Số điện thoại" },
   },
   {
     accessorKey: "roles",
@@ -101,6 +116,11 @@ export const getStaffColumns = (
       }
       return <Badge>{roles[0].name}</Badge>;
     },
+    filterFn: (row, id, value) => {
+      const roleName = row.original.roles[0]?.name;
+      return value.includes(roleName);
+    },
+    meta: { headerTitle: "Vai trò" },
   },
   {
     accessorKey: "is_active",
@@ -113,6 +133,11 @@ export const getStaffColumns = (
         </Badge>
       );
     },
+    filterFn: (row, id, value) => {
+      const isActive = row.getValue(id) ? "active" : "inactive";
+      return value.includes(isActive);
+    },
+    meta: { headerTitle: "Trạng thái" },
   },
   {
     id: "actions",
