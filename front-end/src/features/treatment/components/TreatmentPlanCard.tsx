@@ -10,6 +10,7 @@ interface TreatmentPlanCardProps {
 export default function TreatmentPlanCard({ plan }: TreatmentPlanCardProps) {
   const primaryImageUrl = getPrimaryImageUrl(
     plan.images,
+    plan.primary_image_id,
     "/images/default-product.jpg"
   );
   return (

@@ -289,7 +289,6 @@ export default function TreatmentPlanFormFields() {
         </FormMessage>
       </div>
 
-      {/* Field cho các Ảnh phụ */}
       <FormField
         name="images"
         control={form.control}
@@ -300,6 +299,7 @@ export default function TreatmentPlanFormFields() {
               <MultiImageUploader
                 value={field.value || []}
                 onFilesSelect={(files: File[]) => {
+                  // === FIX CONFLICT: Giữ lại phiên bản này ===
                   field.onChange([...(field.value || []), ...files]);
                 }}
                 onRemoveImage={(imageToRemove) => {

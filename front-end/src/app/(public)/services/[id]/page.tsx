@@ -30,7 +30,10 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     queryFn: () => getServiceById(id),
   });
 
-  const primaryImageUrl = getPrimaryImageUrl(service?.images);
+  const primaryImageUrl = getPrimaryImageUrl(
+    service?.images,
+    service?.primary_image_id
+  );
 
   const [mainImage, setMainImage] = useState<string>(primaryImageUrl);
 

@@ -15,6 +15,7 @@ from app.schemas.treatment_plans_schema import (
     TreatmentPlanUpdate,
 )
 from app.services import catalog_service, services_service
+from app.services.images_service import sync_entity_images
 
 
 def _with_treatment_plan_relationships(statement):
@@ -23,6 +24,7 @@ def _with_treatment_plan_relationships(statement):
     return statement.options(
         selectinload(TreatmentPlan.category),
         selectinload(TreatmentPlan.images),
+        selectinload(TreatmentPlan.primary_image),
         selectinload(TreatmentPlan.steps)
         .selectinload(TreatmentPlanStep.service)
         .selectinload(Service.categories),
@@ -43,6 +45,9 @@ def _filter_soft_deleted_relationships(
     treatment_plan.images = [
         image for image in treatment_plan.images if not image.is_deleted
     ]
+    valid_image_ids = {image.id for image in treatment_plan.images}
+    if treatment_plan.primary_image_id not in valid_image_ids:
+        treatment_plan.primary_image_id = None
     filtered_steps: List[TreatmentPlanStep] = []
     for step in treatment_plan.steps:
         if step.is_deleted:
@@ -58,7 +63,7 @@ def _filter_soft_deleted_relationships(
     return treatment_plan
 
 
-def create_treatment_plan(
+async def create_treatment_plan(
     db: Session, treatment_plan_in: TreatmentPlanCreate
 ) -> TreatmentPlan:
     """Tạo mới một treatment plan cùng với các bước."""
@@ -81,7 +86,9 @@ def create_treatment_plan(
     for step_in in treatment_plan_in.steps:
         services_service.get_service_by_id(db, step_in.service_id)
 
-    plan_data = treatment_plan_in.model_dump(exclude={"steps"})
+    plan_data = treatment_plan_in.model_dump(
+        exclude={"steps", "existing_image_ids", "primary_image_id"}
+    )
     db_plan = TreatmentPlan(**plan_data)
     db.add(db_plan)
     db.commit()
@@ -92,6 +99,15 @@ def create_treatment_plan(
             **step_in.model_dump(), treatment_plan_id=db_plan.id
         )
         db.add(db_step)
+
+    await sync_entity_images(
+        db,
+        entity=db_plan,
+        owner="treatment_plan",
+        existing_image_ids=treatment_plan_in.existing_image_ids,
+        primary_image_id=treatment_plan_in.primary_image_id,
+        alt_text=db_plan.name,
+    )
 
     db.commit()
     return get_treatment_plan_by_id(db, db_plan.id)
@@ -131,10 +147,14 @@ def get_treatment_plan_by_id(
     return _filter_soft_deleted_relationships(treatment_plan)
 
 
-def update_treatment_plan(
-    db: Session, db_treatment_plan: TreatmentPlan, treatment_plan_in: TreatmentPlanUpdate
+async def update_treatment_plan(
+    db: Session,
+    db_treatment_plan: TreatmentPlan,
+    treatment_plan_in: TreatmentPlanUpdate,
 ) -> TreatmentPlan:
     plan_data = treatment_plan_in.model_dump(exclude_unset=True)
+    plan_data.pop("existing_image_ids", None)
+    plan_data.pop("primary_image_id", None)
 
     if "name" in plan_data:
         existing_plan = db.exec(
@@ -158,9 +178,18 @@ def update_treatment_plan(
         setattr(db_treatment_plan, key, value)
 
     db.add(db_treatment_plan)
-    db.commit()
-    db.refresh(db_treatment_plan)
+    db.flush()
 
+    await sync_entity_images(
+        db,
+        entity=db_treatment_plan,
+        owner="treatment_plan",
+        existing_image_ids=treatment_plan_in.existing_image_ids,
+        primary_image_id=treatment_plan_in.primary_image_id,
+        alt_text=db_treatment_plan.name,
+    )
+
+    db.commit()
     return get_treatment_plan_by_id(db, db_treatment_plan.id)
 
 

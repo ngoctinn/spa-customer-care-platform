@@ -325,6 +325,7 @@ export default function ProductFormFields() {
               <MultiImageUploader
                 value={field.value || []}
                 onFilesSelect={(files: File[]) => {
+                  // This is the correct logic to keep
                   field.onChange([...(field.value || []), ...files]);
                 }}
                 onRemoveImage={(imageToRemove) => {

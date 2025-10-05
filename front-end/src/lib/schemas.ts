@@ -52,6 +52,5 @@ export type PersonFormValues = z.infer<typeof personSchema>;
 export const imageSchema = z.object({
   id: z.string(),
   url: z.string().url("URL hình ảnh không hợp lệ."),
-  is_primary: z.boolean(),
   alt_text: z.string().optional(),
 });

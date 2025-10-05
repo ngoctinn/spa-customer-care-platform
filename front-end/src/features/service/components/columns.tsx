@@ -82,6 +82,7 @@ export const getServiceColumns = (
     cell: ({ row }) => {
       const primaryImage = getPrimaryImageUrl(
         row.original.images,
+        row.original.primary_image_id,
         "/images/placeholder.png"
       );
       return (

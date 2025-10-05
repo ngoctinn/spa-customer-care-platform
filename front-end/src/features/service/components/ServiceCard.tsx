@@ -11,6 +11,7 @@ interface ServiceCardProps {
 export default function ServiceCard({ service }: ServiceCardProps) {
   const primaryImageUrl = getPrimaryImageUrl(
     service.images,
+    service.primary_image_id,
     "/images/default-service.jpg"
   );
   return (

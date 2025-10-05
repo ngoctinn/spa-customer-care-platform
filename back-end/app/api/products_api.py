@@ -37,6 +37,7 @@ async def create_product(
     category_ids: List[uuid.UUID] = Form(...),
     existing_image_ids: Optional[List[uuid.UUID]] = Form(None),
     images: List[UploadFile] = File([]),
+    primary_image_id: Optional[uuid.UUID] = Form(None),
 ):
     """Tạo mới một sản phẩm."""
 
@@ -52,6 +53,7 @@ async def create_product(
         conversion_rate=conversion_rate,
         category_ids=category_ids,
         existing_image_ids=existing_image_ids or [],
+        primary_image_id=primary_image_id,
     )
 
     return await products_service.create_product(
@@ -59,6 +61,7 @@ async def create_product(
         product_in=product_in,
         new_images=images,
         existing_image_ids=product_in.existing_image_ids,
+        primary_image_id=product_in.primary_image_id,
     )
 
 
@@ -97,6 +100,7 @@ async def update_product(
     category_ids: Optional[List[uuid.UUID]] = Form(None),
     existing_image_ids: Optional[List[uuid.UUID]] = Form(None),
     images: List[UploadFile] = File([]),
+    primary_image_id: Optional[uuid.UUID] = Form(None),
 ):
     """Cập nhật thông tin một sản phẩm."""
 
@@ -121,12 +125,16 @@ async def update_product(
     if category_ids is not None:
         product_in.category_ids = category_ids
 
+    if primary_image_id is not None:
+        product_in.primary_image_id = primary_image_id
+
     return await products_service.update_product(
         db=session,
         db_product=db_product,
         product_in=product_in,
         new_images=images,
         existing_image_ids=existing_image_ids,
+        primary_image_id=primary_image_id,
     )
 
 

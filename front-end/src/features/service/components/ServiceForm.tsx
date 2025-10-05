@@ -256,14 +256,13 @@ export default function ServiceForm() {
             <FormLabel>Hình ảnh dịch vụ (Tùy chọn)</FormLabel>
             <FormControl>
               <MultiImageUploader
-                // `value` bây giờ sẽ là mảng (File | ImageUrl)[]
                 value={field.value || []}
                 onFilesSelect={(files: File[]) => {
+                  // === FIX CONFLICT: GIỮ LẠI PHIÊN BẢN NÀY ===
                   // Thêm trực tiếp các đối tượng File mới vào state của form
                   field.onChange([...(field.value || []), ...files]);
                 }}
                 onRemoveImage={(imageToRemove) => {
-                  // Lọc ra ảnh cần xóa dựa trên object reference hoặc id
                   const updatedImages = (field.value || []).filter(
                     (img) => img !== imageToRemove
                   );
