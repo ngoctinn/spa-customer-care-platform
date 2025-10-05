@@ -1,7 +1,10 @@
-// src/contexts/AuthContexts.tsx
 "use client";
 
-import { login as apiLogin, fetchProfile } from "@/features/auth/apis/auth_api";
+import {
+  login as apiLogin,
+  fetchProfile,
+  logout as apiLogout,
+} from "@/features/auth/apis/auth_api";
 import { loginSchema } from "@/features/auth/schemas";
 import { User } from "@/features/user/types";
 import { useRouter } from "next/navigation";
@@ -15,18 +18,11 @@ import {
 } from "react";
 import { z } from "zod";
 
-// Định nghĩa một hàm logout giả, sau này bạn có thể gọi API logout ở đây
-const apiLogout = async () => {
-  // Giả lập việc gọi API logout, ví dụ:
-  // await fetch('/api/auth/logout', { method: 'POST' });
-  return Promise.resolve();
-};
-
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (values: z.infer<typeof loginSchema>) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const userProfile = await fetchProfile();
       setUser(userProfile);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      console.error("Không thể lấy thông tin người dùng:", error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -50,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    checkUserStatus();
+    void checkUserStatus();
   }, [checkUserStatus]);
 
   const login = async (values: z.infer<typeof loginSchema>) => {
@@ -60,12 +56,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await checkUserStatus();
   };
 
-  const logout = async () => {
-    await apiLogout();
-    setUser(null);
-    // Điều hướng về trang chủ sau khi logout
-    router.push("/");
-  };
+  const logout = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await apiLogout();
+    } finally {
+      setUser(null);
+      router.replace("/auth/login");
+      router.refresh();
+      setIsLoading(false);
+    }
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, logout }}>

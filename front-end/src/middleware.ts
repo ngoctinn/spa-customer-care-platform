@@ -1,3 +1,4 @@
+import { ACCESS_TOKEN_COOKIE } from "./features/auth/constants";
 import { NextResponse, type NextRequest } from "next/server";
 
 const ADMIN_ROUTES = ["/dashboard"];
@@ -5,7 +6,10 @@ const AUTH_ROUTES = ["/auth/login", "/auth/register"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const accessToken = req.cookies.get("access_token")?.value;
+  const accessToken = req.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+
+  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+  const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
   if (accessToken) {
     try {
@@ -22,29 +26,23 @@ export async function middleware(req: NextRequest) {
       const isSuperuser = user?.is_superuser;
 
       // Nếu đã đăng nhập và là superuser, vào trang admin bình thường
-      if (
-        isSuperuser &&
-        ADMIN_ROUTES.some((route) => pathname.startsWith(route))
-      ) {
+      if (isSuperuser && isAdminRoute) {
         return NextResponse.next();
       }
 
       // Nếu đã đăng nhập nhưng không phải superuser mà cố vào trang admin -> đá về trang chủ
-      if (
-        !isSuperuser &&
-        ADMIN_ROUTES.some((route) => pathname.startsWith(route))
-      ) {
+      if (!isSuperuser && isAdminRoute) {
         return NextResponse.redirect(new URL("/", req.url));
       }
 
       // Nếu đã đăng nhập mà vào lại trang login/register -> đá về trang chủ
-      if (AUTH_ROUTES.includes(pathname)) {
+      if (isAuthRoute) {
         return NextResponse.redirect(new URL("/", req.url));
       }
-    } catch (error) {
+    } catch {
       // Nếu token không hợp lệ, xóa cookie và cho phép request đi tiếp (sẽ bị chặn ở điều kiện dưới)
       const response = NextResponse.next();
-      response.cookies.delete("access_token");
+      response.cookies.delete(ACCESS_TOKEN_COOKIE);
       return response;
     }
   }
