@@ -2,7 +2,7 @@
 
 import uuid
 import re
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import EmailStr, Field, field_validator
 from sqlmodel import SQLModel
@@ -99,7 +99,9 @@ class UserUpdateByAdmin(SQLModel):
 
 # Schema hiển thị thông tin người dùng KÈM THEO vai trò và quyền của họ
 class UserPublicWithRolesAndPermissions(UserPublic):
-    roles: List[RolePublicWithPermissions] = []
+    model_config = {"from_attributes": True}
+
+    roles: list[RolePublicWithPermissions] = Field(default_factory=list)
 
 
 # Cập nhật tham chiếu

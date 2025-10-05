@@ -1,6 +1,6 @@
 # app/schemas/catalog_schema.py
 import uuid
-from typing import List, Optional, Any
+from typing import Any, Optional
 from sqlmodel import SQLModel, Field
 from enum import Enum
 
@@ -47,5 +47,7 @@ class CategoryPublic(CategoryBase):
 
 
 class CategoryPublicWithItems(CategoryPublic):
+    model_config = {"from_attributes": True}
+
     # Dùng Any để linh hoạt, sẽ được thay thế ở các schema con
-    items: List[Any] = []
+    items: list[Any] = Field(default_factory=list)

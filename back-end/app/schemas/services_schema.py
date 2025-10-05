@@ -1,9 +1,7 @@
 # app/schemas/services_schema.py
-from typing import List
-from uuid import UUID
-
-from pydantic import ConfigDict
-from sqlmodel import Field, SQLModel
+from typing import Optional
+from sqlmodel import SQLModel, Field
+import uuid
 
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
@@ -19,6 +17,8 @@ class ServiceBase(SQLModel):
     aftercare_instructions: str | None
     contraindications: str | None
 
+    # THAY ĐỔI: Chấp nhận một danh sách các ID danh mục
+    category_ids: list[uuid.UUID] = Field(description="Danh sách ID của các danh mục")
 
 class ServiceCreatePayload(ServiceBase):
     """Payload nhận từ request khi tạo dịch vụ mới."""
@@ -37,7 +37,8 @@ class ServiceUpdate(SQLModel):
     preparation_notes: str | None = Field(default=None)
     aftercare_instructions: str | None = Field(default=None)
     contraindications: str | None = Field(default=None)
-    category_ids: List[UUID] | None = Field(default=None)
+    # THAY ĐỔI: Cho phép cập nhật danh sách danh mục
+    category_ids: list[uuid.UUID] | None = Field(default=None)
 
 
 class ServicePublic(ServiceBase):
@@ -48,8 +49,11 @@ class ServicePublic(ServiceBase):
 
 
 class ServicePublicWithDetails(ServicePublic):
-    category_ids: List[UUID] = Field(default_factory=list)
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {"from_attributes": True}
+
+    # THAY ĐỔI: Hiển thị danh sách các danh mục
+    categories: list[CategoryPublic] = Field(default_factory=list)
+    images: list[ImagePublic] = Field(default_factory=list)
 
 
 # Cần forward reference cho treatment plan schema
