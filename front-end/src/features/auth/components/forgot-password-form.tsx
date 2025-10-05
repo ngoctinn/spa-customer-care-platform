@@ -1,6 +1,7 @@
 // src/features/auth/components/forgot-password-form.tsx
 "use client";
 
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -105,12 +106,12 @@ export const ForgotPasswordForm = () => {
           <CardFooter>
             <p className="text-sm text-muted-foreground text-center w-full">
               Nhớ mật khẩu rồi?{" "}
-              <a
+              <Link
                 className="text-primary hover:underline font-medium"
                 href="/auth/login"
               >
                 Đăng nhập
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </form>
