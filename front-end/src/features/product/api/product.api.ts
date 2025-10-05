@@ -1,6 +1,7 @@
 // src/features/product/api/product.api.ts
 import { Product } from "@/features/product/types";
 import apiClient from "@/lib/apiClient";
+import { buildQueryString } from "@/lib/queryString";
 import { ProductFormValues } from "@/features/product/schemas";
 import { ImageUrl } from "@/features/shared/types";
 import { uploadFile } from "@/features/upload/upload.api";
@@ -83,8 +84,15 @@ export async function updateProduct({
 /**
  * Lấy danh sách tất cả sản phẩm
  */
-export async function getProducts(): Promise<Product[]> {
-  return apiClient<Product[]>("/products");
+export interface GetProductsParams {
+  skip?: number;
+  limit?: number;
+  search?: string;
+}
+
+export async function getProducts(params?: GetProductsParams): Promise<Product[]> {
+  const query = buildQueryString(params);
+  return apiClient<Product[]>(`/products${query}`);
 }
 
 /**

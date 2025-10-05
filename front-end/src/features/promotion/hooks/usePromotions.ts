@@ -6,6 +6,8 @@ import { Promotion } from "@/features/promotion/types";
 export const usePromotions = () => {
   return useQuery<Promotion[]>({
     queryKey: ["promotions"],
-    queryFn: getPromotions,
+    queryFn: () => getPromotions(),
+    retry: 1,
+    staleTime: 60 * 1000,
   });
 };

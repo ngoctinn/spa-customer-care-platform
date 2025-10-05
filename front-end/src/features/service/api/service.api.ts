@@ -4,6 +4,13 @@ import { Service } from "@/features/service/types";
 import { ImageUrl } from "@/features/shared/types";
 import { uploadFile } from "@/features/upload/upload.api"; // highlight-line
 import apiClient from "@/lib/apiClient";
+import { buildQueryString } from "@/lib/queryString";
+
+export interface GetServicesParams {
+  skip?: number;
+  limit?: number;
+  search?: string;
+}
 
 /**
  * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
@@ -58,7 +65,7 @@ export async function addService(
 
   console.log("Payload to send for addService:", payload);
 
-  return apiClient<Service>("/services/services", {
+  return apiClient<Service>("/services", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -89,7 +96,7 @@ export async function updateService({
 
   console.log("Payload to send for updateService:", payload);
 
-  return apiClient<Service>(`/services/services/${serviceId}`, {
+  return apiClient<Service>(`/services/${serviceId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -98,8 +105,9 @@ export async function updateService({
 /**
  * Lấy danh sách tất cả dịch vụ
  */
-export async function getServices(): Promise<Service[]> {
-  return apiClient<Service[]>("/services");
+export async function getServices(params?: GetServicesParams): Promise<Service[]> {
+  const query = buildQueryString(params);
+  return apiClient<Service[]>(`/services${query}`);
 }
 
 /**
@@ -107,7 +115,7 @@ export async function getServices(): Promise<Service[]> {
  * @param id ID của dịch vụ
  */
 export async function getServiceById(id: string): Promise<Service> {
-  return apiClient<Service>(`/services/services/${id}`);
+  return apiClient<Service>(`/services/${id}`);
 }
 
 /**
@@ -115,7 +123,7 @@ export async function getServiceById(id: string): Promise<Service> {
  * @param serviceId ID của dịch vụ cần xóa
  */
 export async function deleteService(serviceId: string): Promise<void> {
-  return apiClient<void>(`/services/services/${serviceId}`, {
+  return apiClient<void>(`/services/${serviceId}`, {
     method: "DELETE",
   });
 }

@@ -16,7 +16,9 @@ const queryKey = ["products"];
 export const useProducts = () => {
   return useQuery<Product[]>({
     queryKey: queryKey,
-    queryFn: getProducts,
+    queryFn: () => getProducts(),
+    retry: 1,
+    staleTime: 60 * 1000,
   });
 };
 
