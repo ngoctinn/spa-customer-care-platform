@@ -7,7 +7,7 @@ import apiClient from "@/lib/apiClient";
  * Lấy danh sách tất cả dịch vụ
  */
 export async function getServices(): Promise<Service[]> {
-  return apiClient<Service[]>("/services/services");
+  return apiClient<Service[]>("/services");
 }
 
 /**
