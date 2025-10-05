@@ -1,14 +1,12 @@
 # app/api/services_api.py
 import uuid
 from typing import List
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, Form, UploadFile, File, status
 from sqlmodel import Session
 
 from app.core.dependencies import get_db_session
-from app.models.services_model import Service
 from app.schemas.services_schema import (
-    ServiceCreate,
-    ServicePublic,
+    ServiceCreatePayload,
     ServicePublicWithDetails,
     ServiceUpdate,
 )
@@ -41,7 +39,7 @@ async def create_new_service(
     """
     Tạo một dịch vụ mới, bao gồm cả việc tải lên hình ảnh.
     """
-    service_in = ServiceCreate(
+    service_in = ServiceCreatePayload(
         name=name,
         description=description,
         price=price,
@@ -83,10 +81,9 @@ def get_service_by_id(
     service_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):
     """Lấy thông tin chi tiết một dịch vụ bằng ID."""
-    service = services_service.get_service_by_id(db=session, service_id=service_id)
-    if not service:
-        raise HTTPException(status_code=404, detail="Không tìm thấy dịch vụ")
-    return service
+    return services_service.get_service_details_by_id(
+        db=session, service_id=service_id
+    )
 
 
 @router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
