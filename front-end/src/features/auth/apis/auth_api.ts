@@ -1,5 +1,18 @@
 // src/lib/api.ts
+import { ACCESS_TOKEN_COOKIE } from "@/features/auth/constants";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+const safeRequest = async (input: RequestInfo, init?: RequestInit) => {
+  try {
+    const response = await fetch(input, init);
+    if (!response.ok) {
+      console.warn("Request không thành công:", input, response.status);
+    }
+  } catch (error) {
+    console.warn("Không thể gửi request:", input, error);
+  }
+};
 
 export async function login(email: string, password: string) {
   const body = new URLSearchParams();
@@ -40,4 +53,20 @@ export async function fetchProfile() {
   }
 
   return response.json();
+}
+
+export async function logout() {
+  await Promise.all([
+    safeRequest(`${API_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    }),
+    safeRequest("/api/auth/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cookie: ACCESS_TOKEN_COOKIE }),
+    }),
+  ]);
 }
