@@ -1,5 +1,5 @@
 # app/schemas/services_schema.py
-from typing import Optional, List
+from typing import Optional
 from sqlmodel import SQLModel, Field
 import uuid
 
@@ -18,11 +18,15 @@ class ServiceBase(SQLModel):
     contraindications: str | None
 
     # THAY ĐỔI: Chấp nhận một danh sách các ID danh mục
-    category_ids: List[uuid.UUID] = Field(description="Danh sách ID của các danh mục")
+    category_ids: list[uuid.UUID] = Field(description="Danh sách ID của các danh mục")
 
+class ServiceCreatePayload(ServiceBase):
+    """Payload nhận từ request khi tạo dịch vụ mới."""
 
-class ServiceCreate(ServiceBase):
-    pass
+    category_ids: List[UUID] = Field(
+        default_factory=list, description="Danh sách ID của các danh mục"
+    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceUpdate(SQLModel):
@@ -34,17 +38,22 @@ class ServiceUpdate(SQLModel):
     aftercare_instructions: str | None = Field(default=None)
     contraindications: str | None = Field(default=None)
     # THAY ĐỔI: Cho phép cập nhật danh sách danh mục
-    category_ids: List[uuid.UUID] | None = Field(default=None)
+    category_ids: list[uuid.UUID] | None = Field(default=None)
 
 
 class ServicePublic(ServiceBase):
-    id: uuid.UUID
+    id: UUID
+    categories: List[CategoryPublic] = Field(default_factory=list)
+    images: List[ImagePublic] = Field(default_factory=list)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServicePublicWithDetails(ServicePublic):
+    model_config = {"from_attributes": True}
+
     # THAY ĐỔI: Hiển thị danh sách các danh mục
-    categories: List[CategoryPublic] = []
-    images: List[ImagePublic] = []
+    categories: list[CategoryPublic] = Field(default_factory=list)
+    images: list[ImagePublic] = Field(default_factory=list)
 
 
 # Cần forward reference cho treatment plan schema
