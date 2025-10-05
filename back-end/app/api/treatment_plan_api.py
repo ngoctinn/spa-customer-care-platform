@@ -1,77 +1,90 @@
 # app/api/treatment_plan_api.py
 import uuid
 from typing import List
-from fastapi import APIRouter
 
-# THAY ĐỔI: Import schema mới
-from app.schemas.treatment_plans_schema import TreatmentPlanPublicWithDetails
+from fastapi import APIRouter, Depends, status
+from sqlmodel import Session
+
+from app.core.dependencies import get_db_session
+from app.schemas.treatment_plans_schema import (
+    TreatmentPlanCreate,
+    TreatmentPlanPublicWithDetails,
+    TreatmentPlanUpdate,
+)
+from app.services import treatment_plans_service
+
 
 router = APIRouter()
 
-# Dữ liệu giả cho category, service của treatment plan
-mock_tp_category = {
-    "id": str(uuid.uuid4()),
-    "name": "Liệu trình trị mụn",
-    "description": "Các liệu trình chuyên sâu để điều trị mụn.",
-    "category_type": "treatment_plan",
-}
 
-mock_service_for_tp_1 = {
-    "id": str(uuid.uuid4()),
-    "name": "Lấy nhân mụn y khoa",
-    "description": "Làm sạch nhân mụn, tránh viêm nhiễm.",
-    "price": 300000,
-    "duration_minutes": 60,
-    "category_id": str(uuid.uuid4()),  # Giả định category của service
-}
+@router.post(
+    "",
+    response_model=TreatmentPlanPublicWithDetails,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_treatment_plan(
+    *,
+    session: Session = Depends(get_db_session),
+    treatment_plan_in: TreatmentPlanCreate,
+):
+    """Tạo mới một liệu trình cùng các bước."""
 
-mock_service_for_tp_2 = {
-    "id": str(uuid.uuid4()),
-    "name": "Điện di tinh chất B5",
-    "description": "Phục hồi da sau mụn, giảm thâm.",
-    "price": 450000,
-    "duration_minutes": 45,
-    "category_id": str(uuid.uuid4()),
-}
-
-mock_treatment_plan_data = [
-    {
-        "id": str(uuid.uuid4()),
-        "name": "Liệu trình trị mụn chuyên sâu 5 buổi",
-        "description": "Giải quyết dứt điểm mụn ẩn, mụn viêm và ngăn ngừa tái phát.",
-        "price": 3500000,
-        "total_sessions": 5,
-        "category_id": mock_tp_category["id"],
-        "category": mock_tp_category,
-        "images": [
-            {
-                "id": str(uuid.uuid4()),
-                "url": "https://place-hold.it/400x250/e63946/f1faee?text=TriMunChuyenSau",
-                "alt_text": "Hình ảnh liệu trình trị mụn",
-                "is_primary": True,
-            }
-        ],
-        "steps": [
-            {
-                "id": str(uuid.uuid4()),
-                "step_number": 1,
-                "service_id": mock_service_for_tp_1["id"],
-                "description": "Buổi 1, 3, 5: Làm sạch sâu và lấy nhân mụn.",
-                "service": mock_service_for_tp_1,
-            },
-            {
-                "id": str(uuid.uuid4()),
-                "step_number": 2,
-                "service_id": mock_service_for_tp_2["id"],
-                "description": "Buổi 2, 4: Phục hồi, làm dịu da với B5.",
-                "service": mock_service_for_tp_2,
-            },
-        ],
-    }
-]
+    return treatment_plans_service.create_treatment_plan(
+        db=session, treatment_plan_in=treatment_plan_in
+    )
 
 
 @router.get("", response_model=List[TreatmentPlanPublicWithDetails])
-def get_all_treatment_plans():
-    """Lấy danh sách tất cả liệu trình (dữ liệu mô phỏng)."""
-    return mock_treatment_plan_data
+def get_all_treatment_plans(
+    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
+):
+    """Lấy danh sách tất cả liệu trình chưa bị xóa mềm."""
+
+    return treatment_plans_service.get_all_treatment_plans(
+        db=session, skip=skip, limit=limit
+    )
+
+
+@router.get("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
+def get_treatment_plan_by_id(
+    treatment_plan_id: uuid.UUID, session: Session = Depends(get_db_session)
+):
+    """Lấy chi tiết một liệu trình theo ID."""
+
+    return treatment_plans_service.get_treatment_plan_by_id(
+        db=session, treatment_plan_id=treatment_plan_id
+    )
+
+
+@router.put("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
+def update_treatment_plan(
+    *,
+    treatment_plan_id: uuid.UUID,
+    treatment_plan_in: TreatmentPlanUpdate,
+    session: Session = Depends(get_db_session),
+):
+    """Cập nhật thông tin một liệu trình."""
+
+    db_treatment_plan = treatment_plans_service.get_treatment_plan_by_id(
+        db=session, treatment_plan_id=treatment_plan_id
+    )
+    return treatment_plans_service.update_treatment_plan(
+        db=session,
+        db_treatment_plan=db_treatment_plan,
+        treatment_plan_in=treatment_plan_in,
+    )
+
+
+@router.delete("/{treatment_plan_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_treatment_plan(
+    treatment_plan_id: uuid.UUID, session: Session = Depends(get_db_session)
+):
+    """Xóa mềm một liệu trình."""
+
+    db_treatment_plan = treatment_plans_service.get_treatment_plan_by_id(
+        db=session, treatment_plan_id=treatment_plan_id
+    )
+    treatment_plans_service.delete_treatment_plan(
+        db=session, db_treatment_plan=db_treatment_plan
+    )
+    return

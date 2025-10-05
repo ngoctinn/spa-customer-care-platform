@@ -39,3 +39,11 @@ class Service(BaseUUIDModel, table=True):
     )
 
     images: List["Image"] = Relationship(back_populates="service")
+
+    @property
+    def category_ids(self) -> List[uuid.UUID]:
+        """Danh sách ID của các danh mục không bị xóa mềm."""
+
+        return [
+            category.id for category in self.categories if not category.is_deleted
+        ]
