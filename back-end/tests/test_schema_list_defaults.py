@@ -144,3 +144,17 @@ def test_schema_list_defaults_are_independent(model_cls, kwargs_factory, list_fi
         assert list_a == []
         assert list_b == []
         assert list_a is not list_b
+
+
+def test_service_public_with_details_lists_are_independent():
+    kwargs = make_service_kwargs()
+    service_a = ServicePublicWithDetails(**kwargs)
+    service_b = ServicePublicWithDetails(**kwargs)
+
+    assert service_a.categories == []
+    assert service_b.categories == []
+    assert service_a.categories is not service_b.categories
+
+    assert service_a.images == []
+    assert service_b.images == []
+    assert service_a.images is not service_b.images
