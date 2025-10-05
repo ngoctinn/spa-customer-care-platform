@@ -1,5 +1,4 @@
 import uuid
-
 from sqlmodel import select
 
 from app.models.catalog_model import Category, Image
@@ -30,7 +29,6 @@ def test_create_product_with_new_and_existing_images(client, session, monkeypatc
     reusable_image = Image(
         url="https://cdn.example.com/reuse.jpg",
         alt_text="Hình ảnh dùng lại",
-        is_primary=False,
     )
     session.add(reusable_image)
     session.commit()
@@ -73,4 +71,4 @@ def test_create_product_with_new_and_existing_images(client, session, monkeypatc
     ).first()
     assert new_image is not None
     assert new_image.product_id == uuid.UUID(payload["id"])
-    assert any(image["is_primary"] for image in payload["images"])
+    assert payload["primary_image_id"] == str(reusable_image.id)

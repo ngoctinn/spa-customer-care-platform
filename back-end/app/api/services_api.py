@@ -1,7 +1,8 @@
 # app/api/services_api.py
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File, status
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlmodel import Session
 
 from app.core.dependencies import get_db_session
@@ -37,6 +38,8 @@ async def create_new_service(
     images: List[UploadFile] = File(
         [], description="Hình ảnh cho dịch vụ"
     ),  # Sửa thành [] để cho phép không có ảnh
+    existing_image_ids: Optional[List[uuid.UUID]] = Form(None),
+    primary_image_id: Optional[uuid.UUID] = Form(None),
 ):
     """
     Tạo một dịch vụ mới, bao gồm cả việc tải lên hình ảnh.
@@ -50,22 +53,58 @@ async def create_new_service(
         preparation_notes=preparation_notes,
         aftercare_instructions=aftercare_instructions,
         contraindications=contraindications,
+        existing_image_ids=existing_image_ids or [],
+        primary_image_id=primary_image_id,
     )
     return await services_service.create_service(
-        db=session, service_in=service_in, images=images
+        db=session,
+        service_in=service_in,
+        images=images,
     )
 
 
 @router.put("/{service_id}", response_model=ServicePublicWithDetails)
-def update_service(
+async def update_service(
     service_id: uuid.UUID,
-    service_in: ServiceUpdate,
     session: Session = Depends(get_db_session),
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    duration_minutes: Optional[int] = Form(None),
+    preparation_notes: Optional[str] = Form(None),
+    aftercare_instructions: Optional[str] = Form(None),
+    contraindications: Optional[str] = Form(None),
+    category_ids: Optional[List[uuid.UUID]] = Form(None),
+    existing_image_ids: Optional[List[uuid.UUID]] = Form(None),
+    primary_image_id: Optional[uuid.UUID] = Form(None),
+    images: List[UploadFile] = File([]),
 ):
     """Cập nhật thông tin một dịch vụ."""
     db_service = services_service.get_service_by_id(db=session, service_id=service_id)
-    return services_service.update_service(
-        db=session, db_service=db_service, service_in=service_in
+    service_in = ServiceUpdate(
+        name=name,
+        description=description,
+        price=price,
+        duration_minutes=duration_minutes,
+        preparation_notes=preparation_notes,
+        aftercare_instructions=aftercare_instructions,
+        contraindications=contraindications,
+        category_ids=category_ids,
+    )
+
+    if existing_image_ids is not None:
+        service_in.existing_image_ids = existing_image_ids
+
+    if primary_image_id is not None:
+        service_in.primary_image_id = primary_image_id
+
+    return await services_service.update_service(
+        db=session,
+        db_service=db_service,
+        service_in=service_in,
+        new_images=images,
+        existing_image_ids=existing_image_ids,
+        primary_image_id=primary_image_id,
     )
 
 

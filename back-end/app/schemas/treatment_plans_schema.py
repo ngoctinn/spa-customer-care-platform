@@ -1,7 +1,9 @@
 # app/schemas/treatment_plans_schema.py
 import uuid
 from typing import Optional
-from sqlmodel import SQLModel, Field
+
+from sqlmodel import Field, SQLModel
+
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
 # Cần import ServicePublic để hiển thị trong step
@@ -29,6 +31,14 @@ class TreatmentPlanBase(SQLModel):
 
 class TreatmentPlanCreate(TreatmentPlanBase):
     steps: list[TreatmentPlanStepBase] = Field(default_factory=list)
+    existing_image_ids: list[uuid.UUID] = Field(
+        default_factory=list,
+        description="Danh sách ID hình ảnh cần gán cho liệu trình",
+    )
+    primary_image_id: uuid.UUID | None = Field(
+        default=None,
+        description="ID hình ảnh sẽ được đặt làm ảnh chính",
+    )
 
 
 class TreatmentPlanUpdate(SQLModel):
@@ -37,6 +47,8 @@ class TreatmentPlanUpdate(SQLModel):
     price: Optional[float] = Field(default=None, gt=0)
     total_sessions: Optional[int] = Field(default=None, gt=0)
     category_id: Optional[uuid.UUID] = None
+    existing_image_ids: list[uuid.UUID] | None = Field(default=None)
+    primary_image_id: uuid.UUID | None = Field(default=None)
 
 
 class TreatmentPlanPublic(TreatmentPlanBase):
@@ -49,3 +61,4 @@ class TreatmentPlanPublicWithDetails(TreatmentPlanPublic):
     category: CategoryPublic
     images: list[ImagePublic] = Field(default_factory=list)
     steps: list[TreatmentPlanStepPublic] = Field(default_factory=list)
+    primary_image_id: uuid.UUID | None = None

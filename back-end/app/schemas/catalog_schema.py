@@ -1,8 +1,9 @@
 # app/schemas/catalog_schema.py
 import uuid
-from typing import Any, Optional
-from sqlmodel import SQLModel, Field
 from enum import Enum
+from typing import Any, Optional
+
+from sqlmodel import Field, SQLModel
 
 
 # =================================================================
@@ -11,11 +12,11 @@ from enum import Enum
 class ImageBase(SQLModel):
     url: str
     alt_text: str | None = Field(default=None)
-    is_primary: bool = Field(default=False)
 
 
 class ImagePublic(ImageBase):
     id: uuid.UUID
+    model_config = {"from_attributes": True}
 
 
 # =================================================================

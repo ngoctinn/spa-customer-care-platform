@@ -2,6 +2,7 @@
 import uuid
 from typing import Optional
 
+from fastapi import UploadFile
 from sqlmodel import Field, SQLModel
 
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
@@ -23,7 +24,17 @@ class ServiceBase(SQLModel):
 
 
 class ServiceCreate(ServiceBase):
-    pass
+    model_config = {"arbitrary_types_allowed": True}
+
+    existing_image_ids: list[uuid.UUID] = Field(
+        default_factory=list,
+        description="Danh sách ID hình ảnh sẽ được gán cho dịch vụ",
+    )
+    primary_image_id: uuid.UUID | None = Field(
+        default=None,
+        description="ID hình ảnh sẽ được đặt làm ảnh chính",
+    )
+    new_images: list[UploadFile] = Field(default_factory=list, exclude=True)
 
 
 class ServiceUpdate(SQLModel):
@@ -36,6 +47,9 @@ class ServiceUpdate(SQLModel):
     contraindications: str | None = Field(default=None)
     # THAY ĐỔI: Cho phép cập nhật danh sách danh mục
     category_ids: list[uuid.UUID] | None = Field(default=None)
+    existing_image_ids: list[uuid.UUID] | None = Field(default=None, exclude=True)
+    primary_image_id: uuid.UUID | None = Field(default=None)
+    new_images: list[UploadFile] | None = Field(default=None, exclude=True)
 
 
 class ServicePublic(ServiceBase):
@@ -48,6 +62,7 @@ class ServicePublicWithDetails(ServicePublic):
     # THAY ĐỔI: Hiển thị danh sách các danh mục
     categories: list[CategoryPublic] = Field(default_factory=list)
     images: list[ImagePublic] = Field(default_factory=list)
+    primary_image_id: uuid.UUID | None = None
 
 
 # Cần forward reference cho treatment plan schema

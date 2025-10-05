@@ -34,7 +34,10 @@ export default function TreatmentPlanDetailPage({
   const { data: allServices = [], isLoading: isLoadingServices } =
     useServices();
 
-  const primaryImageUrl = getPrimaryImageUrl(plan?.images);
+  const primaryImageUrl = getPrimaryImageUrl(
+    plan?.images,
+    plan?.primary_image_id
+  );
 
   const [mainImage, setMainImage] = useState<string>(primaryImageUrl);
   useEffect(() => {

@@ -28,7 +28,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     queryFn: () => getProductById(id),
   });
 
-  const primaryImageUrl = getPrimaryImageUrl(product?.images);
+  const primaryImageUrl = getPrimaryImageUrl(
+    product?.images,
+    product?.primary_image_id
+  );
 
   const [mainImage, setMainImage] = useState<string>(primaryImageUrl);
   useEffect(() => {

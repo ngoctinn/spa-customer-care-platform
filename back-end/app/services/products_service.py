@@ -8,12 +8,12 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
-from app.core import supabase_client
-from app.models.catalog_model import Category, Image
+from app.models.catalog_model import Category
 from app.models.products_model import Product
 from app.schemas.catalog_schema import CategoryTypeEnum
 from app.schemas.products_schema import ProductCreate, ProductUpdate
 from app.services import catalog_service
+from app.services.images_service import sync_entity_images
 
 
 def _with_product_relationships(statement):
@@ -22,6 +22,7 @@ def _with_product_relationships(statement):
     return statement.options(
         selectinload(Product.categories),
         selectinload(Product.images),
+        selectinload(Product.primary_image),
     )
 
 
@@ -64,82 +65,10 @@ def _filter_soft_deleted_relationships(product: Product) -> Product:
         category for category in product.categories if not category.is_deleted
     ]
     product.images = [image for image in product.images if not image.is_deleted]
+    valid_image_ids = {image.id for image in product.images}
+    if product.primary_image_id not in valid_image_ids:
+        product.primary_image_id = None
     return product
-
-
-def _get_active_product_images(product: Product) -> List[Image]:
-    return sorted(
-        [image for image in product.images if not image.is_deleted],
-        key=lambda image: (not image.is_primary, image.created_at),
-    )
-
-
-def _get_image_by_id(db: Session, image_id: uuid.UUID) -> Image:
-    image = db.exec(
-        select(Image).where(Image.id == image_id, Image.is_deleted == False)
-    ).first()
-    if not image:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Image với ID {image_id} không được tìm thấy.",
-        )
-    return image
-
-
-async def _sync_product_images(
-    db: Session,
-    *,
-    product: Product,
-    new_images: Optional[List[UploadFile]] = None,
-    existing_image_ids: Optional[List[uuid.UUID]] = None,
-) -> None:
-    current_images = _get_active_product_images(product)
-
-    if existing_image_ids is None:
-        existing_image_ids = [image.id for image in current_images]
-    else:
-        existing_image_ids = list(existing_image_ids)
-
-    keep_image_ids = set(existing_image_ids)
-    for image in current_images:
-        if image.id not in keep_image_ids:
-            image.product_id = None
-            image.is_primary = False
-            db.add(image)
-
-    ordered_images: List[Image] = []
-    seen_ids: set[uuid.UUID] = set()
-    for image_id in existing_image_ids:
-        if image_id in seen_ids:
-            continue
-        seen_ids.add(image_id)
-        image = _get_image_by_id(db, image_id)
-        image.product_id = product.id
-        image.service_id = None
-        image.treatment_plan_id = None
-        image.is_primary = False
-        db.add(image)
-        ordered_images.append(image)
-
-    for image_file in new_images or []:
-        if not getattr(image_file, "filename", None):
-            continue
-        image_url = await supabase_client.upload_image(file=image_file)
-        if not image_url:
-            continue
-        db_image = Image(
-            url=image_url,
-            alt_text=product.name,
-            product_id=product.id,
-            is_primary=False,
-        )
-        db.add(db_image)
-        db.flush()
-        ordered_images.append(db_image)
-
-    for index, image in enumerate(ordered_images):
-        image.is_primary = index == 0
-        db.add(image)
 
 
 async def create_product(
@@ -148,6 +77,7 @@ async def create_product(
     *,
     new_images: Optional[List[UploadFile]] = None,
     existing_image_ids: Optional[List[uuid.UUID]] = None,
+    primary_image_id: Optional[uuid.UUID] = None,
 ) -> Product:
     """Tạo mới một sản phẩm."""
 
@@ -165,7 +95,12 @@ async def create_product(
         )
 
     product_data = product_in.model_dump(
-        exclude={"existing_image_ids", "new_images", "category_ids"}
+        exclude={
+            "existing_image_ids",
+            "new_images",
+            "category_ids",
+            "primary_image_id",
+        }
     )
     db_product = Product(**product_data)
     db_product.categories = categories
@@ -173,13 +108,22 @@ async def create_product(
     db.commit()
     db.refresh(db_product)
 
-    await _sync_product_images(
+    await sync_entity_images(
         db,
-        product=db_product,
+        entity=db_product,
+        owner="product",
         new_images=new_images,
-        existing_image_ids=existing_image_ids
-        if existing_image_ids is not None
-        else product_in.existing_image_ids,
+        existing_image_ids=(
+            existing_image_ids
+            if existing_image_ids is not None
+            else product_in.existing_image_ids
+        ),
+        primary_image_id=(
+            primary_image_id
+            if primary_image_id is not None
+            else product_in.primary_image_id
+        ),
+        alt_text=db_product.name,
     )
     db.commit()
     db.refresh(db_product)
@@ -225,12 +169,14 @@ async def update_product(
     *,
     new_images: Optional[List[UploadFile]] = None,
     existing_image_ids: Optional[List[uuid.UUID]] = None,
+    primary_image_id: Optional[uuid.UUID] = None,
 ) -> Product:
     """Cập nhật thông tin một sản phẩm."""
 
     product_data = product_in.model_dump(exclude_unset=True)
     product_data.pop("existing_image_ids", None)
     product_data.pop("new_images", None)
+    product_data.pop("primary_image_id", None)
 
     if "name" in product_data:
         existing_product = db.exec(
@@ -257,14 +203,22 @@ async def update_product(
     db.add(db_product)
     db.flush()
 
-    await _sync_product_images(
+    await sync_entity_images(
         db,
-        product=db_product,
+        entity=db_product,
+        owner="product",
         new_images=new_images,
-        existing_image_ids=
-        existing_image_ids
-        if existing_image_ids is not None
-        else product_in.existing_image_ids,
+        existing_image_ids=(
+            existing_image_ids
+            if existing_image_ids is not None
+            else product_in.existing_image_ids
+        ),
+        primary_image_id=(
+            primary_image_id
+            if primary_image_id is not None
+            else product_in.primary_image_id
+        ),
+        alt_text=db_product.name,
     )
 
     db.commit()

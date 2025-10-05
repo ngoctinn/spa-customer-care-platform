@@ -38,7 +38,19 @@ class Service(BaseUUIDModel, table=True):
         back_populates="services", link_model=ServiceCategoryLink
     )
 
-    images: List["Image"] = Relationship(back_populates="service")
+    images: List["Image"] = Relationship(
+        back_populates="service",
+        sa_relationship_kwargs={"foreign_keys": "Image.service_id"},
+    )
+    primary_image_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="image.id", nullable=True
+    )
+    primary_image: Optional["Image"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "Service.primary_image_id",
+        }
+    )
 
     @property
     def category_ids(self) -> List[uuid.UUID]:

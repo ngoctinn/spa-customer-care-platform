@@ -9,6 +9,7 @@ export interface Service {
   duration_minutes: number;
   categories: Category[];
   images: ImageUrl[];
+  primary_image_id?: string | null;
   status: "active" | "inactive";
   preparation_notes: string;
   aftercare_instructions: string;

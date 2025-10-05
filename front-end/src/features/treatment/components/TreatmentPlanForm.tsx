@@ -302,10 +302,9 @@ export default function TreatmentPlanFormFields() {
               <MultiImageUploader
                 defaultValue={field.value}
                 onFilesSelect={(files: File[]) => {
-                  const newImageUrls: ImageUrl[] = files.map((file, index) => ({
+                  const newImageUrls: ImageUrl[] = files.map((file) => ({
                     id: uuidv4(),
                     url: URL.createObjectURL(file),
-                    is_primary: (field.value?.length || 0) + index === 0,
                     alt_text: file.name,
                   }));
                   field.onChange([...(field.value || []), ...newImageUrls]);
