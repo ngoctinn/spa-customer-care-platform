@@ -61,7 +61,6 @@ def make_product_kwargs() -> dict:
         "base_unit": "unit",
         "consumable_unit": None,
         "conversion_rate": None,
-        "category_id": uuid.uuid4(),
     }
 
 
@@ -117,9 +116,8 @@ def make_product_kwargs() -> dict:
             ProductPublicWithDetails,
             lambda: {
                 **make_product_kwargs(),
-                "category": make_category_public(),
             },
-            ("images",),
+            ("categories", "images"),
         ),
         (
             CategoryPublicWithItems,
