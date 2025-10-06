@@ -46,7 +46,7 @@ export default function TimeSelection({
             className="rounded-md border"
             disabled={(date) =>
               date < new Date(new Date().setHours(0, 0, 0, 0))
-            }
+            } // Vô hiệu hóa ngày trong quá khứ
           />
         </div>
         {selectedDate && (
@@ -63,29 +63,27 @@ export default function TimeSelection({
               </p>
             )}
             {!isLoading && !isError && (
-              <RadioGroup
-                value={selectedTime}
-                onValueChange={onTimeChange}
-                className="grid grid-cols-3 gap-2"
-              >
+              <RadioGroup value={selectedTime} onValueChange={onTimeChange}>
                 {availableTimes && availableTimes.length > 0 ? (
-                  availableTimes.map((time) => (
-                    <div key={time}>
-                      <RadioGroupItem
-                        value={time}
-                        id={time}
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor={time}
-                        className="flex h-10 w-full items-center justify-center rounded-md border text-sm font-medium hover:bg-accent peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground cursor-pointer transition-colors"
-                      >
-                        {time}
-                      </Label>
-                    </div>
-                  ))
+                  <div className="grid grid-cols-3 gap-4">
+                    {availableTimes.map((time) => (
+                      <div key={time}>
+                        <RadioGroupItem
+                          value={time}
+                          id={time}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={time}
+                          className="flex min-h-12 w-full items-center justify-center rounded-md border-2 border-muted bg-popover text-center text-sm hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer py-2 px-1"
+                        >
+                          {time}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <div className="col-span-3 flex items-center justify-center h-40 text-center text-muted-foreground">
+                  <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
                     <p>
                       Không có khung giờ trống cho ngày này.
                       <br />

@@ -11,23 +11,15 @@ import { AppointmentFormValues } from "@/features/appointment/schemas";
 export async function createAppointment(
   bookingData: BookingState
 ): Promise<Appointment> {
-  // highlight-start
   // Chuyển đổi dữ liệu từ front-end thành định dạng mà back-end mong muốn
-  let startTime;
-  if (bookingData.selectedDate && bookingData.selectedTime) {
-    // Tách giờ và phút từ chuỗi "HH:mm"
-    const [hours, minutes] = bookingData.selectedTime.split(":").map(Number);
-    // Tạo một đối tượng Date mới từ ngày đã chọn để tránh thay đổi state gốc
-    startTime = new Date(bookingData.selectedDate);
-    // Đặt giờ, phút, giây, mili giây một cách an toàn
-    startTime.setHours(hours, minutes, 0, 0);
-  }
-  // highlight-end
-
   const payload = {
     service_id: bookingData.serviceId,
     treatment_plan_id: bookingData.treatmentId, // (Nếu có)
-    start_time: startTime, // <-- Sử dụng biến đã xử lý
+    start_time: new Date(
+      `${bookingData.selectedDate?.toISOString().split("T")[0]}T${
+        bookingData.selectedTime
+      }`
+    ),
     // Thông tin khách vãng lai
     guest_name: bookingData.customerInfo?.name,
     guest_phone: bookingData.customerInfo?.phone,

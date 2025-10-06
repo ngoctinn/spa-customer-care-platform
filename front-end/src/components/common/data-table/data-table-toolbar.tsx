@@ -4,13 +4,12 @@
 import { Table } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, SlidersHorizontal, X } from "lucide-react";
+import { Trash2, SlidersHorizontal } from "lucide-react";
 import { DataTableViewOptions } from "@/components/common/data-table/data-table-view-options";
 import {
   DataTableFacetedFilter,
   FacetedFilterOption,
 } from "./data-table-faceted-filter";
-import { DataTablePriceFilter } from "@/components/common/data-table/data-table-price-filter";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -23,7 +22,6 @@ export interface DataTableToolbarProps<TData> {
   }[];
   onDeleteSelected?: (selectedRows: TData[]) => void;
   onAdjustStockClick?: () => void;
-  enablePriceFilter?: boolean;
 }
 
 export function DataTableToolbar<TData>({
@@ -33,7 +31,6 @@ export function DataTableToolbar<TData>({
   facetedFilters = [],
   onDeleteSelected,
   onAdjustStockClick,
-  enablePriceFilter = false,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const selectedRowsData = table
@@ -62,21 +59,6 @@ export function DataTableToolbar<TData>({
             options={filter.options}
           />
         ))}
-
-        {enablePriceFilter && (
-          <DataTablePriceFilter table={table} columnId="price" />
-        )}
-
-        {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
-            Xóa bộ lọc
-            <X className="ml-2 h-4 w-4" />
-          </Button>
-        )}
       </div>
       <div className="flex items-center space-x-2">
         {onAdjustStockClick && (

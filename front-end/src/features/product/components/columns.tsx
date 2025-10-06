@@ -121,12 +121,6 @@ export const getProductColumns = (
     meta: { headerTitle: "Giá" },
     cell: ({ row }) =>
       new Intl.NumberFormat("vi-VN").format(row.original.price),
-
-    filterFn: (row, id, value) => {
-      const [min, max] = value as [number, number];
-      const price = row.original.price;
-      return price >= min && price <= max;
-    },
   },
   {
     accessorKey: "stock",
