@@ -27,7 +27,7 @@ const StarRating = ({
             <Star
               className={cn(
                 "w-6 h-6",
-                starValue <= rating ? "text-star fill-star" : "text-border"
+                starValue <= rating ? "text-warning fill-star" : "text-border"
               )}
             />
           </button>

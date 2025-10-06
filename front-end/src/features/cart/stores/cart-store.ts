@@ -16,14 +16,12 @@ export interface CartItem {
 // Định nghĩa cấu trúc của store
 interface CartState {
   items: CartItem[];
-  lastAddedItem: CartItem | null;
   addItem: (
     itemToAdd: Omit<CartItem, "quantity"> & { quantity?: number }
   ) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
-  clearLastAddedItem: () => void;
 }
 
 const useCartStore = create<CartState>()(
@@ -31,13 +29,10 @@ const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      lastAddedItem: null,
-      clearLastAddedItem: () => set({ lastAddedItem: null }),
       // Thêm sản phẩm vào giỏ hoặc tăng số lượng nếu đã tồn tại
       addItem: (itemToAdd) => {
         const items = get().items;
         const existingItem = items.find((item) => item.id === itemToAdd.id);
-        const newItem = { ...itemToAdd, quantity: itemToAdd.quantity || 1 };
 
         if (existingItem) {
           const updatedItems = items.map((item) =>
@@ -45,11 +40,13 @@ const useCartStore = create<CartState>()(
               ? { ...item, quantity: item.quantity + (itemToAdd.quantity || 1) }
               : item
           );
-          set({ items: updatedItems, lastAddedItem: newItem });
+          set({ items: updatedItems });
         } else {
           set({
-            items: [...items, newItem],
-            lastAddedItem: newItem,
+            items: [
+              ...items,
+              { ...itemToAdd, quantity: itemToAdd.quantity || 1 },
+            ],
           });
         }
         toast.success(`Đã thêm "${itemToAdd.name}" vào giỏ hàng.`);

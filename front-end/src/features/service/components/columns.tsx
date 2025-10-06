@@ -106,11 +106,6 @@ export const getServiceColumns = (
     cell: ({ row }) =>
       new Intl.NumberFormat("vi-VN").format(row.original.price),
     meta: { headerTitle: "Giá" },
-    filterFn: (row, id, value) => {
-      const [min, max] = value as [number, number];
-      const price = row.original.price;
-      return price >= min && price <= max;
-    },
   },
   {
     accessorKey: "duration_minutes",
