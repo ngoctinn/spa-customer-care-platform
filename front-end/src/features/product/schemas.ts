@@ -23,6 +23,7 @@ export const productFormSchema = z
     baseUnit: z.string().trim().min(1, "Đơn vị cơ sở không được để trống."),
     consumableUnit: z.string().optional(),
     conversionRate: z.number().optional(),
+    primary_image_id: z.string().uuid().optional(),
   })
   .refine((data) => data.isRetail || data.isConsumable, {
     message: "Sản phẩm phải là hàng bán lẻ hoặc hàng tiêu hao (hoặc cả hai).",

@@ -1,19 +1,39 @@
 // src/features/upload/upload.api.ts
-import apiClient from "@/lib/apiClient";
 import { ImageUrl } from "@/features/shared/types";
 
-// Giả sử backend trả về một đối tượng ImageUrl sau khi upload thành công
-// Bạn cần một endpoint backend, ví dụ: /uploads, để xử lý việc này
-const UPLOAD_ENDPOINT = "/uploads";
+// Endpoint mới cho dịch vụ upload hình ảnh dùng chung
+const UPLOAD_ENDPOINT = "/images";
+
+type UploadImageOptions = {
+  altText?: string;
+  productIds?: string[];
+  serviceIds?: string[];
+  treatmentPlanIds?: string[];
+};
 
 /**
  * Tải một file lên server.
  * @param file Đối tượng File cần tải lên.
  * @returns Promise chứa thông tin ảnh đã được tải lên (ImageUrl).
  */
-export async function uploadFile(file: File): Promise<ImageUrl> {
+export async function uploadFile(
+  file: File,
+  options: UploadImageOptions = {}
+): Promise<ImageUrl> {
   const formData = new FormData();
   formData.append("file", file);
+
+  if (options.altText) {
+    formData.append("alt_text", options.altText);
+  }
+
+  options.productIds?.forEach((id) =>
+    formData.append("product_ids", id)
+  );
+  options.serviceIds?.forEach((id) => formData.append("service_ids", id));
+  options.treatmentPlanIds?.forEach((id) =>
+    formData.append("treatment_plan_ids", id)
+  );
 
   // Chúng ta không dùng apiClient gốc vì nó mặc định gửi JSON.
   // Thay vào đó, tạo một yêu cầu fetch riêng cho multipart/form-data.

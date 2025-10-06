@@ -1,10 +1,13 @@
 // src/features/service/api/service.api.ts
 import { ServiceFormValues } from "@/features/service/schemas";
 import { Service } from "@/features/service/types";
-import { ImageUrl } from "@/features/shared/types";
-import { uploadFile } from "@/features/upload/upload.api"; // highlight-line
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
+import {
+  appendFormDataList,
+  appendFormDataValue,
+  splitImages,
+} from "@/lib/form-data-utils";
 
 export type GetServicesParams = {
   skip?: number;
@@ -12,36 +15,58 @@ export type GetServicesParams = {
   search?: string;
 };
 
-/**
- * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
- * @param images Mảng chứa cả File (ảnh mới) và ImageUrl (ảnh cũ).
- * @returns Danh sách ImageUrl đã được xử lý.
- */
-async function handleImageUploads(
-  images: (File | ImageUrl)[] | undefined
-): Promise<ImageUrl[]> {
-  if (!images || images.length === 0) {
-    return [];
+function buildServiceFormData(
+  serviceData: Partial<ServiceFormValues>
+): FormData {
+  const formData = new FormData();
+
+  appendFormDataValue(formData, "name", serviceData.name);
+  appendFormDataValue(formData, "description", serviceData.description);
+  appendFormDataValue(formData, "price", serviceData.price);
+  appendFormDataValue(
+    formData,
+    "duration_minutes",
+    serviceData.duration_minutes
+  );
+  appendFormDataValue(
+    formData,
+    "preparation_notes",
+    serviceData.preparation_notes
+  );
+  appendFormDataValue(
+    formData,
+    "aftercare_instructions",
+    serviceData.aftercare_instructions
+  );
+  appendFormDataValue(
+    formData,
+    "contraindications",
+    serviceData.contraindications
+  );
+
+  if (serviceData.categories) {
+    appendFormDataList(formData, "category_ids", serviceData.categories);
   }
 
-  const uploadPromises: Promise<ImageUrl>[] = [];
-  const existingImages: ImageUrl[] = [];
+  if (serviceData.primary_image_id) {
+    appendFormDataValue(
+      formData,
+      "primary_image_id",
+      serviceData.primary_image_id
+    );
+  }
 
-  images.forEach((image) => {
-    if (image instanceof File) {
-      // Nếu là file mới, thêm vào danh sách chờ upload
-      uploadPromises.push(uploadFile(image));
-    } else {
-      // Nếu là ảnh đã có, giữ lại
-      existingImages.push(image);
+  if (serviceData.images) {
+    const { files, existingIds } = splitImages(serviceData.images);
+    if (existingIds.length > 0) {
+      appendFormDataList(formData, "existing_image_ids", existingIds);
     }
-  });
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+  }
 
-  // Chờ tất cả các file được upload xong
-  const uploadedImages = await Promise.all(uploadPromises);
-
-  // Kết hợp ảnh cũ và ảnh mới đã upload
-  return [...existingImages, ...uploadedImages];
+  return formData;
 }
 
 /**
@@ -51,23 +76,11 @@ async function handleImageUploads(
 export async function addService(
   serviceData: ServiceFormValues
 ): Promise<Service> {
-  // Tách riêng các file ảnh và các dữ liệu khác
-  const { images, ...otherData } = serviceData;
-
-  // 1. Tải các file ảnh mới lên và lấy URL
-  const processedImages = await handleImageUploads(images);
-
-  // 2. Gộp URL ảnh đã xử lý vào payload cuối cùng
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
-
-  console.log("Payload to send for addService:", payload);
+  const formData = buildServiceFormData(serviceData);
 
   return apiClient<Service>("/services", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: formData,
   });
 }
 
@@ -83,22 +96,11 @@ export async function updateService({
   serviceId: string;
   serviceData: Partial<ServiceFormValues>;
 }): Promise<Service> {
-  const { images, ...otherData } = serviceData;
-
-  // 1. Tải các file ảnh mới lên và lấy URL
-  const processedImages = await handleImageUploads(images);
-
-  // 2. Gộp URL ảnh đã xử lý vào payload cuối cùng
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
-
-  console.log("Payload to send for updateService:", payload);
+  const formData = buildServiceFormData(serviceData);
 
   return apiClient<Service>(`/services/${serviceId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: formData,
   });
 }
 
