@@ -1,38 +1,38 @@
 // src/app/(admin)/dashboard/products/page.tsx
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { useProducts } from "@/features/product/hooks/useProducts";
 import { getProductColumns } from "@/features/product/components/columns";
-import { Product } from "@/features/product/types";
-import {
-  ProductFormValues,
-  productFormSchema,
-  stockAdjustmentSchema,
-  StockAdjustmentFormValues,
-} from "@/features/product/schemas";
 import {
   useAddProduct,
-  useUpdateProduct,
   useDeleteProduct,
+  useProducts,
+  useUpdateProduct,
 } from "@/features/product/hooks/useProducts";
+import {
+  ProductFormValues,
+  StockAdjustmentFormValues,
+  productFormSchema,
+  stockAdjustmentSchema,
+} from "@/features/product/schemas";
+import { Product } from "@/features/product/types";
 
 import { useAdjustStock } from "@/features/inventory/hooks/useInventory";
 
+import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 import { DataTable } from "@/components/common/data-table/data-table";
+import { FormDialog } from "@/components/common/FormDialog";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { FormDialog } from "@/components/common/FormDialog";
-import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 import { FullPageLoader } from "@/components/ui/spinner";
-import ProductFormFields from "@/features/product/components/ProductForm";
-import StockAdjustmentForm from "@/features/inventory/components/StockAdjustmentForm";
 import { Category } from "@/features/category/types";
+import StockAdjustmentForm from "@/features/inventory/components/StockAdjustmentForm";
+import ProductFormFields from "@/features/product/components/ProductForm";
 
 export default function ProductsDashboardPage() {
   const { data: products = [], isLoading } = useProducts();
@@ -100,6 +100,7 @@ export default function ProductsDashboardPage() {
         stock: product.stock || 0,
         // Chuyển đổi các giá trị có thể là null/undefined
         description: product.description || "",
+        primary_image_id: product.primary_image_id ?? undefined,
       });
       setIsProductFormOpen(true);
     },

@@ -1,29 +1,29 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusCircle } from "lucide-react";
-import {
-  useServices,
-  useAddService,
-  useUpdateService,
-  useDeleteService,
-} from "@/features/service/hooks/useServices";
+import { ConfirmationModal } from "@/components/common/ConfirmationModal";
+import { DataTable } from "@/components/common/data-table/data-table";
+import { FormDialog } from "@/components/common/FormDialog";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { FullPageLoader } from "@/components/ui/spinner";
+import { useCategories } from "@/features/category/hooks/useCategories";
 import { getServiceColumns } from "@/features/service/components/columns";
+import ServiceFormFields from "@/features/service/components/ServiceForm";
+import {
+  useAddService,
+  useDeleteService,
+  useServices,
+  useUpdateService,
+} from "@/features/service/hooks/useServices";
 import {
   ServiceFormValues,
   serviceFormSchema,
 } from "@/features/service/schemas";
 import { Service } from "@/features/service/types";
-import { DataTable } from "@/components/common/data-table/data-table";
-import { PageHeader } from "@/components/common/PageHeader";
-import { Button } from "@/components/ui/button";
-import { FormDialog } from "@/components/common/FormDialog";
-import ServiceFormFields from "@/features/service/components/ServiceForm";
-import { ConfirmationModal } from "@/components/common/ConfirmationModal";
-import { FullPageLoader } from "@/components/ui/spinner";
-import { useCategories } from "@/features/category/hooks/useCategories";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PlusCircle } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
 export default function ServicesDashboardPage() {
   const { data: services = [], isLoading } = useServices();
@@ -63,6 +63,10 @@ export default function ServicesDashboardPage() {
       form.reset({
         ...service,
         categories: service.categories.map((c) => c.id),
+        preparation_notes: service.preparation_notes ?? undefined,
+        aftercare_instructions: service.aftercare_instructions ?? undefined,
+        contraindications: service.contraindications ?? undefined,
+        primary_image_id: service.primary_image_id ?? undefined,
       });
       setIsFormOpen(true);
     },
