@@ -9,9 +9,11 @@ const getCustomerProfile = (): Promise<FullCustomerProfile> => {
 };
 
 export const useCustomerProfile = () => {
+  const { user } = useAuth();
+
   return useQuery<FullCustomerProfile>({
     queryKey: ["customerProfile", "me"],
-    queryFn: getCustomerProfile,
-    enabled: !!useAuth().user, // Chỉ chạy khi đã đăng nhập
+    queryFn: () => getCustomerProfile(),
+    enabled: !!user, // Chỉ chạy khi đã đăng nhập
   });
 };

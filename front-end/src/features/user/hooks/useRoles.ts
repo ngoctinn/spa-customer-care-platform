@@ -5,6 +5,6 @@ import { Role } from "@/features/user/types";
 export const useRoles = () => {
   return useQuery<Role[]>({
     queryKey: ["roles"],
-    queryFn: getRoles,
+    queryFn: () => getRoles(),
   });
 };

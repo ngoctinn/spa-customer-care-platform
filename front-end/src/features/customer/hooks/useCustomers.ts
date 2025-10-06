@@ -5,6 +5,6 @@ import { FullCustomerProfile } from "@/features/customer/types";
 export const useCustomers = () => {
   return useQuery<FullCustomerProfile[]>({
     queryKey: ["customers"],
-    queryFn: getCustomers,
+    queryFn: () => getCustomers(),
   });
 };

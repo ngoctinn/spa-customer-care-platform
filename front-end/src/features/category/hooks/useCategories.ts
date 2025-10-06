@@ -5,6 +5,6 @@ import { Category } from "@/features/category/types";
 export const useCategories = () => {
   return useQuery<Category[]>({
     queryKey: ["categories"],
-    queryFn: getCategories,
+    queryFn: () => getCategories(),
   });
 };
