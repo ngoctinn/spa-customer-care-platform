@@ -302,10 +302,27 @@ export default function TreatmentPlanFormFields() {
                   // === FIX CONFLICT: Giữ lại phiên bản này ===
                   field.onChange([...(field.value || []), ...files]);
                 }}
-                onRemoveImage={(imageToRemove) => {
-                  const updatedImages = (field.value || []).filter(
-                    (img) => img !== imageToRemove
+                onLibrarySelectionChange={(selectedImages) => {
+                  const currentFiles = (field.value || []).filter(
+                    (img): img is File => img instanceof File
                   );
+                  field.onChange([...currentFiles, ...selectedImages]);
+                }}
+                onRemoveImage={(imageToRemove) => {
+                  const updatedImages = (field.value || []).filter((img) => {
+                    if (img instanceof File && imageToRemove instanceof File) {
+                      return img !== imageToRemove;
+                    }
+
+                    if (
+                      !(img instanceof File) &&
+                      !(imageToRemove instanceof File)
+                    ) {
+                      return img.id !== imageToRemove.id;
+                    }
+
+                    return true;
+                  });
                   field.onChange(updatedImages);
                 }}
               />

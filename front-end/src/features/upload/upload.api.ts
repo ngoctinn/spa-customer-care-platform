@@ -1,5 +1,7 @@
 // src/features/upload/upload.api.ts
 import { ImageUrl } from "@/features/shared/types";
+import apiClient from "@/lib/apiClient";
+import { buildQueryString } from "@/lib/queryString";
 
 // Endpoint mới cho dịch vụ upload hình ảnh dùng chung
 const UPLOAD_ENDPOINT = "/images";
@@ -10,6 +12,28 @@ type UploadImageOptions = {
   serviceIds?: string[];
   treatmentPlanIds?: string[];
 };
+
+export type FetchImageLibraryParams = {
+  productId?: string;
+  serviceId?: string;
+  treatmentPlanId?: string;
+};
+
+/**
+ * Lấy danh sách hình ảnh đã được tải lên từ thư viện chung.
+ * @param params Các tham số lọc theo loại đối tượng liên kết.
+ */
+export async function fetchImageLibrary(
+  params?: FetchImageLibraryParams
+): Promise<ImageUrl[]> {
+  const query = buildQueryString({
+    product_id: params?.productId,
+    service_id: params?.serviceId,
+    treatment_plan_id: params?.treatmentPlanId,
+  });
+
+  return apiClient<ImageUrl[]>(`${UPLOAD_ENDPOINT}${query}`);
+}
 
 /**
  * Tải một file lên server.
