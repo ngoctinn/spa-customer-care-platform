@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   UserCircle2,
+  User,
 } from "lucide-react";
 
 import {
@@ -218,13 +219,25 @@ export function Header() {
                 <>
                   <DropdownMenuItem>
                     <Link
-                      href="/dashboard"
+                      href="/account/profile"
                       className="flex items-center w-full"
                     >
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Trang điều khiển</span>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Tài khoản của tôi</span>
                     </Link>
                   </DropdownMenuItem>
+                  {/* highlight-end */}
+                  {user?.is_superuser && ( // Chỉ hiển thị cho admin
+                    <DropdownMenuItem>
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center w-full"
+                      >
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Trang quản trị</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleThemeToggle}>
                     {theme === "light" ? (
                       <Moon className="mr-2 h-4 w-4" />

@@ -4,13 +4,23 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { getServiceById } from "@/features/service/api/service.api";
 import { ReviewList } from "@/features/review/components/ReviewList";
-import { Clock, Tag } from "lucide-react";
+import { Clock, MessageSquarePlus, Tag } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useState, useEffect, use } from "react";
 import { useReviews } from "@/features/review/hooks/useReviews";
 import { FullPageLoader } from "@/components/ui/spinner";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AddReviewForm } from "@/features/review/components/AddReviewForm";
+import { useAuth } from "@/contexts/AuthContexts";
 
 interface ServiceDetailPageProps {
   params: Promise<{ id: string }>;
@@ -18,6 +28,9 @@ interface ServiceDetailPageProps {
 
 export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   const { id } = use(params);
+
+  const { user } = useAuth(); // Kiểm tra trạng thái đăng nhập
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
   const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
 
@@ -118,9 +131,44 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
           </div>
         )}
       </div>
-
       <Separator className="my-8" />
-      <ReviewList reviews={serviceReviews} />
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold">
+            Đánh giá từ khách hàng ({serviceReviews.length})
+          </h3>
+          {user && ( // Chỉ hiển thị nút khi đã đăng nhập
+            <Dialog
+              open={isReviewDialogOpen}
+              onOpenChange={setIsReviewDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  Viết đánh giá
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                  <DialogTitle>Đánh giá dịch vụ: {service.name}</DialogTitle>
+                </DialogHeader>
+                <AddReviewForm
+                  itemId={service.id}
+                  itemType="service"
+                  onSuccess={() => setIsReviewDialogOpen(false)} // Tự động đóng dialog khi thành công
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+        {serviceReviews.length > 0 ? (
+          <ReviewList reviews={serviceReviews} />
+        ) : (
+          <p className="text-muted-foreground py-8 text-center">
+            Chưa có đánh giá nào cho dịch vụ này.
+          </p>
+        )}
+      </div>
     </DetailPageLayout>
   );
 }

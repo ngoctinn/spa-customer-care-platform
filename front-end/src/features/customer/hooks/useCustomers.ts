@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers } from "@/features/customer/api/customer.api";
+import { getCustomers } from "@/features/customer/apis/customer.api";
 import { FullCustomerProfile } from "@/features/customer/types";
 
 export const useCustomers = () => {

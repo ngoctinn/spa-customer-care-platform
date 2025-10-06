@@ -16,7 +16,6 @@ import Confirmation from "@/features/booking/components/Confirmation";
 import TechnicianSelection from "@/features/booking/components/TechnicianSelection";
 import BookingSummary from "@/features/booking/components/BookingSummary";
 import { BookingProgressBar } from "@/features/booking/components/BookingProgressBar";
-import { BookingSummarySheet } from "@/features/booking/components/BookingSummarySheet";
 import {
   customerInfoSchema,
   CustomerInfoValues,
@@ -227,11 +226,8 @@ export default function BookingPage() {
           />
         </div>
       </div>
-      <div className="lg:hidden sticky bottom-0 bg-background border-t p-4 shadow-lg">
-        <BookingSummarySheet
-          bookingState={bookingState}
-          currentStep={currentStep}
-        />
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4 shadow-lg w-full">
+        <BookingSummary bookingState={bookingState} currentStep={currentStep} />
       </div>
     </div>
   );
