@@ -200,6 +200,7 @@ export default function ProductsDashboardPage() {
         toolbarProps={{
           searchColumnId: "name",
           searchPlaceholder: "Lọc theo tên sản phẩm...",
+          enablePriceFilter: true,
         }}
       />
 

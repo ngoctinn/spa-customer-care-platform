@@ -9,6 +9,7 @@ import { Service } from "@/features/service/types";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { ServiceFormValues } from "@/features/service/schemas";
+import { getServiceById } from "@/features/service/api/service.api";
 
 const servicesQueryKeys = {
   all: ["services"] as const,
@@ -78,5 +79,14 @@ export const useDeleteService = () => {
         description: getErrorMessage(error),
       });
     },
+  });
+};
+
+// Hook để lấy một dịch vụ bằng ID
+export const useServiceById = (serviceId?: string) => {
+  return useQuery<Service>({
+    queryKey: ["services", serviceId],
+    queryFn: () => getServiceById(serviceId!),
+    enabled: !!serviceId, // Chỉ chạy query khi serviceId tồn tại
   });
 };
