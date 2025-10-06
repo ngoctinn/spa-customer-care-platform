@@ -5,7 +5,7 @@ from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
 # Import bảng liên kết mới
-from app.models.association_tables import ServiceCategoryLink
+from app.models.association_tables import ServiceCategoryLink, ServiceImageLink
 
 if TYPE_CHECKING:
     from app.models.catalog_model import Category, Image
@@ -39,8 +39,7 @@ class Service(BaseUUIDModel, table=True):
     )
 
     images: List["Image"] = Relationship(
-        back_populates="service",
-        sa_relationship_kwargs={"foreign_keys": "Image.service_id"},
+        back_populates="services", link_model=ServiceImageLink
     )
     primary_image_id: Optional[uuid.UUID] = Field(
         default=None, foreign_key="image.id", nullable=True
