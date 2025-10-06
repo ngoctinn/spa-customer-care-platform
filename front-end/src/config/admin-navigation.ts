@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Archive,
   ClipboardList,
   LayoutDashboard,
   Scissors,
@@ -8,6 +9,7 @@ import {
   Tag,
   UserCog,
   Users,
+  Library,
 } from "lucide-react";
 
 export type AdminNavItem = {
@@ -24,12 +26,19 @@ export const adminBrand = {
 };
 
 export const adminNavigation: AdminNavItem[] = [
-  { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard, exact: true },
+  {
+    href: "/dashboard",
+    label: "Tổng quan",
+    icon: LayoutDashboard,
+    exact: true,
+  },
   { href: "/dashboard/orders", label: "Đơn hàng", icon: ShoppingCart },
   { href: "/dashboard/customers", label: "Khách hàng", icon: Users },
   { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
   { href: "/dashboard/staff", label: "Nhân viên", icon: UserCog },
   { href: "/dashboard/services", label: "Dịch vụ", icon: Scissors },
   { href: "/dashboard/products", label: "Sản phẩm", icon: Tag },
+  { href: "/dashboard/inventory", label: "Kho hàng", icon: Archive },
   { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
+  { href: "/dashboard/categories", label: "Danh mục", icon: Library },
 ];

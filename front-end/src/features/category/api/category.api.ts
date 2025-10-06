@@ -6,11 +6,7 @@ import apiClient from "@/lib/apiClient";
  * Lấy danh sách tất cả danh mục từ server
  */
 export async function getCategories(): Promise<Category[]> {
-  const categories = await apiClient<Category[]>("/categories");
-  return categories.map((category) => ({
-    ...category,
-    type: category.type ?? category.category_type,
-  }));
+  return apiClient<Category[]>("/categories");
 }
 
 /**
@@ -23,5 +19,33 @@ export async function addCategory(
   return apiClient<Category>("/categories", {
     method: "POST",
     body: JSON.stringify(categoryData),
+  });
+}
+
+/**
+ * Cập nhật một danh mục
+ * @param categoryId ID của danh mục cần cập nhật
+ * @param categoryData Dữ liệu cập nhật
+ */
+export async function updateCategory({
+  categoryId,
+  categoryData,
+}: {
+  categoryId: string;
+  categoryData: Partial<CategoryFormValues>;
+}): Promise<Category> {
+  return apiClient<Category>(`/categories/${categoryId}`, {
+    method: "PUT",
+    body: JSON.stringify(categoryData),
+  });
+}
+
+/**
+ * Xóa một danh mục
+ * @param categoryId ID của danh mục cần xóa
+ */
+export async function deleteCategory(categoryId: string): Promise<void> {
+  return apiClient<void>(`/categories/${categoryId}`, {
+    method: "DELETE",
   });
 }

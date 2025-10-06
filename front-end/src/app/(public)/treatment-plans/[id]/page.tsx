@@ -12,6 +12,17 @@ import { useReviews } from "@/features/review/hooks/useReviews";
 import { useServices } from "@/features/service/hooks/useServices";
 import { PurchaseActions } from "@/components/common/PurchaseActions";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
+import { MessageSquarePlus } from "lucide-react"; // Bổ sung icon
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AddReviewForm } from "@/features/review/components/AddReviewForm";
+import { useAuth } from "@/contexts/AuthContexts";
 
 interface TreatmentPlanDetailPageProps {
   params: Promise<{ id: string }>;
@@ -21,6 +32,8 @@ export default function TreatmentPlanDetailPage({
   params,
 }: TreatmentPlanDetailPageProps) {
   const { id } = use(params);
+  const { user } = useAuth();
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const {
     data: plan,
     isLoading: isLoadingPlan,
@@ -96,7 +109,41 @@ export default function TreatmentPlanDetailPage({
     >
       <TreatmentSteps plan={plan} allServices={allServices} />
       <div className="mt-12">
-        <ReviewList reviews={planReviews} />
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold">
+            Đánh giá liệu trình ({planReviews.length})
+          </h3>
+          {user && (
+            <Dialog
+              open={isReviewDialogOpen}
+              onOpenChange={setIsReviewDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  Viết đánh giá
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                  <DialogTitle>Đánh giá liệu trình: {plan.name}</DialogTitle>
+                </DialogHeader>
+                <AddReviewForm
+                  itemId={plan.id}
+                  itemType="treatment"
+                  onSuccess={() => setIsReviewDialogOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+        {planReviews.length > 0 ? (
+          <ReviewList reviews={planReviews} />
+        ) : (
+          <p className="text-muted-foreground py-8 text-center">
+            Chưa có đánh giá nào cho liệu trình này.
+          </p>
+        )}
       </div>
     </DetailPageLayout>
   );
