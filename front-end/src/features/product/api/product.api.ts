@@ -1,41 +1,60 @@
 // src/features/product/api/product.api.ts
 import { ProductFormValues } from "@/features/product/schemas";
 import { Product } from "@/features/product/types";
-import { ImageUrl } from "@/features/shared/types";
-import { uploadFile } from "@/features/upload/upload.api";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
+import {
+  appendFormDataList,
+  appendFormDataValue,
+  splitImages,
+} from "@/lib/form-data-utils";
 
-/**
- * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
- * @param images Mảng chứa cả File (ảnh mới) và ImageUrl (ảnh cũ).
- * @returns Danh sách ImageUrl đã được xử lý.
- */
-async function handleImageUploads(
-  images: (File | ImageUrl)[] | undefined
-): Promise<ImageUrl[]> {
-  if (!images || images.length === 0) {
-    return [];
+function buildProductFormData(
+  productData: Partial<ProductFormValues>
+): FormData {
+  const formData = new FormData();
+
+  appendFormDataValue(formData, "name", productData.name);
+  appendFormDataValue(formData, "description", productData.description);
+  appendFormDataValue(formData, "price", productData.price);
+  appendFormDataValue(formData, "stock", productData.stock);
+  appendFormDataValue(formData, "is_retail", productData.isRetail);
+  appendFormDataValue(formData, "is_consumable", productData.isConsumable);
+  appendFormDataValue(formData, "base_unit", productData.baseUnit);
+  appendFormDataValue(
+    formData,
+    "consumable_unit",
+    productData.consumableUnit
+  );
+  appendFormDataValue(
+    formData,
+    "conversion_rate",
+    productData.conversionRate
+  );
+
+  if (productData.categories) {
+    appendFormDataList(formData, "category_ids", productData.categories);
   }
 
-  const uploadPromises: Promise<ImageUrl>[] = [];
-  const existingImages: ImageUrl[] = [];
+  if (productData.primary_image_id) {
+    appendFormDataValue(
+      formData,
+      "primary_image_id",
+      productData.primary_image_id
+    );
+  }
 
-  images.forEach((image) => {
-    if (image instanceof File) {
-      // Nếu là file mới, thêm vào danh sách chờ upload
-      uploadPromises.push(uploadFile(image));
-    } else {
-      // Nếu là ảnh đã có, giữ lại
-      existingImages.push(image);
+  if (productData.images) {
+    const { files, existingIds } = splitImages(productData.images);
+    if (existingIds.length > 0) {
+      appendFormDataList(formData, "existing_image_ids", existingIds);
     }
-  });
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+  }
 
-  // Chờ tất cả các file được upload xong
-  const uploadedImages = await Promise.all(uploadPromises);
-
-  // Kết hợp ảnh cũ và ảnh mới đã upload
-  return [...existingImages, ...uploadedImages];
+  return formData;
 }
 
 /**
@@ -45,15 +64,10 @@ async function handleImageUploads(
 export async function addProduct(
   productData: ProductFormValues
 ): Promise<Product> {
-  const { images, ...otherData } = productData;
-  const processedImages = await handleImageUploads(images);
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
+  const formData = buildProductFormData(productData);
   return apiClient<Product>("/products", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: formData,
   });
 }
 
@@ -69,15 +83,10 @@ export async function updateProduct({
   productId: string;
   productData: Partial<ProductFormValues>;
 }): Promise<Product> {
-  const { images, ...otherData } = productData;
-  const processedImages = await handleImageUploads(images);
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
+  const formData = buildProductFormData(productData);
   return apiClient<Product>(`/products/${productId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: formData,
   });
 }
 

@@ -25,6 +25,7 @@ export const serviceFormSchema = z.object({
   aftercare_instructions: z.string().optional(),
   contraindications: z.string().optional(),
   images: z.array(imageUnionSchema).optional(),
+  primary_image_id: z.string().uuid().optional(),
   is_deleted: z.boolean().optional(),
 });
 
