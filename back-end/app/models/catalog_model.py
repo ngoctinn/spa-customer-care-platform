@@ -5,7 +5,13 @@ from sqlmodel import SQLModel, Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
 # Import bảng liên kết mới
-from app.models.association_tables import ProductCategoryLink, ServiceCategoryLink
+from app.models.association_tables import (
+    ProductCategoryLink,
+    ProductImageLink,
+    ServiceCategoryLink,
+    ServiceImageLink,
+    TreatmentPlanImageLink,
+)
 
 if TYPE_CHECKING:
     from app.models.services_model import Service
@@ -35,21 +41,30 @@ class Image(BaseUUIDModel, table=True):
     __tablename__ = "image"
     url: str = Field(nullable=False)
     alt_text: Optional[str] = Field(default=None)
-    service_id: Optional[uuid.UUID] = Field(default=None, foreign_key="service.id")
-    product_id: Optional[uuid.UUID] = Field(default=None, foreign_key="product.id")
-    treatment_plan_id: Optional[uuid.UUID] = Field(
-        default=None, foreign_key="treatment_plan.id"
+
+    products: List["Product"] = Relationship(
+        back_populates="images", link_model=ProductImageLink
     )
-    service: Optional["Service"] = Relationship(
-        back_populates="images",
-        sa_relationship_kwargs={"foreign_keys": "Image.service_id"},
+    services: List["Service"] = Relationship(
+        back_populates="images", link_model=ServiceImageLink
     )
-    product: Optional["Product"] = Relationship(
-        back_populates="images",
-        sa_relationship_kwargs={"foreign_keys": "Image.product_id"},
+    treatment_plans: List["TreatmentPlan"] = Relationship(
+        back_populates="images", link_model=TreatmentPlanImageLink
     )
-    treatment_plan: Optional["TreatmentPlan"] = Relationship(
-        back_populates="images",
-        sa_relationship_kwargs={"foreign_keys": "Image.treatment_plan_id"},
-    )
+
+    @property
+    def product_ids(self) -> List[uuid.UUID]:
+        return [product.id for product in self.products if not product.is_deleted]
+
+    @property
+    def service_ids(self) -> List[uuid.UUID]:
+        return [service.id for service in self.services if not service.is_deleted]
+
+    @property
+    def treatment_plan_ids(self) -> List[uuid.UUID]:
+        return [
+            treatment_plan.id
+            for treatment_plan in self.treatment_plans
+            if not treatment_plan.is_deleted
+        ]
 

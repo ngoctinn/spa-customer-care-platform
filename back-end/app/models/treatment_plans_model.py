@@ -3,6 +3,7 @@ import uuid
 from typing import List, Optional, TYPE_CHECKING
 from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
+from app.models.association_tables import TreatmentPlanImageLink
 
 if TYPE_CHECKING:
     from app.models.catalog_model import Category, Image
@@ -31,8 +32,7 @@ class TreatmentPlan(BaseUUIDModel, table=True):
     category_id: uuid.UUID = Field(foreign_key="category.id")
     category: "Category" = Relationship(back_populates="treatment_plans")
     images: List["Image"] = Relationship(
-        back_populates="treatment_plan",
-        sa_relationship_kwargs={"foreign_keys": "Image.treatment_plan_id"},
+        back_populates="treatment_plans", link_model=TreatmentPlanImageLink
     )
     primary_image_id: Optional[uuid.UUID] = Field(
         default=None, foreign_key="image.id", nullable=True

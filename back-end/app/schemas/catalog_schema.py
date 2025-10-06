@@ -16,6 +16,10 @@ class ImageBase(SQLModel):
 
 class ImagePublic(ImageBase):
     id: uuid.UUID
+    product_ids: list[uuid.UUID] = Field(default_factory=list)
+    service_ids: list[uuid.UUID] = Field(default_factory=list)
+    treatment_plan_ids: list[uuid.UUID] = Field(default_factory=list)
+
     model_config = {"from_attributes": True}
 
 

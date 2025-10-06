@@ -19,9 +19,9 @@ async def upload_image(
     session: Session = Depends(get_db_session),
     file: UploadFile = File(...),
     alt_text: Optional[str] = Form(None),
-    product_id: Optional[uuid.UUID] = Form(None),
-    service_id: Optional[uuid.UUID] = Form(None),
-    treatment_plan_id: Optional[uuid.UUID] = Form(None),
+    product_ids: Optional[List[uuid.UUID]] = Form(None),
+    service_ids: Optional[List[uuid.UUID]] = Form(None),
+    treatment_plan_ids: Optional[List[uuid.UUID]] = Form(None),
 ):
     """Tải ảnh lên kho lưu trữ và lưu metadata."""
 
@@ -29,9 +29,9 @@ async def upload_image(
         db=session,
         file=file,
         alt_text=alt_text,
-        product_id=product_id,
-        service_id=service_id,
-        treatment_plan_id=treatment_plan_id,
+        product_ids=product_ids or [],
+        service_ids=service_ids or [],
+        treatment_plan_ids=treatment_plan_ids or [],
     )
 
 
