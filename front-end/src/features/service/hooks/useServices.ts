@@ -18,7 +18,7 @@ const servicesQueryKeys = {
 export const useServices = () => {
   return useQuery<Service[]>({
     queryKey: servicesQueryKeys.all,
-    queryFn: getServices,
+    queryFn: () => getServices(),
   });
 };
 

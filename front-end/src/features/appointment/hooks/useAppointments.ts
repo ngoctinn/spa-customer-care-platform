@@ -24,7 +24,7 @@ type UpdateAppointmentVariables = {
 export const useAppointments = () => {
   return useQuery<Appointment[]>({
     queryKey: appointmentsQueryKeys.all,
-    queryFn: getAppointments,
+    queryFn: () => getAppointments(),
   });
 };
 

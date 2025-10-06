@@ -25,7 +25,7 @@ export const staffQueryKeys = {
 export const useStaff = () => {
   return useQuery<FullStaffProfile[]>({
     queryKey: staffQueryKeys.all,
-    queryFn: getStaffList,
+    queryFn: () => getStaffList(),
   });
 };
 

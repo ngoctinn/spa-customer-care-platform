@@ -5,6 +5,6 @@ import { TreatmentPlan } from "@/features/treatment/types";
 export const useTreatmentPlans = () => {
   return useQuery<TreatmentPlan[]>({
     queryKey: ["treatmentPlans"],
-    queryFn: getTreatmentPlans,
+    queryFn: () => getTreatmentPlans(),
   });
 };
