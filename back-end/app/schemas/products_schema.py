@@ -1,14 +1,23 @@
 # app/schemas/products_schema.py
+"""Schema phục vụ CRUD sản phẩm cùng quan hệ nhiều-nhiều với hình ảnh."""
+
+from __future__ import annotations
+
 import uuid
 from typing import List, Optional
 
 from fastapi import UploadFile
+from pydantic import field_validator
 from sqlmodel import Field, SQLModel
 
 from app.schemas.catalog_schema import CategoryPublic, ImagePublic
 
 
 class ProductBase(SQLModel):
+    """Các thuộc tính chung cho sản phẩm."""
+
+    model_config = {"from_attributes": True}
+
     name: str = Field(max_length=100)
     description: str
     price: float = Field(gt=0)
@@ -21,6 +30,8 @@ class ProductBase(SQLModel):
 
 
 class ProductCreate(ProductBase):
+    """Payload tạo mới sản phẩm."""
+
     model_config = {"arbitrary_types_allowed": True}
 
     category_ids: List[uuid.UUID] = Field(
@@ -37,8 +48,24 @@ class ProductCreate(ProductBase):
     )
     new_images: List[UploadFile] = Field(default_factory=list, exclude=True)
 
+    @field_validator("category_ids")
+    @classmethod
+    def _validate_category_ids(cls, value: List[uuid.UUID]) -> List[uuid.UUID]:
+        if not value:
+            raise ValueError("Sản phẩm phải thuộc ít nhất một danh mục.")
+        return list(dict.fromkeys(value))
+
+    @field_validator("existing_image_ids")
+    @classmethod
+    def _deduplicate_existing_image_ids(
+        cls, value: List[uuid.UUID]
+    ) -> List[uuid.UUID]:
+        return list(dict.fromkeys(value))
+
 
 class ProductUpdate(SQLModel):
+    """Payload cập nhật sản phẩm."""
+
     name: Optional[str] = Field(default=None, max_length=100)
     description: Optional[str] = None
     price: Optional[float] = Field(default=None, gt=0)
@@ -59,14 +86,32 @@ class ProductUpdate(SQLModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
+    @field_validator("category_ids")
+    @classmethod
+    def _validate_update_category_ids(
+        cls, value: Optional[List[uuid.UUID]]
+    ) -> Optional[List[uuid.UUID]]:
+        if value is None:
+            return None
+        if not value:
+            raise ValueError("Sản phẩm phải thuộc ít nhất một danh mục.")
+        return list(dict.fromkeys(value))
+
+    @field_validator("existing_image_ids")
+    @classmethod
+    def _deduplicate_update_existing_image_ids(
+        cls, value: Optional[List[uuid.UUID]]
+    ) -> Optional[List[uuid.UUID]]:
+        if value is None:
+            return None
+        return list(dict.fromkeys(value))
+
 
 class ProductPublic(ProductBase):
     id: uuid.UUID
 
 
 class ProductPublicWithDetails(ProductPublic):
-    model_config = {"from_attributes": True}
-
     categories: list[CategoryPublic] = Field(default_factory=list)
     images: list[ImagePublic] = Field(default_factory=list)
     primary_image_id: uuid.UUID | None = None

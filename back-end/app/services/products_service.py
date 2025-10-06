@@ -1,7 +1,10 @@
 # app/services/products_service.py
-"""Service layer cho quản lý sản phẩm."""
+"""Service layer cho quản lý sản phẩm với quan hệ hình ảnh nhiều-nhiều."""
+
+from __future__ import annotations
 
 import uuid
+from collections.abc import Iterable
 from typing import List, Optional
 
 from fastapi import HTTPException, UploadFile, status
@@ -27,12 +30,31 @@ def _with_product_relationships(statement):
 
 
 def _ensure_product_category(category: Category) -> None:
-    """Đảm bảo danh mục được gán cho sản phẩm là loại product."""
+    """Đảm bảo danh mục được gán cho sản phẩm là loại ``product``."""
 
     if category.category_type != CategoryTypeEnum.product:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Danh mục được chọn không phải danh mục sản phẩm.",
+        )
+
+
+def _validate_unique_product_name(
+    db: Session, *, name: str, exclude_id: Optional[uuid.UUID] = None
+) -> None:
+    """Kiểm tra trùng tên sản phẩm, bỏ qua ID nhất định nếu cần."""
+
+    statement = select(Product).where(
+        Product.name == name,
+        Product.is_deleted == False,  # noqa: E712
+    )
+    if exclude_id:
+        statement = statement.where(Product.id != exclude_id)
+
+    if db.exec(statement).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Sản phẩm với tên '{name}' đã tồn tại.",
         )
 
 
@@ -71,6 +93,51 @@ def _filter_soft_deleted_relationships(product: Product) -> Product:
     return product
 
 
+def _resolve_optional_sequence(
+    explicit: Optional[Iterable[uuid.UUID]],
+    fallback: Optional[Iterable[uuid.UUID]],
+) -> Optional[List[uuid.UUID]]:
+    """Trả về danh sách ID theo ưu tiên ``explicit`` rồi đến ``fallback``."""
+
+    if explicit is not None:
+        return list(explicit)
+    if fallback is not None:
+        return list(fallback)
+    return None
+
+
+async def _sync_product_images(
+    db: Session,
+    *,
+    product: Product,
+    new_images: Optional[List[UploadFile]],
+    explicit_existing_ids: Optional[Iterable[uuid.UUID]],
+    fallback_existing_ids: Optional[Iterable[uuid.UUID]],
+    explicit_primary_id: Optional[uuid.UUID],
+    fallback_primary_id: Optional[uuid.UUID],
+) -> None:
+    """Đồng bộ quan hệ hình ảnh cho sản phẩm theo tham số được ưu tiên."""
+
+    resolved_existing_ids = _resolve_optional_sequence(
+        explicit_existing_ids, fallback_existing_ids
+    )
+    resolved_primary_id = (
+        explicit_primary_id
+        if explicit_primary_id is not None
+        else fallback_primary_id
+    )
+
+    await sync_entity_images(
+        db,
+        entity=product,
+        owner="product",
+        new_images=new_images,
+        existing_image_ids=resolved_existing_ids,
+        primary_image_id=resolved_primary_id,
+        alt_text=product.name,
+    )
+
+
 async def create_product(
     db: Session,
     product_in: ProductCreate,
@@ -83,16 +150,7 @@ async def create_product(
 
     categories = _get_valid_product_categories(db, product_in.category_ids)
 
-    existing_product = db.exec(
-        select(Product).where(
-            Product.name == product_in.name, Product.is_deleted == False
-        )
-    ).first()
-    if existing_product:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Sản phẩm với tên '{product_in.name}' đã tồn tại.",
-        )
+    _validate_unique_product_name(db, name=product_in.name)
 
     product_data = product_in.model_dump(
         exclude={
@@ -108,22 +166,14 @@ async def create_product(
     db.commit()
     db.refresh(db_product)
 
-    await sync_entity_images(
+    await _sync_product_images(
         db,
-        entity=db_product,
-        owner="product",
+        product=db_product,
         new_images=new_images,
-        existing_image_ids=(
-            existing_image_ids
-            if existing_image_ids is not None
-            else product_in.existing_image_ids
-        ),
-        primary_image_id=(
-            primary_image_id
-            if primary_image_id is not None
-            else product_in.primary_image_id
-        ),
-        alt_text=db_product.name,
+        explicit_existing_ids=existing_image_ids,
+        fallback_existing_ids=product_in.existing_image_ids,
+        explicit_primary_id=primary_image_id,
+        fallback_primary_id=product_in.primary_image_id,
     )
     db.commit()
     db.refresh(db_product)
@@ -178,19 +228,10 @@ async def update_product(
     product_data.pop("new_images", None)
     product_data.pop("primary_image_id", None)
 
-    if "name" in product_data:
-        existing_product = db.exec(
-            select(Product).where(
-                Product.name == product_data["name"],
-                Product.id != db_product.id,
-                Product.is_deleted == False,
-            )
-        ).first()
-        if existing_product:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Sản phẩm với tên '{product_data['name']}' đã tồn tại.",
-            )
+    if "name" in product_data and product_data["name"] is not None:
+        _validate_unique_product_name(
+            db, name=product_data["name"], exclude_id=db_product.id
+        )
 
     if "category_ids" in product_data:
         new_category_ids = product_data.pop("category_ids")
@@ -203,22 +244,14 @@ async def update_product(
     db.add(db_product)
     db.flush()
 
-    await sync_entity_images(
+    await _sync_product_images(
         db,
-        entity=db_product,
-        owner="product",
+        product=db_product,
         new_images=new_images,
-        existing_image_ids=(
-            existing_image_ids
-            if existing_image_ids is not None
-            else product_in.existing_image_ids
-        ),
-        primary_image_id=(
-            primary_image_id
-            if primary_image_id is not None
-            else product_in.primary_image_id
-        ),
-        alt_text=db_product.name,
+        explicit_existing_ids=existing_image_ids,
+        fallback_existing_ids=product_in.existing_image_ids,
+        explicit_primary_id=primary_image_id,
+        fallback_primary_id=product_in.primary_image_id,
     )
 
     db.commit()
