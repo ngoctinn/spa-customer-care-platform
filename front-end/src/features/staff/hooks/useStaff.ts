@@ -17,7 +17,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 
 export const staffQueryKeys = {
   all: ["staff"] as const,
-  detail: (staffId: string) => ["staff", staffId] as const,
+  detail: (staffId: string | undefined) => ["staff", staffId] as const,
   techniciansByService: (serviceId?: string) =>
     ["technicians", serviceId] as const,
 };
@@ -54,11 +54,7 @@ export const useAddStaff = () => {
 export const useUpdateStaff = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    UserPublic,
-    unknown,
-    Parameters<typeof updateStaff>[0]
-  >({
+  return useMutation<UserPublic, unknown, Parameters<typeof updateStaff>[0]>({
     mutationFn: updateStaff,
     onSuccess: async (_, variables) => {
       toast.success("Cập nhật thông tin thành công!");
@@ -99,10 +95,10 @@ export const useDeleteStaff = () => {
   });
 };
 
-export const useStaffById = (staffId: string) => {
+export const useStaffById = (staffId: string | undefined) => {
   return useQuery<FullStaffProfile>({
     queryKey: staffQueryKeys.detail(staffId),
-    queryFn: () => getStaffById(staffId),
+    queryFn: () => getStaffById(staffId as string),
     enabled: Boolean(staffId),
   });
 };
