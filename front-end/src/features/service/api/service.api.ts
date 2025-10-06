@@ -6,11 +6,11 @@ import { uploadFile } from "@/features/upload/upload.api"; // highlight-line
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
 
-export interface GetServicesParams {
+export type GetServicesParams = {
   skip?: number;
   limit?: number;
   search?: string;
-}
+};
 
 /**
  * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
@@ -105,7 +105,9 @@ export async function updateService({
 /**
  * Lấy danh sách tất cả dịch vụ
  */
-export async function getServices(params?: GetServicesParams): Promise<Service[]> {
+export async function getServices(
+  params?: GetServicesParams
+): Promise<Service[]> {
   const query = buildQueryString(params);
   return apiClient<Service[]>(`/services${query}`);
 }
