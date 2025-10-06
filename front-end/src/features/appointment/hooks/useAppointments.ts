@@ -9,13 +9,21 @@ import {
 import { Appointment } from "@/features/appointment/types";
 import { toast } from "sonner";
 import { AppointmentFormValues } from "@/features/appointment/schemas";
+import { getErrorMessage } from "@/lib/get-error-message";
 
-const queryKey = ["appointments"];
+const appointmentsQueryKeys = {
+  all: ["appointments"] as const,
+};
+
+type UpdateAppointmentVariables = {
+  id: string;
+  data: Parameters<typeof updateAppointment>[1];
+};
 
 // Hook để lấy danh sách lịch hẹn
 export const useAppointments = () => {
   return useQuery<Appointment[]>({
-    queryKey: queryKey,
+    queryKey: appointmentsQueryKeys.all,
     queryFn: getAppointments,
   });
 };
@@ -23,15 +31,17 @@ export const useAppointments = () => {
 // Hook để admin thêm lịch hẹn mới
 export const useAddAppointmentAdmin = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (appointmentData: AppointmentFormValues) =>
-      createAppointmentAdmin(appointmentData),
-    onSuccess: () => {
+
+  return useMutation<Appointment, unknown, AppointmentFormValues>({
+    mutationFn: (appointmentData) => createAppointmentAdmin(appointmentData),
+    onSuccess: async () => {
       toast.success("Tạo lịch hẹn thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
+      await queryClient.invalidateQueries({ queryKey: appointmentsQueryKeys.all });
     },
     onError: (error) => {
-      toast.error("Tạo lịch hẹn thất bại", { description: error.message });
+      toast.error("Tạo lịch hẹn thất bại", {
+        description: getErrorMessage(error),
+      });
     },
   });
 };
@@ -39,20 +49,17 @@ export const useAddAppointmentAdmin = () => {
 // Hook để cập nhật lịch hẹn
 export const useUpdateAppointment = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<Appointment | AppointmentFormValues>;
-    }) => updateAppointment(id, data),
-    onSuccess: () => {
+
+  return useMutation<Appointment, unknown, UpdateAppointmentVariables>({
+    mutationFn: ({ id, data }) => updateAppointment(id, data),
+    onSuccess: async () => {
       toast.success("Cập nhật lịch hẹn thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
+      await queryClient.invalidateQueries({ queryKey: appointmentsQueryKeys.all });
     },
     onError: (error) => {
-      toast.error("Cập nhật thất bại", { description: error.message });
+      toast.error("Cập nhật thất bại", {
+        description: getErrorMessage(error),
+      });
     },
   });
 };
@@ -60,14 +67,17 @@ export const useUpdateAppointment = () => {
 // Hook để xóa/hủy lịch hẹn
 export const useDeleteAppointment = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteAppointment,
-    onSuccess: () => {
+
+  return useMutation<void, unknown, string>({
+    mutationFn: (appointmentId) => deleteAppointment(appointmentId),
+    onSuccess: async () => {
       toast.success("Đã hủy lịch hẹn!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
+      await queryClient.invalidateQueries({ queryKey: appointmentsQueryKeys.all });
     },
     onError: (error) => {
-      toast.error("Hủy lịch hẹn thất bại", { description: error.message });
+      toast.error("Hủy lịch hẹn thất bại", {
+        description: getErrorMessage(error),
+      });
     },
   });
 };
