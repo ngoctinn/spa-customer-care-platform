@@ -1,6 +1,15 @@
 // src/features/appointment/hooks/useAvailability.ts
 import { useQuery } from "@tanstack/react-query";
+
 import { getAvailableSlots } from "@/features/appointment/apis/availability.api";
+
+const availabilityQueryKeys = {
+  detail: (
+    serviceId: string | undefined,
+    dateString: string | undefined,
+    technicianId?: string
+  ) => ["availability", serviceId, dateString, technicianId] as const,
+};
 
 /**
  * Custom hook để lấy các khung giờ trống.
@@ -13,10 +22,16 @@ export const useAvailability = (
   technicianId?: string // Thêm technicianId
 ) => {
   const dateString = selectedDate?.toISOString().split("T")[0];
+  const hasValidParams = Boolean(serviceId && dateString);
 
   return useQuery<string[]>({
-    queryKey: ["availability", serviceId, dateString, technicianId], // Thêm vào queryKey
-    queryFn: () => getAvailableSlots(serviceId!, dateString!, technicianId),
-    enabled: !!serviceId && !!dateString,
+    queryKey: availabilityQueryKeys.detail(serviceId, dateString, technicianId),
+    queryFn: () =>
+      getAvailableSlots(
+        serviceId as string,
+        dateString as string,
+        technicianId
+      ),
+    enabled: hasValidParams,
   });
 };
