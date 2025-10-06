@@ -1,10 +1,10 @@
 // src/features/treatment/api/treatment.api.ts
+import { ImageUrl } from "@/features/shared/types";
+import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { TreatmentPlan } from "@/features/treatment/types";
+import { uploadFile } from "@/features/upload/upload.api";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
-import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
-import { ImageUrl } from "@/features/shared/types";
-import { uploadFile } from "@/features/upload/upload.api";
 
 /**
  * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
@@ -79,11 +79,11 @@ export async function updateTreatmentPlan({
 /**
  * Lấy danh sách tất cả các liệu trình
  */
-export interface GetTreatmentPlansParams {
+export type GetTreatmentPlansParams = {
   skip?: number;
   limit?: number;
   search?: string;
-}
+};
 
 export const getTreatmentPlans = async (
   params?: GetTreatmentPlansParams

@@ -1,8 +1,5 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
-import { Service } from "@/features/service/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,7 +10,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Service } from "@/features/service/types";
 import { getPrimaryImageUrl } from "@/lib/image-utils";
+import { ColumnDef } from "@tanstack/react-table";
+import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 // Helper component cho các hành động trên mỗi dòng
@@ -84,7 +84,7 @@ export const getServiceColumns = (
         row.original.images,
         row.original.primary_image_id,
         "/images/placeholder.png"
-      );
+      ).trimEnd();
       return (
         <div className="flex items-center gap-3">
           <Image
@@ -135,13 +135,13 @@ export const getServiceColumns = (
     header: "Trạng thái",
     cell: ({ row }) => (
       <Badge
-        variant={row.original.status === "active" ? "default" : "destructive"}
+        variant={row.original.is_deleted === true ? "default" : "destructive"}
       >
-        {row.original.status === "active" ? "Hoạt động" : "Tạm ngưng"}
+        {row.original.is_deleted === true ? "Hoạt động" : "Tạm ngưng"}
       </Badge>
     ),
     filterFn: (row, id, value) => {
-      return value.includes(row.original.status);
+      return value.includes(row.original.is_deleted);
     },
     meta: { headerTitle: "Trạng thái" },
   },

@@ -1,9 +1,6 @@
 // src/features/product/components/columns.tsx
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Edit, Trash2, SlidersHorizontal } from "lucide-react";
-import { Product } from "@/features/product/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,9 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getPrimaryImageUrl } from "@/lib/image-utils";
-import Image from "next/image";
 import { Category } from "@/features/category/types";
+import { Product } from "@/features/product/types";
+import { getPrimaryImageUrl } from "@/lib/image-utils";
+import { ColumnDef } from "@tanstack/react-table";
+import { Edit, MoreHorizontal, SlidersHorizontal, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 // Helper component cho các hành động trên mỗi dòng
 const ProductRowActions = ({
@@ -98,8 +98,9 @@ export const getProductColumns = (
     cell: ({ row }) => {
       const primaryImage = getPrimaryImageUrl(
         row.original.images,
+        row.original.primary_image_id,
         "/images/placeholder.png"
-      );
+      ).trimEnd();
       return (
         <div className="flex items-center gap-3">
           <Image
@@ -163,16 +164,25 @@ export const getProductColumns = (
     meta: { headerTitle: "Trạng thái" },
     cell: ({ row }) => (
       <Badge
-        variant={row.original.status === "active" ? "default" : "destructive"}
+        variant={row.original.is_deleted === true ? "destructive" : "default"}
       >
-        {row.original.status === "active"
-          ? "Đang mở bán/sử dụng"
-          : "Ngừng bán/sử dụng"}
+        {row.original.is_deleted === true ? "Tạm ngưng" : "Đang sử dụng"}
       </Badge>
     ),
     filterFn: (row, id, value) => {
-      return value.includes(row.original.status);
+      return value.includes(row.original.is_deleted);
     },
+  },
+
+  {
+    accessorKey: "is_retail",
+    header: "loại hình",
+    meta: { headerTitle: "Bán lẻ" },
+    cell: ({ row }) => (
+      <Badge variant={row.original.is_retail ? "default" : "secondary"}>
+        {row.original.is_retail ? "Bán lẻ" : "Dịch vụ"}
+      </Badge>
+    ),
   },
 
   {
