@@ -34,7 +34,6 @@ class ServiceCreate(ServiceBase):
         default=None,
         description="ID hình ảnh sẽ được đặt làm ảnh chính",
     )
-    new_images: list[UploadFile] = Field(default_factory=list, exclude=True)
 
 
 class ServiceUpdate(SQLModel):
@@ -49,7 +48,6 @@ class ServiceUpdate(SQLModel):
     category_ids: list[uuid.UUID] | None = Field(default=None)
     existing_image_ids: list[uuid.UUID] | None = Field(default=None, exclude=True)
     primary_image_id: uuid.UUID | None = Field(default=None)
-    new_images: list[UploadFile] | None = Field(default=None, exclude=True)
 
 
 class ServicePublic(ServiceBase):

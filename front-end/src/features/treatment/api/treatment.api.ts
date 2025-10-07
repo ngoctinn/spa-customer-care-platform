@@ -1,5 +1,8 @@
 // src/features/treatment/api/treatment.api.ts
+import { ImageUrl } from "@/features/shared/types";
+import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { TreatmentPlan } from "@/features/treatment/types";
+import { uploadFile } from "@/features/upload/upload.api";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";

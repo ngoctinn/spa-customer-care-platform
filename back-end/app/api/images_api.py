@@ -14,40 +14,33 @@ router = APIRouter()
 
 
 @router.post("", response_model=ImagePublic, status_code=status.HTTP_201_CREATED)
-async def upload_image(
+async def upload_image_to_library(
     *,
     session: Session = Depends(get_db_session),
     file: UploadFile = File(...),
-    alt_text: Optional[str] = Form(None),
-    product_id: Optional[uuid.UUID] = Form(None),
-    service_id: Optional[uuid.UUID] = Form(None),
-    treatment_plan_id: Optional[uuid.UUID] = Form(None),
+    alt_text: str | None = Form(None),
 ):
     """Tải ảnh lên kho lưu trữ và lưu metadata."""
 
-    return await images_service.create_image(
+    return await images_service.create_image_to_library(
         db=session,
         file=file,
         alt_text=alt_text,
-        product_id=product_id,
-        service_id=service_id,
-        treatment_plan_id=treatment_plan_id,
     )
 
 
 @router.get("", response_model=List[ImagePublic])
-def list_images(
-    *,
-    session: Session = Depends(get_db_session),
-    product_id: Optional[uuid.UUID] = None,
-    service_id: Optional[uuid.UUID] = None,
-    treatment_plan_id: Optional[uuid.UUID] = None,
-):
-    """Trả về danh sách hình ảnh, hỗ trợ lọc theo đối tượng sở hữu."""
+def list_images_from_library(*, session: Session = Depends(get_db_session)):
+    """Lấy danh sách tất cả hình ảnh có trong thư viện."""
+    return images_service.get_all_images(db=session)
 
-    return images_service.list_images(
-        db=session,
-        product_id=product_id,
-        service_id=service_id,
-        treatment_plan_id=treatment_plan_id,
-    )
+
+@router.delete("/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_image_from_library(
+    *, session: Session = Depends(get_db_session), image_id: uuid.UUID
+):
+    """Xóa mềm một hình ảnh khỏi thư viện."""
+    # Service sẽ xử lý việc tìm kiếm và báo lỗi nếu không thấy
+    db_image = images_service.get_image_by_id(db=session, image_id=image_id)
+    images_service.delete_image(db=session, db_image=db_image)
+    return
