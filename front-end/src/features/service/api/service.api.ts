@@ -1,47 +1,14 @@
 // src/features/service/api/service.api.ts
 import { ServiceFormValues } from "@/features/service/schemas";
 import { Service } from "@/features/service/types";
-import { ImageUrl } from "@/features/shared/types";
-import { uploadFile } from "@/features/upload/upload.api"; // highlight-line
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
+import { handleImageUploads } from "@/features/upload/upload.api";
 
 export interface GetServicesParams {
   skip?: number;
   limit?: number;
   search?: string;
-}
-
-/**
- * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
- * @param images Mảng chứa cả File (ảnh mới) và ImageUrl (ảnh cũ).
- * @returns Danh sách ImageUrl đã được xử lý.
- */
-async function handleImageUploads(
-  images: (File | ImageUrl)[] | undefined
-): Promise<ImageUrl[]> {
-  if (!images || images.length === 0) {
-    return [];
-  }
-
-  const uploadPromises: Promise<ImageUrl>[] = [];
-  const existingImages: ImageUrl[] = [];
-
-  images.forEach((image) => {
-    if (image instanceof File) {
-      // Nếu là file mới, thêm vào danh sách chờ upload
-      uploadPromises.push(uploadFile(image));
-    } else {
-      // Nếu là ảnh đã có, giữ lại
-      existingImages.push(image);
-    }
-  });
-
-  // Chờ tất cả các file được upload xong
-  const uploadedImages = await Promise.all(uploadPromises);
-
-  // Kết hợp ảnh cũ và ảnh mới đã upload
-  return [...existingImages, ...uploadedImages];
 }
 
 /**
@@ -105,8 +72,10 @@ export async function updateService({
 /**
  * Lấy danh sách tất cả dịch vụ
  */
-export async function getServices(params?: GetServicesParams): Promise<Service[]> {
-  const query = buildQueryString(params);
+export async function getServices(
+  params?: GetServicesParams
+): Promise<Service[]> {
+  const query = buildQueryString({ ...params }); // <--- Sửa ở đây
   return apiClient<Service[]>(`/services${query}`);
 }
 

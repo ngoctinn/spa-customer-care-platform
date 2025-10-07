@@ -58,13 +58,17 @@ export default function TreatmentPlanDetailPage({
 
   const planReviews = allReviews.filter((review) => review.item_id === plan.id);
 
-  const thumbnailImages = plan.images?.map((img) => img.url) || [];
+  const planImages =
+    plan.images?.map((img) => ({
+      url: img.url,
+      alt: plan.name,
+    })) || [];
 
   return (
     <DetailPageLayout
       mainImage={mainImage}
       imageAlt={plan.name}
-      thumbnailUrls={thumbnailImages}
+      images={planImages}
       onThumbnailClick={setMainImage}
       title={<h1 className="text-4xl font-bold mb-4">{plan.name}</h1>}
       description={<p className="text-muted-foreground">{plan.description}</p>}

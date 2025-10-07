@@ -43,7 +43,9 @@ export default function ProductFormFields() {
 
   const isRetail = form.watch("isRetail");
   const { data: categories = [] } = useCategories();
-  const productCategories = categories.filter((c) => c.type === "product");
+  const productCategories = categories.filter(
+    (c) => c.category_type === "product"
+  );
   const selectedCategoryIds = form.watch("categories") || [];
   const isConsumable = form.watch("isConsumable");
   const baseUnit = form.watch("baseUnit");

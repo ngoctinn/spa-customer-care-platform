@@ -1,5 +1,4 @@
 // src/features/upload/upload.api.ts
-import apiClient from "@/lib/apiClient";
 import { ImageUrl } from "@/features/shared/types";
 
 // Giả sử backend trả về một đối tượng ImageUrl sau khi upload thành công
@@ -33,4 +32,36 @@ export async function uploadFile(file: File): Promise<ImageUrl> {
   }
 
   return response.json();
+}
+
+/**
+ * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
+ * @param images Mảng chứa cả File (ảnh mới) và ImageUrl (ảnh cũ).
+ * @returns Danh sách ImageUrl đã được xử lý.
+ */
+export async function handleImageUploads(
+  images: (File | ImageUrl)[] | undefined
+): Promise<ImageUrl[]> {
+  if (!images || images.length === 0) {
+    return [];
+  }
+
+  const uploadPromises: Promise<ImageUrl>[] = [];
+  const existingImages: ImageUrl[] = [];
+
+  images.forEach((image) => {
+    if (image instanceof File) {
+      // Nếu là file mới, thêm vào danh sách chờ upload
+      uploadPromises.push(uploadFile(image));
+    } else {
+      // Nếu là ảnh đã có, giữ lại
+      existingImages.push(image);
+    }
+  });
+
+  // Chờ tất cả các file được upload xong
+  const uploadedImages = await Promise.all(uploadPromises);
+
+  // Kết hợp ảnh cũ và ảnh mới đã upload
+  return [...existingImages, ...uploadedImages];
 }

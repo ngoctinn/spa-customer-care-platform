@@ -11,6 +11,7 @@ import {
   Sparkles,
   Scissors,
   UserCog,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ const navLinks = [
   { href: "/dashboard/products", label: "Sản phẩm", icon: Tag },
   { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
   { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
+  { href: "/dashboard/loyalty", label: "Khách hàng thân thiết", icon: Award },
 ];
 
 export function AdminSidebar() {

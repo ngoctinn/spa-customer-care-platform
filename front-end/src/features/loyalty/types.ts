@@ -1,4 +1,3 @@
-
 export interface LoyaltyTier {
   id: string;
   name: string; // Ví dụ: "Đồng", "Bạc", "Vàng"

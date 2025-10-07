@@ -1,7 +1,7 @@
 import { ACCESS_TOKEN_COOKIE } from "./features/auth/constants";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ADMIN_ROUTES = ["/dashboard"];
+const ADMIN_ROUTES = ["/dashboard", "/account"];
 const AUTH_ROUTES = ["/auth/login", "/auth/register"];
 
 export async function middleware(req: NextRequest) {
@@ -59,5 +59,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*"],
+  matcher: ["/dashboard/:path*", "/auth/:path*", "/account/:path*"],
 };

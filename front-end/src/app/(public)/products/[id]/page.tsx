@@ -52,13 +52,17 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     (review) => review.item_id === product.id
   );
 
-  const thumbnailImages = product.images?.map((img) => img.url) || [];
+  const productImages =
+    product.images?.map((img) => ({
+      url: img.url,
+      alt: product.name,
+    })) || [];
 
   return (
     <DetailPageLayout
       mainImage={mainImage}
       imageAlt={product.name}
-      thumbnailUrls={thumbnailImages}
+      images={productImages}
       onThumbnailClick={setMainImage}
       title={<h1 className="text-4xl font-bold mb-4">{product.name}</h1>}
       description={

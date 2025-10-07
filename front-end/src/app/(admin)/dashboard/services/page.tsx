@@ -63,6 +63,10 @@ export default function ServicesDashboardPage() {
       form.reset({
         ...service,
         categories: service.categories.map((c) => c.id),
+        description: service.description || "",
+        preparation_notes: service.preparation_notes || "",
+        aftercare_instructions: service.aftercare_instructions || "",
+        contraindications: service.contraindications || "",
       });
       setIsFormOpen(true);
     },
@@ -123,7 +127,7 @@ export default function ServicesDashboardPage() {
   const categoryFilterOptions = useMemo(
     () =>
       categories
-        .filter((c) => c.type === "service")
+        .filter((c) => c.category_type === "service")
         .map((cat) => ({ label: cat.name, value: cat.name })),
     [categories]
   );

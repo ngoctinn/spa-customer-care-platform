@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import React from "react";
+import React, { useState } from "react";
+import { ImageLightbox } from "./ImageLightbox";
+import type { Slide } from "yet-another-react-lightbox";
 
 interface DetailPageLayoutProps {
   mainImage: string | null;
   imageAlt: string;
-  thumbnailUrls: string[];
+  images: { url: string; alt?: string }[];
   onThumbnailClick: (url: string) => void;
   title: React.ReactNode;
   description: React.ReactNode;
@@ -17,9 +19,9 @@ interface DetailPageLayoutProps {
 }
 
 export const DetailPageLayout = ({
-  mainImage,
+  mainImage: initialMainImage,
   imageAlt,
-  thumbnailUrls,
+  images,
   onThumbnailClick,
   title,
   description,
@@ -27,12 +29,39 @@ export const DetailPageLayout = ({
   purchaseActions,
   children,
 }: DetailPageLayoutProps) => {
+  // State để quản lý ảnh đang hiển thị
+  const [mainImage] = useState<string | null>(initialMainImage);
+  // State cho Lightbox
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const thumbnailUrls = images.map((img) => img.url);
+
+  // Chuẩn bị slides cho lightbox
+  const slides: Slide[] = images.map((img) => ({
+    src: img.url,
+    alt: img.alt || imageAlt,
+  }));
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  // Tìm index của ảnh chính hiện tại để mở lightbox đúng vị trí
+  const currentMainImageIndex = images.findIndex(
+    (img) => img.url === mainImage
+  );
+
   return (
     <div className="container mx-auto py-12">
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Cột thư viện ảnh */}
         <div>
-          <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg shadow-lg border bg-white">
+          <div
+            className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg shadow-lg border bg-white cursor-pointer"
+            onClick={() => openLightbox(currentMainImageIndex)}
+          >
             <Image
               src={mainImage || "/images/product-placeholder.png"}
               alt={imageAlt}
@@ -61,6 +90,7 @@ export const DetailPageLayout = ({
           </div>
         </div>
 
+        {/* Cột thông tin chi tiết */}
         <div className="space-y-6">
           {title}
           {description}
@@ -70,6 +100,13 @@ export const DetailPageLayout = ({
         </div>
       </div>
       <div className="mt-12">{children}</div>
+
+      <ImageLightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={slides}
+        index={lightboxIndex}
+      />
     </div>
   );
 };

@@ -3,40 +3,7 @@ import { Product } from "@/features/product/types";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
 import { ProductFormValues } from "@/features/product/schemas";
-import { ImageUrl } from "@/features/shared/types";
-import { uploadFile } from "@/features/upload/upload.api";
-
-/**
- * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
- * @param images Mảng chứa cả File (ảnh mới) và ImageUrl (ảnh cũ).
- * @returns Danh sách ImageUrl đã được xử lý.
- */
-async function handleImageUploads(
-  images: (File | ImageUrl)[] | undefined
-): Promise<ImageUrl[]> {
-  if (!images || images.length === 0) {
-    return [];
-  }
-
-  const uploadPromises: Promise<ImageUrl>[] = [];
-  const existingImages: ImageUrl[] = [];
-
-  images.forEach((image) => {
-    if (image instanceof File) {
-      // Nếu là file mới, thêm vào danh sách chờ upload
-      uploadPromises.push(uploadFile(image));
-    } else {
-      // Nếu là ảnh đã có, giữ lại
-      existingImages.push(image);
-    }
-  });
-
-  // Chờ tất cả các file được upload xong
-  const uploadedImages = await Promise.all(uploadPromises);
-
-  // Kết hợp ảnh cũ và ảnh mới đã upload
-  return [...existingImages, ...uploadedImages];
-}
+import { handleImageUploads } from "@/features/upload/upload.api";
 
 /**
  * Thêm một sản phẩm mới
@@ -46,7 +13,7 @@ export async function addProduct(
   productData: ProductFormValues
 ): Promise<Product> {
   const { images, ...otherData } = productData;
-  const processedImages = await handleImageUploads(images);
+  const processedImages = await handleImageUploads(images); // <--- Sử dụng hàm dùng chung
   const payload = {
     ...otherData,
     images: processedImages,
@@ -70,7 +37,7 @@ export async function updateProduct({
   productData: Partial<ProductFormValues>;
 }): Promise<Product> {
   const { images, ...otherData } = productData;
-  const processedImages = await handleImageUploads(images);
+  const processedImages = await handleImageUploads(images); // <--- Sử dụng hàm dùng chung
   const payload = {
     ...otherData,
     images: processedImages,
@@ -85,12 +52,15 @@ export async function updateProduct({
  * Lấy danh sách tất cả sản phẩm
  */
 export interface GetProductsParams {
+  [key: string]: string | number | undefined;
   skip?: number;
   limit?: number;
   search?: string;
 }
 
-export async function getProducts(params?: GetProductsParams): Promise<Product[]> {
+export async function getProducts(
+  params?: GetProductsParams
+): Promise<Product[]> {
   const query = buildQueryString(params);
   return apiClient<Product[]>(`/products${query}`);
 }

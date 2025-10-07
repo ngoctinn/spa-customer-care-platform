@@ -61,7 +61,9 @@ export default function TreatmentPlanFormFields() {
 
   const { data: categories = [] } = useCategories();
   const { data: services = [] } = useServices();
-  const treatmentCategories = categories.filter((c) => c.type === "treatment");
+  const treatmentCategories = categories.filter(
+    (c) => c.category_type === "treatment"
+  );
   const selectedCategoryIds = form.watch("categories") || [];
 
   const addCategoryMutation = useMutation({

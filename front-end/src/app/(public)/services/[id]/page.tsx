@@ -56,12 +56,17 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     (review) => review.item_id === service.id
   );
 
-  const thumbnailImages = service.images?.map((img) => img.url) || [];
+  const serviceImages =
+    service.images?.map((img) => ({
+      url: img.url,
+      alt: service.name,
+    })) || [];
+
   return (
     <DetailPageLayout
       mainImage={mainImage}
       imageAlt={service.name}
-      thumbnailUrls={thumbnailImages}
+      images={serviceImages}
       onThumbnailClick={setMainImage}
       title={<h1 className="text-4xl font-bold mb-4">{service.name}</h1>}
       description={

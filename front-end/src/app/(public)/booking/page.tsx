@@ -1,7 +1,7 @@
 // src/app/(public)/booking/page.tsx
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +15,7 @@ import TimeSelection from "@/features/booking/components/TimeSelection";
 import CustomerInfoForm from "@/features/booking/components/CustomerInfoForm";
 import Confirmation from "@/features/booking/components/Confirmation";
 import TechnicianSelection from "@/features/booking/components/TechnicianSelection";
+import BookingProgress from "@/features/booking/components/BookingProgress";
 
 // Import schemas và types
 import {
@@ -24,6 +25,14 @@ import {
 } from "@/features/booking/schemas";
 
 import { createAppointment } from "@/features/appointment/apis/appointment.api";
+
+const bookingSteps = [
+  { id: 1, name: "Chọn Dịch Vụ" },
+  { id: 2, name: "Chọn Kỹ Thuật Viên" },
+  { id: 3, name: "Chọn Thời Gian" },
+  { id: 4, name: "Thông Tin Cá Nhân" },
+  { id: 5, name: "Xác Nhận" },
+];
 
 export default function BookingPage() {
   const searchParams = useSearchParams();
@@ -37,10 +46,18 @@ export default function BookingPage() {
 
   const [isPending, startTransition] = useTransition();
 
+  const topOfContentRef = useRef<HTMLDivElement>(null);
+
   const form = useForm<CustomerInfoValues>({
     resolver: zodResolver(customerInfoSchema),
     defaultValues: { name: "", phone: "", email: "", note: "" },
   });
+
+  useEffect(() => {
+    if (topOfContentRef.current) {
+      topOfContentRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [step]);
 
   const handleNextStep = () => setStep((prev) => prev + 1);
   const handlePrevStep = () => setStep((prev) => prev - 1);
@@ -153,19 +170,21 @@ export default function BookingPage() {
           sắc đẹp.
         </p>
       </header>
-      <div className="max-w-4xl mx-auto space-y-8">
+
+      <div ref={topOfContentRef} className="max-w-4xl mx-auto space-y-8">
+        <div className="p-4 rounded-lg border bg-card">
+          <BookingProgress steps={bookingSteps} currentStep={step} />
+        </div>
         {step > 1 && (
           <Button variant="ghost" onClick={handlePrevStep}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại
           </Button>
         )}
-
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(handleCustomerInfoSubmit)}>
             {renderStep()}
           </form>
         </FormProvider>
-
         <div className="flex justify-end pt-4">
           {step === 3 &&
             bookingState.selectedDate &&

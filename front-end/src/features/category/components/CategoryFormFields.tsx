@@ -47,7 +47,7 @@ export default function CategoryFormFields({
       {!hideTypeField && (
         <FormField
           control={control}
-          name="type"
+          name="category_type"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Loại danh mục</FormLabel>

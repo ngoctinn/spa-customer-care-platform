@@ -1,3 +1,6 @@
+import { ChangePasswordFormValues } from "@/features/auth/schemas";
+import apiClient from "@/lib/apiClient";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /**
@@ -42,4 +45,20 @@ export async function resetPassword(data: {
     throw new Error(errorData.detail || "Đặt lại mật khẩu thất bại.");
   }
   return response.json();
+}
+
+/**
+ * Đổi mật khẩu cho người dùng đã đăng nhập
+ * @param data Dữ liệu bao gồm mật khẩu cũ và mật khẩu mới
+ * */
+export async function changePassword(
+  data: ChangePasswordFormValues
+): Promise<{ message: string }> {
+  return apiClient("/users/me/change-password", {
+    method: "POST",
+    body: JSON.stringify({
+      current_password: data.oldPassword,
+      new_password: data.newPassword,
+    }),
+  });
 }

@@ -1,4 +1,5 @@
 import { User } from "@/features/user/types";
+import { LoyaltyTier } from "@/features/loyalty/types";
 
 export interface PurchasedService {
   service_id: string;
@@ -27,7 +28,6 @@ export interface Customer {
   preferences?: CustomerPreferences;
   notification_settings?: NotificationSettings;
   loyalty_points?: number;
-  rank?: string;
   joined_date: Date;
   is_deleted: boolean;
   created_at: Date;
@@ -35,5 +35,6 @@ export interface Customer {
 }
 
 export type FullCustomerProfile = Omit<User, "roles"> & {
-  customer_profile: Customer; // Lồng thông tin customer vào
+  customer_profile: Customer;
+  loyalty_tier?: LoyaltyTier;
 };
