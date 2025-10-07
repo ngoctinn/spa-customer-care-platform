@@ -105,48 +105,6 @@ def delete_image(db: Session, db_image: Image) -> Image:
 # ==========================================
 
 
-async def create_and_link_images(
-    db: Session,
-    *,
-    owner_entity: OwnerModel,
-    owner_type: str,
-    new_images: Optional[List[UploadFile]] = None,
-    alt_text: Optional[str] = None,
-) -> List[Image]:
-    """Tải ảnh mới lên, tạo record trong DB và liên kết với chủ sở hữu."""
-    if not new_images:
-        return []
-
-    created_images = []
-    config = OWNER_CONFIG[owner_type]
-    LinkModel = config["link_model"]
-
-    for image_file in new_images:
-        if not getattr(image_file, "filename", None):
-            continue
-
-        image_url = await supabase_client.upload_image(file=image_file)
-        if not image_url:
-            # Có thể log lỗi ở đây thay vì raise exception ngay lập tức
-            print(f"Failed to upload image: {image_file.filename}")
-            continue
-
-        db_image = Image(url=image_url, alt_text=alt_text or owner_entity.name)
-        db.add(db_image)
-        db.commit()
-        db.refresh(db_image)
-
-        # Tạo liên kết
-        link = LinkModel(
-            **{config["link_field"]: owner_entity.id, "image_id": db_image.id}
-        )
-        db.add(link)
-        created_images.append(db_image)
-
-    db.commit()
-    return created_images
-
-
 async def sync_images_for_entity(
     db: Session,
     *,
@@ -154,7 +112,6 @@ async def sync_images_for_entity(
     owner_type: str,
     existing_image_ids: Optional[List[UUID]],
     primary_image_id: Optional[UUID],
-    new_images: Optional[List[UploadFile]] = None,
 ):
     """
     Hàm chính để đồng bộ hóa tất cả các hình ảnh cho một thực thể (Product, Service, TreatmentPlan).
@@ -170,15 +127,6 @@ async def sync_images_for_entity(
     LinkModel: Type[SQLModel] = config["link_model"]
     link_field: str = config["link_field"]
     entity_id = entity.id
-
-    # 1. Xử lý các ảnh mới tải lên
-    await create_and_link_images(
-        db,
-        owner_entity=entity,
-        owner_type=owner_type,
-        new_images=new_images,
-        alt_text=entity.name,
-    )
 
     # 2. Đồng bộ các ảnh đã có (existing_image_ids)
     if existing_image_ids is not None:
