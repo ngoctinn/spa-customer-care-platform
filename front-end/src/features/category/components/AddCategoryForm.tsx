@@ -29,13 +29,13 @@ export default function AddCategoryForm({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
       name: "",
-      type: categoryType,
+      category_type: categoryType,
     },
   });
 
   // Đảm bảo `type` của danh mục luôn đúng với ngữ cảnh
   useEffect(() => {
-    form.setValue("type", categoryType);
+    form.setValue("category_type", categoryType);
   }, [categoryType, form]);
 
   return (

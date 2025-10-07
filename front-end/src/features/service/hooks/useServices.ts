@@ -12,10 +12,11 @@ const queryKey = ["services"];
 
 // Hook để lấy danh sách dịch vụ
 export const useServices = () => {
-  return useQuery<Service[]>({
+  const { data, isLoading, isError, error } = useQuery<Service[]>({
     queryKey: queryKey,
-    queryFn: getServices,
+    queryFn: () => getServices(),
   });
+  return { data, isLoading, isError, error };
 };
 
 // Hook để thêm dịch vụ mới

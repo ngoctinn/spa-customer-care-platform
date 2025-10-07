@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   UserCircle2,
+  User,
 } from "lucide-react";
 
 import {
@@ -196,6 +197,12 @@ export function Header() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               {isLoggedIn ? (
                 <>
+                  <DropdownMenuItem>
+                    <Link href="/account" className="flex items-center w-full">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Tài khoản của tôi</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Link
                       href="/dashboard"

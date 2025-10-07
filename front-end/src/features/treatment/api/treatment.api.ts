@@ -3,35 +3,7 @@ import { TreatmentPlan } from "@/features/treatment/types";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
-import { ImageUrl } from "@/features/shared/types";
-import { uploadFile } from "@/features/upload/upload.api";
-
-/**
- * Xử lý upload các file mới và trả về danh sách ImageUrl hoàn chỉnh.
- * @param images Mảng chứa cả File (ảnh mới) và ImageUrl (ảnh cũ).
- * @returns Danh sách ImageUrl đã được xử lý.
- */
-async function handleImageUploads(
-  images: (File | ImageUrl)[] | undefined
-): Promise<ImageUrl[]> {
-  if (!images || images.length === 0) {
-    return [];
-  }
-
-  const uploadPromises: Promise<ImageUrl>[] = [];
-  const existingImages: ImageUrl[] = [];
-
-  images.forEach((image) => {
-    if (image instanceof File) {
-      uploadPromises.push(uploadFile(image));
-    } else {
-      existingImages.push(image);
-    }
-  });
-
-  const uploadedImages = await Promise.all(uploadPromises);
-  return [...existingImages, ...uploadedImages];
-}
+import { handleImageUploads } from "@/features/upload/upload.api";
 
 /**
  * Thêm một liệu trình mới
@@ -80,6 +52,7 @@ export async function updateTreatmentPlan({
  * Lấy danh sách tất cả các liệu trình
  */
 export interface GetTreatmentPlansParams {
+  [key: string]: string | number | undefined;
   skip?: number;
   limit?: number;
   search?: string;

@@ -2,7 +2,7 @@
 import { ImageUrl } from "@/features/shared/types"; // Giả sử bạn có file này
 
 // Định nghĩa các loại có thể được đánh giá
-export type ReviewItemType = "product" | "treatment_plan" | "service";
+export type ReviewItemType = "product" | "treatment" | "service";
 
 export interface Review {
   id: string;

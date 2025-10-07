@@ -21,7 +21,6 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from "@/features/product/hooks/useProducts";
-
 import { useAdjustStock } from "@/features/inventory/hooks/useInventory";
 
 import { DataTable } from "@/components/common/data-table/data-table";

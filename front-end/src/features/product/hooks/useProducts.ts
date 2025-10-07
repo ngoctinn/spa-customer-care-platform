@@ -14,12 +14,14 @@ const queryKey = ["products"];
 
 // Hook để lấy danh sách sản phẩm
 export const useProducts = () => {
-  return useQuery<Product[]>({
+  const { data, isLoading, isError, error } = useQuery<Product[]>({
     queryKey: queryKey,
     queryFn: () => getProducts(),
     retry: 1,
     staleTime: 60 * 1000,
   });
+
+  return { data, isLoading, isError, error };
 };
 
 // Hook để thêm sản phẩm mới

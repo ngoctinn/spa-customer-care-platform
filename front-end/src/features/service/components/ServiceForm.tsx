@@ -61,7 +61,9 @@ export default function ServiceForm() {
   });
 
   const { data: categories = [] } = useCategories();
-  const serviceCategories = categories.filter((c) => c.type === "service");
+  const serviceCategories = categories.filter(
+    (c) => c.category_type === "service"
+  );
 
   const addCategoryMutation = useMutation({
     mutationFn: addCategory,

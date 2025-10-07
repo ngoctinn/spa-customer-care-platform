@@ -20,6 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 // Component này giờ chỉ nhận props và gọi hàm, không quản lý state
 const StaffRowActions = ({
@@ -128,9 +129,15 @@ export const getStaffColumns = (
     cell: ({ row }) => {
       const isActive = row.getValue("is_active");
       return (
-        <Badge variant={isActive ? "default" : "secondary"}>
-          {isActive ? "Hoạt động" : "Tạm ngưng"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isActive ? "bg-success" : "bg-muted"
+            )}
+          />
+          <span>{isActive ? "Hoạt động" : "Tạm ngưng"}</span>
+        </div>
       );
     },
     filterFn: (row, id, value) => {

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getPrimaryImageUrl } from "@/lib/image-utils";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 // Helper component cho các hành động trên mỗi dòng
 const ServiceRowActions = ({
@@ -109,8 +110,13 @@ export const getServiceColumns = (
   },
   {
     accessorKey: "duration_minutes",
-    header: "Thời lượng (phút)",
     meta: { headerTitle: "Thời lượng" },
+    header: () => <div className="hidden md:table-cell">Thời lượng (phút)</div>,
+    cell: ({ row }) => (
+      <div className="hidden md:table-cell">
+        {row.original.duration_minutes}
+      </div>
+    ),
   },
   {
     accessorKey: "categories",
@@ -131,17 +137,26 @@ export const getServiceColumns = (
     meta: { headerTitle: "Danh mục" },
   },
   {
-    accessorKey: "status",
+    accessorKey: "is_deleted",
     header: "Trạng thái",
-    cell: ({ row }) => (
-      <Badge
-        variant={row.original.status === "active" ? "default" : "destructive"}
-      >
-        {row.original.status === "active" ? "Hoạt động" : "Tạm ngưng"}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const isInactive = row.original.is_deleted;
+      const statusText = isInactive ? "Tạm ngưng" : "Hoạt động";
+      return (
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isInactive ? "bg-muted" : "bg-success"
+            )}
+          />
+          <span>{statusText}</span>
+        </div>
+      );
+    },
     filterFn: (row, id, value) => {
-      return value.includes(row.original.status);
+      const status = row.original.is_deleted ? "inactive" : "active";
+      return value.includes(status);
     },
     meta: { headerTitle: "Trạng thái" },
   },

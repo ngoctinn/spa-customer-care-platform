@@ -18,6 +18,7 @@ import {
 import { getPrimaryImageUrl } from "@/lib/image-utils";
 import Image from "next/image";
 import { Category } from "@/features/category/types";
+import { cn } from "@/lib/utils";
 
 // Helper component cho các hành động trên mỗi dòng
 const ProductRowActions = ({
@@ -158,20 +159,27 @@ export const getProductColumns = (
   },
 
   {
-    accessorKey: "status",
+    accessorKey: "is_deleted",
     header: "Trạng thái",
     meta: { headerTitle: "Trạng thái" },
-    cell: ({ row }) => (
-      <Badge
-        variant={row.original.status === "active" ? "default" : "destructive"}
-      >
-        {row.original.status === "active"
-          ? "Đang mở bán/sử dụng"
-          : "Ngừng bán/sử dụng"}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const isInactive = row.original.is_deleted;
+      const statusText = isInactive ? "Ngừng bán" : "Đang bán";
+      return (
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isInactive ? "bg-muted" : "bg-success"
+            )}
+          ></span>
+          <span>{statusText}</span>
+        </div>
+      );
+    },
     filterFn: (row, id, value) => {
-      return value.includes(row.original.status);
+      const status = row.original.is_deleted ? "inactive" : "active";
+      return value.includes(status);
     },
   },
 

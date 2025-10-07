@@ -6,11 +6,7 @@ import apiClient from "@/lib/apiClient";
  * Lấy danh sách tất cả danh mục từ server
  */
 export async function getCategories(): Promise<Category[]> {
-  const categories = await apiClient<Category[]>("/categories");
-  return categories.map((category) => ({
-    ...category,
-    type: category.type ?? category.category_type,
-  }));
+  return await apiClient<Category[]>("/categories");
 }
 
 /**
