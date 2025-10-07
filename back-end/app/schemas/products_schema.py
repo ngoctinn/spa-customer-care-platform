@@ -35,7 +35,6 @@ class ProductCreate(ProductBase):
         default=None,
         description="ID của hình ảnh sẽ được đặt làm ảnh chính",
     )
-    new_images: List[UploadFile] = Field(default_factory=list, exclude=True)
 
 
 class ProductUpdate(SQLModel):
@@ -51,7 +50,6 @@ class ProductUpdate(SQLModel):
     category_ids: Optional[List[uuid.UUID]] = Field(default=None)
     # Thêm các trường khác nếu muốn cho phép cập nhật
     existing_image_ids: Optional[List[uuid.UUID]] = Field(default=None, exclude=True)
-    new_images: Optional[List[UploadFile]] = Field(default=None, exclude=True)
     primary_image_id: uuid.UUID | None = Field(
         default=None,
         description="ID của hình ảnh sẽ được đặt làm ảnh chính",
