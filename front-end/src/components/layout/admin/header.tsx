@@ -128,7 +128,7 @@ export function AdminHeader() {
             Cài đặt
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => void logout()}>
+          <DropdownMenuItem onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />
             Đăng xuất
           </DropdownMenuItem>
