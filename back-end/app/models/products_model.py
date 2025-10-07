@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional, TYPE_CHECKING
 from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
-from app.models.association_tables import ProductCategoryLink
+from app.models.association_tables import ProductCategoryLink, ProductImageLink
 
 if TYPE_CHECKING:
     from app.models.catalog_model import Category, Image
@@ -25,8 +25,7 @@ class Product(BaseUUIDModel, table=True):
         back_populates="products", link_model=ProductCategoryLink
     )
     images: List["Image"] = Relationship(
-        back_populates="product",
-        sa_relationship_kwargs={"foreign_keys": "Image.product_id"},
+        back_populates="products", link_model=ProductImageLink
     )
     primary_image_id: Optional[uuid.UUID] = Field(
         default=None, foreign_key="image.id", nullable=True

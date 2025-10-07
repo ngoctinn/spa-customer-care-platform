@@ -13,7 +13,7 @@ from app.models.products_model import Product
 from app.schemas.catalog_schema import CategoryTypeEnum
 from app.schemas.products_schema import ProductCreate, ProductUpdate
 from app.services import catalog_service
-from app.services.images_service import sync_entity_images
+from app.services.images_service import sync_images_for_entity
 
 
 def _with_product_relationships(statement):
@@ -108,10 +108,10 @@ async def create_product(
     db.commit()
     db.refresh(db_product)
 
-    await sync_entity_images(
+    await sync_images_for_entity(
         db,
         entity=db_product,
-        owner="product",
+        owner_type="product",
         new_images=new_images,
         existing_image_ids=(
             existing_image_ids
@@ -135,10 +135,7 @@ def get_all_products(db: Session, skip: int = 0, limit: int = 100) -> List[Produ
     """Lấy danh sách sản phẩm chưa bị xóa mềm."""
 
     statement = _with_product_relationships(
-        select(Product)
-        .where(Product.is_deleted == False)
-        .offset(skip)
-        .limit(limit)
+        select(Product).where(Product.is_deleted == False).offset(skip).limit(limit)
     )
     products = db.exec(statement).unique().all()
     return [_filter_soft_deleted_relationships(product) for product in products]
@@ -203,10 +200,10 @@ async def update_product(
     db.add(db_product)
     db.flush()
 
-    await sync_entity_images(
+    await sync_images_for_entity(
         db,
         entity=db_product,
-        owner="product",
+        owner_type="product",
         new_images=new_images,
         existing_image_ids=(
             existing_image_ids

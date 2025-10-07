@@ -11,7 +11,7 @@ from app.models.services_model import Service
 from app.schemas.catalog_schema import CategoryTypeEnum
 from app.schemas.services_schema import ServiceCreate, ServiceUpdate
 from app.services import catalog_service
-from app.services.images_service import sync_entity_images
+from app.services.images_service import sync_images_for_entity
 
 
 def _filter_soft_deleted_relationships(service: Service) -> Service:
@@ -78,10 +78,10 @@ async def create_service(
     db.commit()
     db.refresh(db_service)
 
-    await sync_entity_images(
+    await sync_images_for_entity(
         db,
         entity=db_service,
-        owner="service",
+        owner_type="service",
         new_images=images,
         existing_image_ids=service_in.existing_image_ids,
         primary_image_id=service_in.primary_image_id,
@@ -130,10 +130,10 @@ async def update_service(
     db.add(db_service)
     db.flush()
 
-    await sync_entity_images(
+    await sync_images_for_entity(
         db,
         entity=db_service,
-        owner="service",
+        owner_type="service",
         new_images=new_images,
         existing_image_ids=(
             existing_image_ids
