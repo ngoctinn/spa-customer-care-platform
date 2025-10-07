@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship
 
 from app.models.association_tables import ProductCategoryLink, ProductImageLink
@@ -23,23 +24,26 @@ class Product(BaseUUIDModel, table=True):
     is_retail: bool = Field(default=True)
     is_consumable: bool = Field(default=False)
     base_unit: str = Field(max_length=50)  # vd: "chai", "lọ"
-    consumable_unit: Optional[str] = Field(default=None, max_length=50)  # vd: "ml", "g"
-    conversion_rate: Optional[float] = Field(default=None, gt=0)  # Tỷ lệ quy đổi
+    consumable_unit: str | None = Field(default=None, max_length=50)  # vd: "ml", "g"
+    conversion_rate: float | None = Field(default=None, gt=0)  # Tỷ lệ quy đổi
 
-    categories: List["Category"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    categories: Mapped[list["Category"]] = Relationship(
         back_populates="products",
         link_model=ProductCategoryLink,
         sa_relationship_kwargs={"lazy": "selectin"},
     )
-    images: List["Image"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    images: Mapped[list["Image"]] = Relationship(
         back_populates="products",
         link_model=ProductImageLink,
         sa_relationship_kwargs={"lazy": "selectin"},
     )
-    primary_image_id: Optional[uuid.UUID] = Field(
+    primary_image_id: uuid.UUID | None = Field(
         default=None, foreign_key="image.id", nullable=True
     )
-    primary_image: Optional["Image"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    primary_image: Mapped["Image"] | None = Relationship(
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "Product.primary_image_id",

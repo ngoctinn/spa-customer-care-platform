@@ -1,9 +1,14 @@
 # app/models/schedules_model.py
+from __future__ import annotations
+
+import datetime
 import uuid
 from typing import TYPE_CHECKING
-from sqlmodel import Field, Relationship, SQLModel
+
+from sqlalchemy.orm import Mapped
+from sqlmodel import Field, Relationship
+
 from app.models.base_model import BaseUUIDModel
-import datetime
 
 if TYPE_CHECKING:
     from app.models.users_model import User
@@ -23,5 +28,6 @@ class DefaultSchedule(BaseUUIDModel, table=True):
         default=None, description="Giờ kết thúc làm việc"
     )
 
+    # ✅ updated for SQLAlchemy 2.0
     # Mối quan hệ nhiều-một: nhiều lịch mặc định thuộc về một User
-    user: "User" = Relationship(back_populates="default_schedules")
+    user: Mapped["User"] = Relationship(back_populates="default_schedules")

@@ -1,10 +1,16 @@
 # app/models/users_model.py
+from __future__ import annotations
+
 import uuid
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
-from datetime import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy.orm import Mapped
+from sqlmodel import Field, Relationship, SQLModel
+
 from app.models.base_model import BaseUUIDModel
-from app.models.schedules_model import DefaultSchedule
+
+if TYPE_CHECKING:
+    from app.models.schedules_model import DefaultSchedule
 
 
 class UserRole(SQLModel, table=True):
@@ -42,10 +48,14 @@ class User(BaseUUIDModel, table=True):
     is_superuser: bool = Field(default=False, nullable=False)
     is_email_verified: bool = Field(default=False, nullable=False)
 
-    roles: List["Role"] = Relationship(back_populates="users", link_model=UserRole)
+    # ✅ updated for SQLAlchemy 2.0
+    roles: Mapped[list["Role"]] = Relationship(
+        back_populates="users", link_model=UserRole
+    )
 
+    # ✅ updated for SQLAlchemy 2.0
     # Mối quan hệ một-nhiều: một User có thể có nhiều lịch mặc định
-    default_schedules: List["DefaultSchedule"] = Relationship(
+    default_schedules: Mapped[list["DefaultSchedule"]] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
@@ -56,8 +66,12 @@ class Role(BaseUUIDModel, table=True):
     name: str = Field(index=True, nullable=False, unique=True)
     description: str | None = Field(default=None, nullable=True)
 
-    users: List[User] = Relationship(back_populates="roles", link_model=UserRole)
-    permissions: List["Permission"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    users: Mapped[list["User"]] = Relationship(
+        back_populates="roles", link_model=UserRole
+    )
+    # ✅ updated for SQLAlchemy 2.0
+    permissions: Mapped[list["Permission"]] = Relationship(
         back_populates="roles", link_model=RolePermission
     )
 
@@ -68,6 +82,7 @@ class Permission(BaseUUIDModel, table=True):
     name: str = Field(index=True, nullable=False, unique=True)
     description: str | None = Field(default=None, nullable=True)
 
-    roles: List[Role] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    roles: Mapped[list["Role"]] = Relationship(
         back_populates="permissions", link_model=RolePermission
     )

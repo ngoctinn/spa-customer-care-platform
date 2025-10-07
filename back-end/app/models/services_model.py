@@ -1,7 +1,12 @@
 # app/models/services_model.py
+from __future__ import annotations
+
 import uuid
-from typing import Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
+from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship
+
 from app.models.base_model import BaseUUIDModel
 
 # Import bảng liên kết mới
@@ -33,18 +38,20 @@ class Service(BaseUUIDModel, table=True):
     # category_id: uuid.UUID = Field(foreign_key="category.id")
     # category: "Category" = Relationship(back_populates="services")
 
-    # THAY ĐỔI: Thêm relationship mới cho mối quan hệ nhiều-nhiều
-    categories: List["Category"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    categories: Mapped[list["Category"]] = Relationship(
         back_populates="services", link_model=ServiceCategoryLink
     )
 
-    images: List["Image"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    images: Mapped[list["Image"]] = Relationship(
         back_populates="services", link_model=ServiceImageLink
     )
-    primary_image_id: Optional[uuid.UUID] = Field(
+    primary_image_id: uuid.UUID | None = Field(
         default=None, foreign_key="image.id", nullable=True
     )
-    primary_image: Optional["Image"] = Relationship(
+    # ✅ updated for SQLAlchemy 2.0
+    primary_image: Mapped["Image"] | None = Relationship(
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "Service.primary_image_id",
@@ -52,9 +59,7 @@ class Service(BaseUUIDModel, table=True):
     )
 
     @property
-    def category_ids(self) -> List[uuid.UUID]:
+    def category_ids(self) -> list[uuid.UUID]:
         """Danh sách ID của các danh mục không bị xóa mềm."""
 
-        return [
-            category.id for category in self.categories if not category.is_deleted
-        ]
+        return [category.id for category in self.categories if not category.is_deleted]
