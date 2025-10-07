@@ -1,3 +1,4 @@
+// src/features/review/components/ReviewList.tsx
 "use client";
 
 import { Review } from "@/features/review/types";
@@ -12,7 +13,6 @@ interface ReviewListProps {
   reviews: Review[];
 }
 
-// Component con để hiển thị một đánh giá
 const ReviewItem = ({
   review,
   customer,
@@ -40,6 +40,7 @@ const ReviewItem = ({
         </span>
       </div>
       <div className="flex items-center my-1">
+        {/* Chuyển thành chế độ chỉ đọc */}
         <StarRating rating={review.rating} onRatingChange={() => {}} />
       </div>
       <p className="text-sm text-muted-foreground">{review.comment}</p>
@@ -47,35 +48,26 @@ const ReviewItem = ({
   </div>
 );
 
+// Component này giờ chỉ tập trung vào việc render danh sách
 export const ReviewList = ({ reviews }: ReviewListProps) => {
   const { data: customers = [], isLoading } = useCustomers();
 
   const customersMap = useMemo(() => {
     return new Map(customers.map((customer) => [customer.id, customer]));
   }, [customers]);
+
   if (isLoading) {
     return <FullPageLoader />;
   }
 
   return (
-    <div className="mt-8">
-      <h3 className="text-2xl font-bold mb-4">
-        Đánh giá từ khách hàng ({reviews.length})
-      </h3>
-      {reviews.length > 0 ? (
-        <div className="divide-y">
-          {reviews.map((review) => {
-            const customer = customersMap.get(review.customer_id);
-            return (
-              <ReviewItem key={review.id} review={review} customer={customer} />
-            );
-          })}
-        </div>
-      ) : (
-        <p className="text-muted-foreground">
-          Chưa có đánh giá nào cho dịch vụ này.
-        </p>
-      )}
+    <div className="divide-y">
+      {reviews.map((review) => {
+        const customer = customersMap.get(review.customer_id);
+        return (
+          <ReviewItem key={review.id} review={review} customer={customer} />
+        );
+      })}
     </div>
   );
 };

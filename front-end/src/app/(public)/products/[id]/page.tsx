@@ -11,12 +11,26 @@ import { PurchaseActions } from "@/components/common/PurchaseActions";
 import { DetailPageLayout } from "@/components/common/DetailPageLayout";
 import { Tag } from "lucide-react";
 import { FullPageLoader } from "@/components/ui/spinner";
+import { MessageSquarePlus } from "lucide-react"; // Bổ sung icon
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AddReviewForm } from "@/features/review/components/AddReviewForm";
+import { useAuth } from "@/contexts/AuthContexts";
+
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id } = use(params);
+  const { user } = useAuth();
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const { data: allReviews = [], isLoading: isLoadingReviews } = useReviews();
 
   const {
@@ -90,7 +104,43 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         />
       }
     >
-      <ReviewList reviews={productReviews} />
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold">
+            Đánh giá sản phẩm ({productReviews.length})
+          </h3>
+          {user && (
+            <Dialog
+              open={isReviewDialogOpen}
+              onOpenChange={setIsReviewDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  Viết đánh giá
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                  <DialogTitle>Đánh giá sản phẩm: {product.name}</DialogTitle>
+                </DialogHeader>
+                <AddReviewForm
+                  itemId={product.id}
+                  itemType="product"
+                  onSuccess={() => setIsReviewDialogOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+        {productReviews.length > 0 ? (
+          <ReviewList reviews={productReviews} />
+        ) : (
+          <p className="text-muted-foreground py-8 text-center">
+            Chưa có đánh giá nào cho sản phẩm này.
+          </p>
+        )}
+      </div>{" "}
     </DetailPageLayout>
   );
 }

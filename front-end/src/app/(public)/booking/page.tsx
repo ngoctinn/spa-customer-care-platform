@@ -16,7 +16,9 @@ import CustomerInfoForm from "@/features/booking/components/CustomerInfoForm";
 import Confirmation from "@/features/booking/components/Confirmation";
 import TechnicianSelection from "@/features/booking/components/TechnicianSelection";
 
-// Import schemas và types
+import BookingSummary from "@/features/booking/components/BookingSummary";
+import { BookingProgressBar } from "@/features/booking/components/BookingProgressBar";
+
 import {
   customerInfoSchema,
   CustomerInfoValues,
@@ -192,6 +194,9 @@ export default function BookingPage() {
             </Button>
           )}
         </div>
+      </div>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4 shadow-lg w-full">
+        <BookingSummary bookingState={bookingState} currentStep={currentStep} />
       </div>
     </div>
   );
