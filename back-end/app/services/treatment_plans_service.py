@@ -15,7 +15,7 @@ from app.schemas.treatment_plans_schema import (
     TreatmentPlanUpdate,
 )
 from app.services import catalog_service, services_service
-from app.services.images_service import sync_entity_images
+from app.services.images_service import sync_images_for_entity
 
 
 def _with_treatment_plan_relationships(statement):
@@ -56,7 +56,9 @@ def _filter_soft_deleted_relationships(
             continue
         if step.service:
             step.service.categories = [
-                category for category in step.service.categories if not category.is_deleted
+                category
+                for category in step.service.categories
+                if not category.is_deleted
             ]
         filtered_steps.append(step)
     treatment_plan.steps = filtered_steps
@@ -100,10 +102,10 @@ async def create_treatment_plan(
         )
         db.add(db_step)
 
-    await sync_entity_images(
+    await sync_images_for_entity(
         db,
         entity=db_plan,
-        owner="treatment_plan",
+        owner_type="treatment_plan",
         existing_image_ids=treatment_plan_in.existing_image_ids,
         primary_image_id=treatment_plan_in.primary_image_id,
         alt_text=db_plan.name,
@@ -180,10 +182,10 @@ async def update_treatment_plan(
     db.add(db_treatment_plan)
     db.flush()
 
-    await sync_entity_images(
+    await sync_images_for_entity(
         db,
         entity=db_treatment_plan,
-        owner="treatment_plan",
+        owner_type="treatment_plan",
         existing_image_ids=treatment_plan_in.existing_image_ids,
         primary_image_id=treatment_plan_in.primary_image_id,
         alt_text=db_treatment_plan.name,
@@ -193,7 +195,9 @@ async def update_treatment_plan(
     return get_treatment_plan_by_id(db, db_treatment_plan.id)
 
 
-def delete_treatment_plan(db: Session, db_treatment_plan: TreatmentPlan) -> TreatmentPlan:
+def delete_treatment_plan(
+    db: Session, db_treatment_plan: TreatmentPlan
+) -> TreatmentPlan:
     db_treatment_plan.is_deleted = True
     db.add(db_treatment_plan)
     db.commit()

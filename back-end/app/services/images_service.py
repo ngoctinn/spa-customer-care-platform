@@ -1,223 +1,229 @@
+# app/services/images_service.py
 """Các hàm tiện ích dùng chung cho xử lý hình ảnh."""
 
 from __future__ import annotations
-
-import uuid
-from dataclasses import dataclass
-from typing import Dict, Iterable, List, Literal, Optional
-
+from uuid import UUID
+from typing import List, Optional, Type
 from fastapi import HTTPException, UploadFile, status
-from sqlmodel import Session, select
+from sqlmodel import Session, SQLModel, select
 
 from app.core import supabase_client
 from app.models.catalog_model import Image
+from app.models.products_model import Product
+from app.models.services_model import Service
+from app.models.treatment_plans_model import TreatmentPlan
+from app.models.association_tables import (
+    ProductImageLink,
+    ServiceImageLink,
+    TreatmentPlanImageLink,
+)
 
-OwnerType = Literal["product", "service", "treatment_plan"]
+# Định nghĩa các kiểu để dễ quản lý
+OwnerModel = Product | Service | TreatmentPlan
+LinkModel = ProductImageLink | ServiceImageLink | TreatmentPlanImageLink
 
-
-@dataclass(frozen=True)
-class _ImageOwnerConfig:
-    target_field: str
-    other_fields: tuple[str, ...]
-
-
-_OWNER_CONFIG: Dict[OwnerType, _ImageOwnerConfig] = {
-    "product": _ImageOwnerConfig(
-        target_field="product_id",
-        other_fields=("service_id", "treatment_plan_id"),
-    ),
-    "service": _ImageOwnerConfig(
-        target_field="service_id",
-        other_fields=("product_id", "treatment_plan_id"),
-    ),
-    "treatment_plan": _ImageOwnerConfig(
-        target_field="treatment_plan_id",
-        other_fields=("product_id", "service_id"),
-    ),
+OWNER_CONFIG = {
+    "product": {
+        "model": Product,
+        "link_model": ProductImageLink,
+        "link_field": "product_id",
+    },
+    "service": {
+        "model": Service,
+        "link_model": ServiceImageLink,
+        "link_field": "service_id",
+    },
+    "treatment_plan": {
+        "model": TreatmentPlan,
+        "link_model": TreatmentPlanImageLink,
+        "link_field": "treatment_plan_id",
+    },
 }
 
-
-def _ensure_single_relation(
-    *, product_id: Optional[uuid.UUID], service_id: Optional[uuid.UUID], treatment_plan_id: Optional[uuid.UUID]
-) -> None:
-    provided = [value for value in (product_id, service_id, treatment_plan_id) if value is not None]
-    if len(provided) > 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mỗi hình ảnh chỉ được gắn với duy nhất một loại đối tượng (sản phẩm, dịch vụ hoặc liệu trình).",
-        )
+# ==========================================
+# CÁC HÀM CỐT LÕI XỬ LÝ ẢNH
+# ==========================================
 
 
-def _get_image_by_id(db: Session, image_id: uuid.UUID) -> Image:
-    image = db.exec(
-        select(Image).where(Image.id == image_id, Image.is_deleted == False)  # noqa: E712
-    ).first()
-    if not image:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy hình ảnh với ID {image_id}.",
-        )
-    return image
-
-
-async def create_image(
+async def create_image_to_library(
     db: Session,
     *,
     file: UploadFile,
     alt_text: Optional[str] = None,
-    product_id: Optional[uuid.UUID] = None,
-    service_id: Optional[uuid.UUID] = None,
-    treatment_plan_id: Optional[uuid.UUID] = None,
 ) -> Image:
-    """Tải ảnh lên dịch vụ lưu trữ và lưu metadata vào cơ sở dữ liệu."""
-
-    _ensure_single_relation(
-        product_id=product_id, service_id=service_id, treatment_plan_id=treatment_plan_id
-    )
-
+    """
+    Tải một file ảnh lên storage và tạo bản ghi trong DB.
+    """
     if not getattr(file, "filename", None):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tập tin hình ảnh không hợp lệ.",
+            detail="File không hợp lệ hoặc không được cung cấp.",
         )
 
     image_url = await supabase_client.upload_image(file=file)
     if not image_url:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Không thể tải hình ảnh lên kho lưu trữ.",
+            detail="Không thể tải ảnh lên kho lưu trữ.",
         )
 
-    db_image = Image(
-        url=image_url,
-        alt_text=alt_text,
-        product_id=product_id,
-        service_id=service_id,
-        treatment_plan_id=treatment_plan_id,
-    )
+    db_image = Image(url=image_url, alt_text=alt_text or file.filename)
     db.add(db_image)
     db.commit()
     db.refresh(db_image)
     return db_image
 
 
-def list_images(
+def get_all_images(db: Session) -> List[Image]:
+    """Lấy danh sách tất cả ảnh trong kho lưu trữ."""
+    images = db.exec(select(Image).where(Image.is_deleted == False)).all()
+    return images
+
+
+def get_image_by_id(db: Session, image_id: UUID) -> Image:
+    """Lấy ảnh theo ID, nếu không tìm thấy sẽ raise 404."""
+    image = db.get(Image, image_id)
+    if not image or image.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy hình ảnh với ID {image_id}",
+        )
+    return image
+
+
+def delete_image(db: Session, db_image: Image) -> Image:
+    """Xóa mềm một ảnh."""
+    db_image.is_deleted = True
+    db.add(db_image)
+    db.commit()
+    db.refresh(db_image)
+    return db_image
+
+
+# ==========================================
+# HÀM ĐỂ LIÊN KẾT ẢNH VỚI CÁC THỰC THỂ
+# ==========================================
+
+
+async def create_and_link_images(
     db: Session,
     *,
-    product_id: Optional[uuid.UUID] = None,
-    service_id: Optional[uuid.UUID] = None,
-    treatment_plan_id: Optional[uuid.UUID] = None,
-) -> List[Image]:
-    """Lấy danh sách hình ảnh, có thể lọc theo đối tượng sở hữu."""
-
-    _ensure_single_relation(
-        product_id=product_id, service_id=service_id, treatment_plan_id=treatment_plan_id
-    )
-
-    statement = select(Image).where(Image.is_deleted == False)  # noqa: E712
-
-    if product_id is not None:
-        statement = statement.where(Image.product_id == product_id)
-    if service_id is not None:
-        statement = statement.where(Image.service_id == service_id)
-    if treatment_plan_id is not None:
-        statement = statement.where(Image.treatment_plan_id == treatment_plan_id)
-
-    return db.exec(statement).all()
-
-
-def _apply_owner(image: Image, owner: OwnerType, entity_id: Optional[uuid.UUID]) -> None:
-    config = _OWNER_CONFIG[owner]
-    setattr(image, config.target_field, entity_id)
-    for field in config.other_fields:
-        setattr(image, field, None)
-
-
-async def sync_entity_images(
-    db: Session,
-    *,
-    entity,
-    owner: OwnerType,
+    owner_entity: OwnerModel,
+    owner_type: str,
     new_images: Optional[List[UploadFile]] = None,
-    existing_image_ids: Optional[Iterable[uuid.UUID]] = None,
-    primary_image_id: Optional[uuid.UUID] = None,
     alt_text: Optional[str] = None,
 ) -> List[Image]:
-    """Đồng bộ danh sách hình ảnh cho một đối tượng cụ thể."""
+    """Tải ảnh mới lên, tạo record trong DB và liên kết với chủ sở hữu."""
+    if not new_images:
+        return []
 
-    if owner not in _OWNER_CONFIG:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Loại đối tượng hình ảnh không được hỗ trợ.",
-        )
+    created_images = []
+    config = OWNER_CONFIG[owner_type]
+    LinkModel = config["link_model"]
 
-    current_images = [image for image in getattr(entity, "images", []) if not image.is_deleted]
-
-    if existing_image_ids is None:
-        ordered_existing_ids: List[uuid.UUID] = [image.id for image in current_images]
-    else:
-        ordered_existing_ids = list(dict.fromkeys(existing_image_ids))
-
-    keep_ids = set(ordered_existing_ids)
-    for image in current_images:
-        if image.id not in keep_ids:
-            _apply_owner(image, owner, None)
-            db.add(image)
-
-    ordered_images: List[Image] = []
-    previous_primary_id: Optional[uuid.UUID] = getattr(entity, "primary_image_id", None)
-
-    for image_id in ordered_existing_ids:
-        image = _get_image_by_id(db, image_id)
-        config = _OWNER_CONFIG[owner]
-        current_owner_id = getattr(image, config.target_field)
-        if current_owner_id not in (None, getattr(entity, "id", None)):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Hình ảnh {image_id} đang được sử dụng bởi {owner} khác.",
-            )
-        _apply_owner(image, owner, getattr(entity, "id", None))
-        db.add(image)
-        ordered_images.append(image)
-
-    for image_file in new_images or []:
+    for image_file in new_images:
         if not getattr(image_file, "filename", None):
             continue
+
         image_url = await supabase_client.upload_image(file=image_file)
         if not image_url:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Không thể tải hình ảnh lên kho lưu trữ.",
-            )
-        db_image = Image(
-            url=image_url,
-            alt_text=alt_text,
-        )
-        _apply_owner(db_image, owner, getattr(entity, "id", None))
+            # Có thể log lỗi ở đây thay vì raise exception ngay lập tức
+            print(f"Failed to upload image: {image_file.filename}")
+            continue
+
+        db_image = Image(url=image_url, alt_text=alt_text or owner_entity.name)
         db.add(db_image)
-        db.flush()
-        ordered_images.append(db_image)
+        db.commit()
+        db.refresh(db_image)
 
-    resolved_primary_id: Optional[uuid.UUID] = None
-    ordered_ids = [image.id for image in ordered_images]
+        # Tạo liên kết
+        link = LinkModel(
+            **{config["link_field"]: owner_entity.id, "image_id": db_image.id}
+        )
+        db.add(link)
+        created_images.append(db_image)
 
+    db.commit()
+    return created_images
+
+
+async def sync_images_for_entity(
+    db: Session,
+    *,
+    entity: OwnerModel,
+    owner_type: str,
+    existing_image_ids: Optional[List[UUID]],
+    primary_image_id: Optional[UUID],
+    new_images: Optional[List[UploadFile]] = None,
+):
+    """
+    Hàm chính để đồng bộ hóa tất cả các hình ảnh cho một thực thể (Product, Service, TreatmentPlan).
+    - Xóa các liên kết cũ không còn dùng.
+    - Thêm các liên kết mới.
+    - Tải lên và liên kết các hình ảnh mới.
+    - Cập nhật ảnh chính (primary_image_id).
+    """
+    if owner_type not in OWNER_CONFIG:
+        raise ValueError("Invalid owner_type specified.")
+
+    config = OWNER_CONFIG[owner_type]
+    LinkModel: Type[SQLModel] = config["link_model"]
+    link_field: str = config["link_field"]
+    entity_id = entity.id
+
+    # 1. Xử lý các ảnh mới tải lên
+    await create_and_link_images(
+        db,
+        owner_entity=entity,
+        owner_type=owner_type,
+        new_images=new_images,
+        alt_text=entity.name,
+    )
+
+    # 2. Đồng bộ các ảnh đã có (existing_image_ids)
+    if existing_image_ids is not None:
+        # Lấy tất cả các liên kết hiện tại của thực thể
+        current_links_stmt = select(LinkModel).where(
+            getattr(LinkModel, link_field) == entity_id
+        )
+        current_links = db.exec(current_links_stmt).all()
+        current_image_ids = {link.image_id for link in current_links}
+
+        new_image_ids = set(existing_image_ids)
+
+        # Xóa các liên kết không còn trong danh sách mới
+        ids_to_remove = current_image_ids - new_image_ids
+        for link in current_links:
+            if link.image_id in ids_to_remove:
+                db.delete(link)
+
+        # Thêm các liên kết mới
+        ids_to_add = new_image_ids - current_image_ids
+        for image_id in ids_to_add:
+            # Kiểm tra xem ảnh có tồn tại không
+            image = db.get(Image, image_id)
+            if not image or image.is_deleted:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Không tìm thấy hình ảnh với ID {image_id}",
+                )
+            link = LinkModel(**{link_field: entity_id, "image_id": image_id})
+            db.add(link)
+
+    # 3. Cập nhật primary_image_id
     if primary_image_id is not None:
-        if primary_image_id not in ordered_ids:
+        # Kiểm tra xem ảnh chính có thực sự được liên kết với thực thể không
+        final_images_stmt = select(LinkModel.image_id).where(
+            getattr(LinkModel, link_field) == entity_id
+        )
+        final_image_ids = db.exec(final_images_stmt).all()
+        if primary_image_id not in final_image_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Ảnh chính được chọn không thuộc danh sách hình ảnh hiện tại.",
+                detail="Ảnh chính được chọn không thuộc danh sách hình ảnh của thực thể.",
             )
-        resolved_primary_id = primary_image_id
-    elif previous_primary_id in ordered_ids:
-        resolved_primary_id = previous_primary_id
-    elif ordered_ids:
-        resolved_primary_id = ordered_ids[0]
+    entity.primary_image_id = primary_image_id
+    db.add(entity)
 
-    if hasattr(entity, "primary_image_id"):
-        entity.primary_image_id = resolved_primary_id
-        db.add(entity)
-
-    if hasattr(entity, "images"):
-        entity.images = ordered_images
-
-    return ordered_images
+    db.commit()
+    db.refresh(entity)

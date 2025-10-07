@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 2df69e15f2a7
+Revision ID: 0d3374933ea8
 Revises:
-Create Date: 2025-10-05 20:51:41.789519
+Create Date: 2025-10-07 19:03:43.797964
 
 """
 
@@ -12,9 +12,8 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 
-
 # revision identifiers, used by Alembic.
-revision: str = "2df69e15f2a7"
+revision: str = "0d3374933ea8"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -46,6 +45,22 @@ def upgrade() -> None:
         op.f("ix_category_is_deleted"), "category", ["is_deleted"], unique=False
     )
     op.create_index(op.f("ix_category_name"), "category", ["name"], unique=False)
+    op.create_table(
+        "image",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("alt_text", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_image_id"), "image", ["id"], unique=False)
+    op.create_index(op.f("ix_image_is_deleted"), "image", ["is_deleted"], unique=False)
     op.create_table(
         "permission",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -107,150 +122,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_user_id"), "user", ["id"], unique=False)
     op.create_index(op.f("ix_user_is_deleted"), "user", ["is_deleted"], unique=False)
     op.create_index(op.f("ix_user_phone"), "user", ["phone"], unique=True)
-
-    # Bảng service, product, treatment_plan phải được tạo trước image
-    op.create_table(
-        "service",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False),
-        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("price", sa.Float(), nullable=False),
-        sa.Column("duration_minutes", sa.Integer(), nullable=False),
-        sa.Column(
-            "preparation_notes", sqlmodel.sql.sqltypes.AutoString(), nullable=True
-        ),
-        sa.Column(
-            "aftercare_instructions", sqlmodel.sql.sqltypes.AutoString(), nullable=True
-        ),
-        sa.Column(
-            "contraindications", sqlmodel.sql.sqltypes.AutoString(), nullable=True
-        ),
-        sa.Column("primary_image_id", sa.Uuid(), nullable=True),
-        # Di chuyển foreign key ra sau khi tạo bảng image
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_service_id"), "service", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_service_is_deleted"), "service", ["is_deleted"], unique=False
-    )
-    op.create_index(op.f("ix_service_name"), "service", ["name"], unique=True)
-
-    op.create_table(
-        "product",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False),
-        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("price", sa.Float(), nullable=False),
-        sa.Column("stock", sa.Integer(), nullable=False),
-        sa.Column("is_retail", sa.Boolean(), nullable=False),
-        sa.Column("is_consumable", sa.Boolean(), nullable=False),
-        sa.Column(
-            "base_unit", sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False
-        ),
-        sa.Column(
-            "consumable_unit",
-            sqlmodel.sql.sqltypes.AutoString(length=50),
-            nullable=True,
-        ),
-        sa.Column("conversion_rate", sa.Float(), nullable=True),
-        sa.Column("primary_image_id", sa.Uuid(), nullable=True),
-        # Di chuyển foreign key ra sau khi tạo bảng image
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_product_id"), "product", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_product_is_deleted"), "product", ["is_deleted"], unique=False
-    )
-    op.create_index(op.f("ix_product_name"), "product", ["name"], unique=True)
-
-    op.create_table(
-        "treatment_plan",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False),
-        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("price", sa.Float(), nullable=False),
-        sa.Column("total_sessions", sa.Integer(), nullable=False),
-        sa.Column("category_id", sa.Uuid(), nullable=False),
-        sa.Column("primary_image_id", sa.Uuid(), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["category_id"],
-            ["category.id"],
-        ),
-        # Di chuyển foreign key ra sau khi tạo bảng image
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_treatment_plan_id"), "treatment_plan", ["id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_treatment_plan_is_deleted"),
-        "treatment_plan",
-        ["is_deleted"],
-        unique=False,
-    )
-    op.create_index(
-        op.f("ix_treatment_plan_name"), "treatment_plan", ["name"], unique=True
-    )
-
-    # Bây giờ tạo bảng image
-    op.create_table(
-        "image",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False),
-        sa.Column("url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("alt_text", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-        sa.Column("service_id", sa.Uuid(), nullable=True),
-        sa.Column("product_id", sa.Uuid(), nullable=True),
-        sa.Column("treatment_plan_id", sa.Uuid(), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["product_id"],
-            ["product.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["service_id"],
-            ["service.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["treatment_plan_id"],
-            ["treatment_plan.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_image_id"), "image", ["id"], unique=False)
-    op.create_index(op.f("ix_image_is_deleted"), "image", ["is_deleted"], unique=False)
-
-    # Thêm các khóa ngoại đã di chuyển ở trên
-    op.create_foreign_key(None, "service", "image", ["primary_image_id"], ["id"])
-    op.create_foreign_key(None, "product", "image", ["primary_image_id"], ["id"])
-    op.create_foreign_key(None, "treatment_plan", "image", ["primary_image_id"], ["id"])
-    # Các bảng còn lại
     op.create_table(
         "default_schedule",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -288,19 +159,42 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_table(
-        "product_category_link",
-        sa.Column("product_id", sa.Uuid(), nullable=False),
-        sa.Column("category_id", sa.Uuid(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["category_id"],
-            ["category.id"],
+        "product",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
         ),
-        sa.ForeignKeyConstraint(
-            ["product_id"],
-            ["product.id"],
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
         ),
-        sa.PrimaryKeyConstraint("product_id", "category_id"),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("price", sa.Float(), nullable=False),
+        sa.Column("stock", sa.Integer(), nullable=False),
+        sa.Column("is_retail", sa.Boolean(), nullable=False),
+        sa.Column("is_consumable", sa.Boolean(), nullable=False),
+        sa.Column(
+            "base_unit", sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False
+        ),
+        sa.Column(
+            "consumable_unit",
+            sqlmodel.sql.sqltypes.AutoString(length=50),
+            nullable=True,
+        ),
+        sa.Column("conversion_rate", sa.Float(), nullable=True),
+        sa.Column("primary_image_id", sa.Uuid(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["primary_image_id"],
+            ["image.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
+    op.create_index(op.f("ix_product_id"), "product", ["id"], unique=False)
+    op.create_index(
+        op.f("ix_product_is_deleted"), "product", ["is_deleted"], unique=False
+    )
+    op.create_index(op.f("ix_product_name"), "product", ["name"], unique=True)
     op.create_table(
         "role_permission",
         sa.Column("role_id", sa.Uuid(), nullable=False),
@@ -316,6 +210,121 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("role_id", "permission_id"),
     )
     op.create_table(
+        "service",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("price", sa.Float(), nullable=False),
+        sa.Column("duration_minutes", sa.Integer(), nullable=False),
+        sa.Column(
+            "preparation_notes", sqlmodel.sql.sqltypes.AutoString(), nullable=True
+        ),
+        sa.Column(
+            "aftercare_instructions", sqlmodel.sql.sqltypes.AutoString(), nullable=True
+        ),
+        sa.Column(
+            "contraindications", sqlmodel.sql.sqltypes.AutoString(), nullable=True
+        ),
+        sa.Column("primary_image_id", sa.Uuid(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["primary_image_id"],
+            ["image.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_service_id"), "service", ["id"], unique=False)
+    op.create_index(
+        op.f("ix_service_is_deleted"), "service", ["is_deleted"], unique=False
+    )
+    op.create_index(op.f("ix_service_name"), "service", ["name"], unique=True)
+    op.create_table(
+        "treatment_plan",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("price", sa.Float(), nullable=False),
+        sa.Column("total_sessions", sa.Integer(), nullable=False),
+        sa.Column("category_id", sa.Uuid(), nullable=False),
+        sa.Column("primary_image_id", sa.Uuid(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["category_id"],
+            ["category.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["primary_image_id"],
+            ["image.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        op.f("ix_treatment_plan_id"), "treatment_plan", ["id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_treatment_plan_is_deleted"),
+        "treatment_plan",
+        ["is_deleted"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_treatment_plan_name"), "treatment_plan", ["name"], unique=True
+    )
+    op.create_table(
+        "user_role",
+        sa.Column("user_id", sa.Uuid(), nullable=False),
+        sa.Column("role_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["role_id"],
+            ["role.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("user_id", "role_id"),
+    )
+    op.create_table(
+        "product_category_link",
+        sa.Column("product_id", sa.Uuid(), nullable=False),
+        sa.Column("category_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["category_id"],
+            ["category.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["product_id"],
+            ["product.id"],
+        ),
+        sa.PrimaryKeyConstraint("product_id", "category_id"),
+    )
+    op.create_table(
+        "product_image_link",
+        sa.Column("product_id", sa.Uuid(), nullable=False),
+        sa.Column("image_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["image_id"],
+            ["image.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["product_id"],
+            ["product.id"],
+        ),
+        sa.PrimaryKeyConstraint("product_id", "image_id"),
+    )
+    op.create_table(
         "service_category_link",
         sa.Column("service_id", sa.Uuid(), nullable=False),
         sa.Column("category_id", sa.Uuid(), nullable=False),
@@ -328,6 +337,34 @@ def upgrade() -> None:
             ["service.id"],
         ),
         sa.PrimaryKeyConstraint("service_id", "category_id"),
+    )
+    op.create_table(
+        "service_image_link",
+        sa.Column("service_id", sa.Uuid(), nullable=False),
+        sa.Column("image_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["image_id"],
+            ["image.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["service_id"],
+            ["service.id"],
+        ),
+        sa.PrimaryKeyConstraint("service_id", "image_id"),
+    )
+    op.create_table(
+        "treatment_plan_image_link",
+        sa.Column("treatment_plan_id", sa.Uuid(), nullable=False),
+        sa.Column("image_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["image_id"],
+            ["image.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["treatment_plan_id"],
+            ["treatment_plan.id"],
+        ),
+        sa.PrimaryKeyConstraint("treatment_plan_id", "image_id"),
     )
     op.create_table(
         "treatment_plan_step",
@@ -362,35 +399,36 @@ def upgrade() -> None:
         ["is_deleted"],
         unique=False,
     )
-    op.create_table(
-        "user_role",
-        sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column("role_id", sa.Uuid(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["role_id"],
-            ["role.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["user.id"],
-        ),
-        sa.PrimaryKeyConstraint("user_id", "role_id"),
-    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table("user_role")
     op.drop_index(
         op.f("ix_treatment_plan_step_is_deleted"), table_name="treatment_plan_step"
     )
     op.drop_index(op.f("ix_treatment_plan_step_id"), table_name="treatment_plan_step")
     op.drop_table("treatment_plan_step")
+    op.drop_table("treatment_plan_image_link")
+    op.drop_table("service_image_link")
     op.drop_table("service_category_link")
-    op.drop_table("role_permission")
+    op.drop_table("product_image_link")
     op.drop_table("product_category_link")
+    op.drop_table("user_role")
+    op.drop_index(op.f("ix_treatment_plan_name"), table_name="treatment_plan")
+    op.drop_index(op.f("ix_treatment_plan_is_deleted"), table_name="treatment_plan")
+    op.drop_index(op.f("ix_treatment_plan_id"), table_name="treatment_plan")
+    op.drop_table("treatment_plan")
+    op.drop_index(op.f("ix_service_name"), table_name="service")
+    op.drop_index(op.f("ix_service_is_deleted"), table_name="service")
+    op.drop_index(op.f("ix_service_id"), table_name="service")
+    op.drop_table("service")
+    op.drop_table("role_permission")
+    op.drop_index(op.f("ix_product_name"), table_name="product")
+    op.drop_index(op.f("ix_product_is_deleted"), table_name="product")
+    op.drop_index(op.f("ix_product_id"), table_name="product")
+    op.drop_table("product")
     op.drop_index(op.f("ix_default_schedule_user_id"), table_name="default_schedule")
     op.drop_index(op.f("ix_default_schedule_is_deleted"), table_name="default_schedule")
     op.drop_index(op.f("ix_default_schedule_id"), table_name="default_schedule")
@@ -400,22 +438,10 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_user_id"), table_name="user")
     op.drop_index(op.f("ix_user_email"), table_name="user")
     op.drop_table("user")
-    op.drop_index(op.f("ix_treatment_plan_name"), table_name="treatment_plan")
-    op.drop_index(op.f("ix_treatment_plan_is_deleted"), table_name="treatment_plan")
-    op.drop_index(op.f("ix_treatment_plan_id"), table_name="treatment_plan")
-    op.drop_table("treatment_plan")
-    op.drop_index(op.f("ix_service_name"), table_name="service")
-    op.drop_index(op.f("ix_service_is_deleted"), table_name="service")
-    op.drop_index(op.f("ix_service_id"), table_name="service")
-    op.drop_table("service")
     op.drop_index(op.f("ix_role_name"), table_name="role")
     op.drop_index(op.f("ix_role_is_deleted"), table_name="role")
     op.drop_index(op.f("ix_role_id"), table_name="role")
     op.drop_table("role")
-    op.drop_index(op.f("ix_product_name"), table_name="product")
-    op.drop_index(op.f("ix_product_is_deleted"), table_name="product")
-    op.drop_index(op.f("ix_product_id"), table_name="product")
-    op.drop_table("product")
     op.drop_index(op.f("ix_permission_name"), table_name="permission")
     op.drop_index(op.f("ix_permission_is_deleted"), table_name="permission")
     op.drop_index(op.f("ix_permission_id"), table_name="permission")
