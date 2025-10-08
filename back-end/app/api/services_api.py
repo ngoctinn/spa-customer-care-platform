@@ -9,7 +9,6 @@ from app.core.dependencies import get_db_session
 from app.models.services_model import Service
 from app.schemas.services_schema import (
     ServiceCreate,
-    ServicePublic,
     ServicePublicWithDetails,
     ServiceUpdate,
 )
@@ -26,15 +25,12 @@ router = APIRouter()
 async def create_new_service(
     *,
     session: Session = Depends(get_db_session),
-    # THAY ĐỔI: Nhận toàn bộ dữ liệu từ JSON body
     service_in: ServiceCreate,
 ):
     """
     Tạo một dịch vụ mới.
     """
-    return await services_service.create(
-        db=session, service_in=service_in
-    ) @ router.put("/{service_id}", response_model=ServicePublicWithDetails)
+    return await services_service.create(db=session, service_in=service_in)
 
 
 @router.put("/{service_id}", response_model=ServicePublicWithDetails)
@@ -42,10 +38,9 @@ async def update_service(
     *,
     service_id: uuid.UUID,
     session: Session = Depends(get_db_session),
-    # THAY ĐỔI: Nhận toàn bộ dữ liệu từ JSON body
     service_in: ServiceUpdate,
 ):
-    """Cập nhật thông tin một dịch vụ."""
+    """Cập nhật dịch vụ theo ID."""
     db_service = services_service.get_by_id(db=session, id=service_id)
     return await services_service.update(
         db=session, db_obj=db_service, obj_in=service_in
@@ -56,7 +51,7 @@ async def update_service(
 def get_all_services(
     session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
-    """Lấy danh sách tất cả dịch vụ."""
+    """Lấy danh sách dịch vụ."""
     return services_service.get_all(db=session, skip=skip, limit=limit)
 
 
@@ -64,11 +59,8 @@ def get_all_services(
 def get_service_by_id(
     service_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):
-    """Lấy thông tin chi tiết một dịch vụ bằng ID."""
-    service = services_service.get_by_id(db=session, id=service_id)
-    if not service:
-        raise HTTPException(status_code=404, detail="Không tìm thấy dịch vụ")
-    return service
+    """Lấy chi tiết một dịch vụ."""
+    return services_service.get_by_id(db=session, id=service_id)
 
 
 @router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,8 +1,7 @@
 # app/services/products_service.py
-
 import uuid
-from typing import List, Optional
-from fastapi import HTTPException, UploadFile, status
+from typing import List
+from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
@@ -12,10 +11,9 @@ from app.schemas.catalog_schema import CategoryTypeEnum
 from app.schemas.products_schema import ProductCreate, ProductUpdate
 from app.services import catalog_service
 from app.services.images_service import sync_images_for_entity
-from .base_service import BaseService  # Import lớp cha
+from .base_service import BaseService
 
 
-# Các hàm helper vẫn giữ lại vì chúng đặc thù cho Product
 def _with_product_relationships(statement):
     return statement.options(
         selectinload(Product.categories),
@@ -28,7 +26,7 @@ def _ensure_product_category(category: Category) -> None:
     if category.category_type != CategoryTypeEnum.product:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Danh mục được chọn không phải danh mục sản phẩm.",
+            detail="Danh mục không hợp lệ cho sản phẩm.",
         )
 
 
@@ -61,12 +59,10 @@ def _filter_soft_deleted_relationships(product: Product) -> Product:
     return product
 
 
-# Lớp ProductService kế thừa từ BaseService
 class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
     def __init__(self):
         super().__init__(Product)
 
-    # Ghi đè (override) để thêm logic xử lý eager loading
     def get_all(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Product]:
         query = _with_product_relationships(
             select(self.model)
@@ -87,11 +83,10 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
         if not product:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product với ID {id} không được tìm thấy.",
+                detail=f"Không tìm thấy sản phẩm {id}.",
             )
         return _filter_soft_deleted_relationships(product)
 
-    # Ghi đè (override) để thêm logic đặc thù
     async def create(
         self,
         db: Session,
@@ -107,20 +102,17 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
         if existing_product:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Sản phẩm với tên '{product_in.name}' đã tồn tại.",
+                detail=f"Sản phẩm '{product_in.name}' đã tồn tại.",
             )
 
         product_data = product_in.model_dump(
             exclude={
                 "category_ids",
                 "existing_image_ids",
-                "new_images",
                 "primary_image_id",
             }
         )
-        db_product = self.model(
-            **product_data
-        )  # Không dùng super().create() ở đây vì cần gán categories trước khi commit
+        db_product = self.model(**product_data)
         db_product.categories = categories
         db.add(db_product)
         db.commit()
@@ -157,7 +149,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Sản phẩm với tên '{product_data['name']}' đã tồn tại.",
+                    detail=f"Sản phẩm '{product_data['name']}' đã tồn tại.",
                 )
 
         if "category_ids" in product_data:
@@ -165,7 +157,6 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
                 db, product_data.pop("category_ids")
             )
 
-        # Gọi super().update() để cập nhật các trường còn lại
         super().update(db, db_obj=db_obj, obj_in=ProductUpdate(**product_data))
 
         await sync_images_for_entity(
@@ -174,7 +165,6 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             owner_type="product",
             existing_image_ids=obj_in.existing_image_ids,
             primary_image_id=obj_in.primary_image_id,
-            alt_text=db_obj.name,
         )
         db.commit()
         db.refresh(db_obj)

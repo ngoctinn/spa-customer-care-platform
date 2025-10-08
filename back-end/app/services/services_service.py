@@ -2,7 +2,7 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import HTTPException, UploadFile, status
+from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
@@ -15,12 +15,10 @@ from app.services.images_service import sync_images_for_entity
 from .base_service import BaseService
 
 
-# Lớp ServiceService kế thừa từ BaseService
 class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
     def __init__(self):
         super().__init__(Service)
 
-    # Helper functions đặc thù cho Service
     def _with_service_relationships(self, statement):
         return statement.options(
             selectinload(Service.categories),
@@ -36,7 +34,6 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             service.primary_image_id = None
         return service
 
-    # Ghi đè các phương thức cần eager loading
     def get_all(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Service]:
         statement = self._with_service_relationships(
             select(self.model)
@@ -57,11 +54,10 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         if not service:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Service với ID {id} không được tìm thấy.",
+                detail=f"Không tìm thấy dịch vụ {id}.",
             )
         return self._filter_soft_deleted_relationships(service)
 
-    # Ghi đè phương thức create
     async def create(
         self,
         db: Session,
@@ -80,7 +76,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             if category.category_type != CategoryTypeEnum.service:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Danh mục ID {cat_id} không phải là danh mục cho dịch vụ.",
+                    detail=f"Danh mục {cat_id} không hợp lệ cho dịch vụ.",
                 )
             categories.append(category)
 
@@ -92,14 +88,13 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         if existing_service:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Dịch vụ với tên '{service_in.name}' đã tồn tại.",
+                detail=f"Dịch vụ '{service_in.name}' đã tồn tại.",
             )
 
         service_data = service_in.model_dump(
             exclude={
                 "category_ids",
                 "existing_image_ids",
-                "new_images",
                 "primary_image_id",
             }
         )
@@ -115,7 +110,6 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             owner_type="service",
             existing_image_ids=service_in.existing_image_ids,
             primary_image_id=service_in.primary_image_id,
-            alt_text=db_service.name,
         )
         db.commit()
         db.refresh(db_service)
@@ -138,12 +132,11 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
                 if category.category_type != CategoryTypeEnum.service:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Danh mục ID {cat_id} không phải là danh mục cho dịch vụ.",
+                        detail=f"Danh mục {cat_id} không hợp lệ cho dịch vụ.",
                     )
                 new_categories.append(category)
             db_obj.categories = new_categories
 
-        # Gọi super().update() cho các trường còn lại
         super().update(db, db_obj=db_obj, obj_in=ServiceUpdate(**service_data))
 
         await sync_images_for_entity(
@@ -152,7 +145,6 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             owner_type="service",
             existing_image_ids=obj_in.existing_image_ids,
             primary_image_id=obj_in.primary_image_id,
-            alt_text=db_obj.name,
         )
         db.commit()
         db.refresh(db_obj)

@@ -1,8 +1,8 @@
 # app/api/products_api.py
 import uuid
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, status
 from sqlmodel import Session
 
 from app.core.dependencies import get_db_session
@@ -39,7 +39,7 @@ async def create_product(
 def get_all_products(
     session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
-    """Lấy danh sách tất cả sản phẩm chưa bị xóa mềm."""
+    """Lấy danh sách sản phẩm chưa bị xóa mềm."""
 
     return products_service.get_all(db=session, skip=skip, limit=limit)
 
@@ -48,7 +48,7 @@ def get_all_products(
 def get_product_by_id(
     product_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):
-    """Lấy thông tin chi tiết của một sản phẩm."""
+    """Lấy chi tiết của một sản phẩm."""
 
     return products_service.get_by_id(db=session, product_id=product_id)
 
@@ -57,7 +57,7 @@ def get_product_by_id(
 async def update_product(
     *, session: Session = Depends(get_db_session), product_in: ProductUpdate
 ):
-    """Cập nhật thông tin một sản phẩm."""
+    """Cập nhật sản phẩm theo ID."""
 
     return await products_service.update(
         db=session,
