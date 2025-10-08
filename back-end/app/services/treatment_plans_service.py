@@ -19,8 +19,6 @@ from app.services.images_service import sync_images_for_entity
 
 
 def _with_treatment_plan_relationships(statement):
-    """Helper để load đầy đủ các quan hệ cho treatment plan."""
-
     return statement.options(
         selectinload(TreatmentPlan.category),
         selectinload(TreatmentPlan.images),
@@ -35,7 +33,7 @@ def _ensure_treatment_plan_category(category: Category) -> None:
     if category.category_type != CategoryTypeEnum.treatment_plan:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Danh mục được chọn không phải danh mục liệu trình.",
+            detail="Danh mục không hợp lệ cho liệu trình.",
         )
 
 
@@ -68,15 +66,13 @@ def _filter_soft_deleted_relationships(
 async def create_treatment_plan(
     db: Session, treatment_plan_in: TreatmentPlanCreate
 ) -> TreatmentPlan:
-    """Tạo mới một treatment plan cùng với các bước."""
-
     category = catalog_service.get_category_by_id(db, treatment_plan_in.category_id)
     _ensure_treatment_plan_category(category)
 
     existing_plan = db.exec(
         select(TreatmentPlan).where(
             TreatmentPlan.name == treatment_plan_in.name,
-            TreatmentPlan.is_deleted == False,
+            TreatmentPlan.is_deleted == False,  # noqa: E712
         )
     ).first()
     if existing_plan:
@@ -86,7 +82,7 @@ async def create_treatment_plan(
         )
 
     for step_in in treatment_plan_in.steps:
-        services_service.get_service_by_id(db, step_in.service_id)
+        services_service.get_by_id(db, id=step_in.service_id)
 
     plan_data = treatment_plan_in.model_dump(
         exclude={"steps", "existing_image_ids", "primary_image_id"}
@@ -108,7 +104,6 @@ async def create_treatment_plan(
         owner_type="treatment_plan",
         existing_image_ids=treatment_plan_in.existing_image_ids,
         primary_image_id=treatment_plan_in.primary_image_id,
-        alt_text=db_plan.name,
     )
 
     db.commit()
@@ -120,7 +115,7 @@ def get_all_treatment_plans(
 ) -> List[TreatmentPlan]:
     statement = _with_treatment_plan_relationships(
         select(TreatmentPlan)
-        .where(TreatmentPlan.is_deleted == False)
+        .where(TreatmentPlan.is_deleted == False)  # noqa: E712
         .offset(skip)
         .limit(limit)
     )
@@ -137,14 +132,14 @@ def get_treatment_plan_by_id(
     statement = _with_treatment_plan_relationships(
         select(TreatmentPlan).where(
             TreatmentPlan.id == treatment_plan_id,
-            TreatmentPlan.is_deleted == False,
+            TreatmentPlan.is_deleted == False,  # noqa: E712
         )
     )
     treatment_plan = db.exec(statement).unique().first()
     if not treatment_plan:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"TreatmentPlan với ID {treatment_plan_id} không được tìm thấy.",
+            detail=f"Không tìm thấy liệu trình {treatment_plan_id}.",
         )
     return _filter_soft_deleted_relationships(treatment_plan)
 
@@ -163,7 +158,7 @@ async def update_treatment_plan(
             select(TreatmentPlan).where(
                 TreatmentPlan.name == plan_data["name"],
                 TreatmentPlan.id != db_treatment_plan.id,
-                TreatmentPlan.is_deleted == False,
+                TreatmentPlan.is_deleted == False,  # noqa: E712
             )
         ).first()
         if existing_plan:
@@ -188,7 +183,6 @@ async def update_treatment_plan(
         owner_type="treatment_plan",
         existing_image_ids=treatment_plan_in.existing_image_ids,
         primary_image_id=treatment_plan_in.primary_image_id,
-        alt_text=db_treatment_plan.name,
     )
 
     db.commit()

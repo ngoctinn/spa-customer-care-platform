@@ -1,7 +1,6 @@
 # app/services/auth_service.py
 
-from typing import Annotated, Optional
-from fastapi.params import Depends
+from typing import Optional
 from sqlmodel import Session
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 from authlib.integrations.starlette_client import OAuth
@@ -12,10 +11,7 @@ from app.models.users_model import User
 from app.services import users_service
 from app.core.config import settings
 
-# Cấu hình cho việc tạo token xác thực email
-email_verification_serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
 
-# Cấu hình cho việc tạo token
 email_verification_serializer = URLSafeTimedSerializer(
     settings.SECRET_KEY, salt="email-confirm-salt"
 )
@@ -24,7 +20,6 @@ password_reset_serializer = URLSafeTimedSerializer(
 )
 
 
-# Cấu hình OAuth cho Google
 oauth = OAuth()
 oauth.register(
     name="google",
@@ -37,26 +32,19 @@ oauth.register(
 
 def authenticate(db_session: Session, *, email: str, password: str) -> Optional[User]:
     """
-    Xác thực người dùng. Trả về đối tượng User nếu hợp lệ, ngược lại trả về None.
+    Xác thực người dùng bằng email và mật khẩu.
     """
-    # Bước 1: Tìm người dùng bằng email
     user = users_service.get_user_by_email(db_session, email=email)
-
-    # Bước 2: Kiểm tra sự tồn tại và trạng thái của user
     if not user or not user.is_active:
         return None
-
-    # Bước 3: Kiểm tra mật khẩu
     if not verify_password(password, user.hashed_password):
         return None
-
-    # Nếu tất cả đều hợp lệ, trả về user
     return user
 
 
 async def send_verification_email(user: User):
     """
-    Tạo token và gửi email xác thực.
+    Gửi email xác thực tài khoản.
     """
     token = email_verification_serializer.dumps(str(user.id), salt="email-confirm-salt")
     verification_link = f"http://localhost:8000/auth/verify-email?token={token}"
@@ -73,14 +61,11 @@ async def send_verification_email(user: User):
     )
 
 
-# gửi email chào mừng và yêu cầu đặt mật khẩu cho user mới do admin tạo
 async def send_welcome_and_set_password_email(user: User):
     """
-    Tạo token reset mật khẩu và gửi email chào mừng cho người dùng mới (do admin tạo).
+    Gửi email chào mừng kèm liên kết đặt mật khẩu.
     """
-    # Token có hiệu lực trong 7 ngày (phù hợp cho việc kích hoạt tài khoản)
     token = password_reset_serializer.dumps(str(user.id))
-    # Link đến trang đặt mật khẩu trên frontend của bạn
     set_password_link = f"http://localhost:3000/auth/reset-password?token={token}"
 
     body = f"""
@@ -92,7 +77,7 @@ async def send_welcome_and_set_password_email(user: User):
     """
 
     await send_email(
-        subject="Chào mừng bạn! Vui lòng kích hoạt tài khoản",
+        subject="Kích hoạt tài khoản của bạn",
         recipients=[user.email],
         body=body,
     )
@@ -100,7 +85,7 @@ async def send_welcome_and_set_password_email(user: User):
 
 def verify_email_token(token: str) -> Optional[str]:
     """
-    Giải mã token xác thực email. Trả về user_id nếu hợp lệ.
+    Giải mã token xác thực email.
     """
     try:
         user_id = email_verification_serializer.loads(
@@ -148,7 +133,7 @@ def update_password(
 
 async def send_password_reset_email(user: User):
     """
-    Tạo token và gửi email reset mật khẩu.
+    Gửi email reset mật khẩu.
     """
     # Token có hiệu lực trong 15 phút (900 giây)
     token = password_reset_serializer.dumps(str(user.id))
@@ -181,7 +166,7 @@ def verify_password_reset_token(token: str) -> Optional[str]:
 
 def reset_user_password(db_session: Session, *, user: User, new_password: str) -> User:
     """
-    Băm và cập nhật mật khẩu mới cho người dùng mà không cần mật khẩu cũ.
+    Đặt lại mật khẩu cho người dùng.
     """
     new_hashed_password = get_password_hash(new_password)
     user.hashed_password = new_hashed_password
