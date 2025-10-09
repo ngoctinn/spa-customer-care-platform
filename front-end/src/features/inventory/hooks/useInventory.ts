@@ -1,7 +1,10 @@
 // src/features/inventory/hooks/useInventory.ts
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { adjustStock } from "@/features/inventory/api/inventory.api";
+import {
+  adjustStock,
+  getInventoryHistory,
+} from "@/features/inventory/api/inventory.api";
 import { StockAdjustmentFormValues } from "@/features/product/schemas";
 
 export const useAdjustStock = () => {
@@ -21,5 +24,13 @@ export const useAdjustStock = () => {
         description: error.message,
       });
     },
+  });
+};
+
+export const useInventoryHistory = (productId: string) => {
+  return useQuery({
+    queryKey: ["inventoryHistory", productId],
+    queryFn: () => getInventoryHistory(productId),
+    enabled: !!productId, // Chỉ chạy khi có productId
   });
 };

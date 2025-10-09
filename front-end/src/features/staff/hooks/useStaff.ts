@@ -9,7 +9,9 @@ import {
   getTechniciansByService,
 } from "@/features/staff/api/staff.api";
 import { FullStaffProfile } from "@/features/staff/types";
-import { toast } from "sonner";
+import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { UserPublic } from "@/features/user/types";
+import { StaffFormValues } from "@/features/staff/schemas";
 
 const queryKey = ["staffList"];
 
@@ -20,53 +22,23 @@ export const useStaff = () => {
   });
 };
 
-export const useAddStaff = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: addStaff,
-    onSuccess: () => {
-      toast.success("Thêm nhân viên thành công!");
-      // Làm mới lại danh sách nhân viên
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Thêm nhân viên thất bại", {
-        description: error.message,
-      });
-    },
-  });
-};
-
-export const useUpdateStaff = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: updateStaff,
-    onSuccess: () => {
-      toast.success("Cập nhật thông tin thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Cập nhật thất bại", {
-        description: error.message,
-      });
-    },
-  });
-};
-
-export const useDeleteStaff = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteStaff,
-    onSuccess: () => {
-      toast.success("Đã xóa nhân viên!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Xóa thất bại", {
-        description: error.message,
-      });
-    },
-  });
+export const useStaffMutations = () => {
+  return useCrudMutations<
+    UserPublic,
+    StaffFormValues,
+    Partial<StaffFormValues>
+  >(
+    queryKey,
+    addStaff,
+    (vars: { id: string; data: Partial<StaffFormValues> }) =>
+      updateStaff({ staffId: vars.id, staffData: vars.data }),
+    deleteStaff,
+    {
+      addSuccess: "Thêm nhân viên thành công!",
+      updateSuccess: "Cập nhật thông tin nhân viên thành công!",
+      deleteSuccess: "Đã xóa nhân viên!",
+    }
+  );
 };
 
 export const useStaffById = (staffId: string) => {

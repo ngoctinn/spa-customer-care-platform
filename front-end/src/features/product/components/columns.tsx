@@ -139,21 +139,16 @@ export const getProductColumns = (
     meta: { headerTitle: "Danh mục" },
     cell: ({ row }) => (
       <div className="flex flex-wrap gap-1">
-        {row.original.categories?.map((cat: Category | string) => {
-          const categoryId = typeof cat === "string" ? cat : cat.id;
-          const categoryName = typeof cat === "string" ? cat : cat.name;
-          return (
-            <Badge key={categoryId} variant="secondary">
-              {categoryName}
-            </Badge>
-          );
-        })}
+        {row.original.categories?.map((cat: Category) => (
+          <Badge key={cat.id} variant="secondary">
+            {cat.name}
+          </Badge>
+        ))}
       </div>
     ),
     filterFn: (row, id, value) => {
-      const categoryNames = row.original.categories.map(
-        (cat: Category | string) => (typeof cat === "string" ? cat : cat.name)
-      );
+      // Logic filter cũng được đơn giản hóa
+      const categoryNames = row.original.categories.map((c) => c.name);
       return value.some((val: string) => categoryNames.includes(val));
     },
   },

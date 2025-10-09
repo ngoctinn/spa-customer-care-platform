@@ -5,7 +5,7 @@ import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "@/components/providers/query-provider";
-import { AuthProvider } from "@/contexts/AuthContexts";
+import { AuthProvider } from "@/features/auth/contexts/AuthContexts";
 import { ThemeProvider } from "next-themes";
 
 const geistSans = Geist({

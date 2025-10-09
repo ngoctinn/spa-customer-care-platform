@@ -46,7 +46,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 import useCartStore from "@/features/cart/stores/cart-store";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
 
 const navLinks = [
   { href: "/services", label: "Dịch vụ" },

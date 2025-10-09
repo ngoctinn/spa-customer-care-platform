@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/apiClient";
 import { FullCustomerProfile } from "@/features/customer/types";
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { updateCustomerProfile } from "@/features/customer/api/customer.api";
 import { toast } from "sonner";
 

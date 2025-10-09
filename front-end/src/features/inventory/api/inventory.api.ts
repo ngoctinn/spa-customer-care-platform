@@ -2,6 +2,7 @@
 import apiClient from "@/lib/apiClient";
 import { Product } from "@/features/product/types";
 import { StockAdjustmentFormValues } from "@/features/product/schemas";
+import { InventoryTransaction } from "@/features/inventory/types";
 
 /**
  * Điều chỉnh số lượng tồn kho của một sản phẩm.
@@ -22,4 +23,17 @@ export async function adjustStock(
       notes: payload.notes,
     }),
   });
+}
+
+/**
+ * Lấy lịch sử giao dịch tồn kho của một sản phẩm.
+ * @param productId ID của sản phẩm.
+ * @returns Danh sách các giao dịch tồn kho.
+ */
+export async function getInventoryHistory(
+  productId: string
+): Promise<InventoryTransaction[]> {
+  return apiClient<InventoryTransaction[]>(
+    `/products/${productId}/inventory-history`
+  );
 }

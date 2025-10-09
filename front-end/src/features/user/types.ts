@@ -3,12 +3,14 @@ export interface Role {
   name: string;
   description?: string;
   permissions?: Permission[];
+  users_count?: number;
 }
 
 export interface Permission {
   id: string;
   name: string;
   description?: string;
+  group: string;
 }
 export type UserStatus = "active" | "inactive" | "pending_verification";
 
@@ -32,3 +34,7 @@ export type UserPublic = Pick<
   User,
   "id" | "email" | "phone" | "full_name" | "is_active" | "is_superuser"
 >;
+
+export interface PermissionGroup {
+  [groupName: string]: Permission[];
+}
