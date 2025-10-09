@@ -40,3 +40,30 @@ export interface ScheduleRegistration {
   created_at: Date;
   updated_at: Date;
 }
+
+// Lịch đăng ký linh hoạt (FlexibleSchedules)
+export interface FlexibleSchedule {
+  id: string;
+  user_id: string;
+  start_time: Date;
+  end_time: Date;
+  status: "pending" | "approved" | "rejected";
+  approved_by?: string; // user_id của người duyệt
+  created_at: Date;
+  updated_at: Date;
+}
+
+// Giao dịch chấm công (TimeEntries)
+export interface TimeEntry {
+  id: string;
+  user_id: string;
+  schedule_id: string; // Liên kết với FlexibleSchedule được duyệt
+  check_in_time: Date;
+  check_out_time?: Date; // Có thể null nếu chưa check-out
+  check_in_location?: string; // Tọa độ GPS hoặc địa chỉ IP
+  check_out_location?: string; // Tọa độ GPS hoặc địa chỉ IP
+  duration_minutes?: number; // Tổng thời gian làm việc (tính bằng phút)
+  notes?: string;
+  created_at: Date;
+  updated_at: Date;
+}

@@ -32,28 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const checkUserStatus = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const userProfile = await fetchProfile();
-      setUser(userProfile);
-    } catch (error) {
-      console.error("Không thể lấy thông tin người dùng:", error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      try {
+        setIsLoading(true);
+        const userProfile = await fetchProfile();
+        setUser(userProfile);
+      } catch (error) {
+        console.error("Không thể lấy thông tin người dùng:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUserStatus();
   }, []);
 
-  useEffect(() => {
-    void checkUserStatus();
-  }, [checkUserStatus]);
-
   const login = async (values: z.infer<typeof loginSchema>) => {
-    // Không cần try/catch ở đây vì component sẽ xử lý
     await apiLogin(values.email, values.password);
-    // Sau khi login thành công, fetch lại profile để cập nhật context
-    await checkUserStatus();
+    window.location.reload();
   };
 
   const logout = useCallback(async () => {
@@ -62,9 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiLogout();
     } finally {
       setUser(null);
-      router.replace("/auth/login");
-      router.refresh();
-      setIsLoading(false);
+      window.location.href = "/auth/login";
     }
   }, [router]);
 

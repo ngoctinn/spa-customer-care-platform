@@ -12,6 +12,9 @@ import {
   Scissors,
   UserCog,
   Award,
+  ShieldCheck,
+  CalendarClock,
+  CalendarPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +22,11 @@ const navLinks = [
   { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/dashboard/orders", label: "Đơn hàng", icon: ShoppingCart },
   { href: "/dashboard/customers", label: "Khách hàng", icon: Users },
+  {
+    href: "/dashboard/roles",
+    label: "Vai trò & Phân quyền",
+    icon: ShieldCheck,
+  },
   { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
   { href: "/dashboard/staff", label: "Nhân viên", icon: UserCog },
   { href: "/dashboard/services", label: "Dịch vụ", icon: Scissors },
@@ -26,6 +34,16 @@ const navLinks = [
   { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
   { href: "/dashboard/appointments", label: "Lịch hẹn", icon: ClipboardList },
   { href: "/dashboard/loyalty", label: "Khách hàng thân thiết", icon: Award },
+  {
+    href: "/dashboard/event-types",
+    label: "Quản lý Sự kiện",
+    icon: CalendarPlus,
+  },
+  {
+    href: "/dashboard/my-availability",
+    label: "Lịch cá nhân",
+    icon: CalendarClock,
+  },
 ];
 
 export function AdminSidebar() {

@@ -1,7 +1,14 @@
 // src/app/(public)/account/layout.tsx
 "use client";
 
-import { User, ShoppingBag, Calendar, Lock, LucideIcon } from "lucide-react";
+import {
+  User,
+  ShoppingBag,
+  Calendar,
+  Lock,
+  LucideIcon,
+  CalendarCheck,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -14,6 +21,11 @@ interface NavLink {
 
 const navLinks: NavLink[] = [
   { href: "/account", label: "Thông tin cá nhân", icon: User },
+  {
+    href: "/account/my-schedule",
+    label: "Lịch trình của tôi",
+    icon: CalendarCheck,
+  },
   {
     href: "/account/order-history",
     label: "Lịch sử mua hàng",

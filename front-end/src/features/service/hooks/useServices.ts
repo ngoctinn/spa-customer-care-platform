@@ -6,7 +6,8 @@ import {
   deleteService,
 } from "@/features/service/api/service.api";
 import { Service } from "@/features/service/types";
-import { toast } from "sonner";
+import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { ServiceFormValues } from "@/features/service/schemas";
 
 const queryKey = ["services"];
 
@@ -19,47 +20,22 @@ export const useServices = () => {
   return { data, isLoading, isError, error };
 };
 
-// Hook để thêm dịch vụ mới
-export const useAddService = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: addService,
-    onSuccess: () => {
-      toast.success("Thêm dịch vụ thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Thêm dịch vụ thất bại", { description: error.message });
-    },
-  });
-};
-
-// Hook để cập nhật dịch vụ
-export const useUpdateService = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: updateService,
-    onSuccess: () => {
-      toast.success("Cập nhật thông tin thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Cập nhật thất bại", { description: error.message });
-    },
-  });
-};
-
-// Hook để xóa dịch vụ
-export const useDeleteService = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteService,
-    onSuccess: () => {
-      toast.success("Đã xóa dịch vụ!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Xóa thất bại", { description: error.message });
-    },
-  });
+// Hook để quản lý các mutations cho dịch vụ
+export const useServiceMutations = () => {
+  return useCrudMutations<
+    Service,
+    ServiceFormValues,
+    Partial<ServiceFormValues>
+  >(
+    queryKey,
+    addService,
+    (vars: { id: string; data: Partial<ServiceFormValues> }) =>
+      updateService({ serviceId: vars.id, serviceData: vars.data }),
+    deleteService,
+    {
+      addSuccess: "Thêm dịch vụ thành công!",
+      updateSuccess: "Cập nhật dịch vụ thành công!",
+      deleteSuccess: "Đã xóa dịch vụ!",
+    }
+  );
 };

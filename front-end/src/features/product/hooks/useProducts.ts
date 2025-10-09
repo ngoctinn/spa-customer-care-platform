@@ -8,7 +8,7 @@ import {
 } from "@/features/product/api/product.api";
 import { Product } from "@/features/product/types";
 import { ProductFormValues } from "@/features/product/schemas";
-import { toast } from "sonner";
+import { useCrudMutations } from "@/hooks/useCrudMutations";
 
 const queryKey = ["products"];
 
@@ -24,50 +24,21 @@ export const useProducts = () => {
   return { data, isLoading, isError, error };
 };
 
-// Hook để thêm sản phẩm mới
-export const useAddProduct = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (productData: ProductFormValues) => addProduct(productData),
-    onSuccess: () => {
-      toast.success("Thêm sản phẩm thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Thêm sản phẩm thất bại", { description: error.message });
-    },
-  });
-};
-
-// Hook để cập nhật sản phẩm
-export const useUpdateProduct = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: {
-      productId: string;
-      productData: Partial<ProductFormValues>;
-    }) => updateProduct(data),
-    onSuccess: () => {
-      toast.success("Cập nhật thông tin thành công!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Cập nhật thất bại", { description: error.message });
-    },
-  });
-};
-
-// Hook để xóa sản phẩm
-export const useDeleteProduct = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (productId: string) => deleteProduct(productId),
-    onSuccess: () => {
-      toast.success("Đã xóa sản phẩm!");
-      queryClient.invalidateQueries({ queryKey: queryKey });
-    },
-    onError: (error) => {
-      toast.error("Xóa thất bại", { description: error.message });
-    },
-  });
+export const useProductMutations = () => {
+  return useCrudMutations<
+    Product,
+    ProductFormValues,
+    Partial<ProductFormValues>
+  >(
+    queryKey,
+    addProduct,
+    (vars: { id: string; data: Partial<ProductFormValues> }) =>
+      updateProduct({ productId: vars.id, productData: vars.data }),
+    deleteProduct,
+    {
+      addSuccess: "Thêm sản phẩm thành công!",
+      updateSuccess: "Cập nhật sản phẩm thành công!",
+      deleteSuccess: "Đã xóa sản phẩm!",
+    }
+  );
 };

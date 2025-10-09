@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { loginSchema } from "@/features/auth/schemas";
 
 import { useTransition } from "react";

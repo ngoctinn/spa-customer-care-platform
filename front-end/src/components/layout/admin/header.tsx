@@ -11,10 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContexts";
-import { LogOut, Menu, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
+import { LogOut, Menu, Moon, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminSidebar } from "./sidebar"; // Import sidebar cho mobile
 
@@ -37,18 +36,8 @@ export function AdminHeader() {
         </SheetContent>
       </Sheet>
 
-      <div className="w-full flex-1">
-        <form>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Tìm kiếm..."
-              className="w-full appearance-none bg-muted pl-8 shadow-none md:w-2/3 lg:w-1/3"
-            />
-          </div>
-        </form>
-      </div>
+      <div className="relative flex flex-1" />
+
       <Button
         variant="outline"
         size="icon"

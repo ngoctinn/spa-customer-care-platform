@@ -10,7 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { createOrder } from "@/features/checkout/api/invoice.api";
-import { useAuth } from "@/contexts/AuthContexts";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import useCartStore from "@/features/cart/stores/cart-store";
 import {
   shippingSchema,

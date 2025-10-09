@@ -27,24 +27,41 @@ export default function OrderSuccessPage() {
     // Chỉ chạy một lần khi component được mount
     clearCart();
 
+    let isMounted = true; // 1. Cờ để theo dõi trạng thái component
+
     if (invoiceId) {
       const fetchInvoice = async () => {
         try {
+          // Không cần kiểm tra isMounted cho setIsLoading(true) ban đầu
           setIsLoading(true);
           const fetchedInvoice = await getInvoiceById(invoiceId);
-          setInvoice(fetchedInvoice);
+          // 2. Chỉ cập nhật state nếu component vẫn còn mount
+          if (isMounted) {
+            setInvoice(fetchedInvoice);
+          }
         } catch (err) {
-          setError("Không thể tải thông tin đơn hàng. Vui lòng thử lại.");
+          if (isMounted) {
+            setError("Không thể tải thông tin đơn hàng. Vui lòng thử lại.");
+          }
           console.error(err);
         } finally {
-          setIsLoading(false);
+          if (isMounted) {
+            setIsLoading(false);
+          }
         }
       };
       fetchInvoice();
     } else {
-      setError("Không tìm thấy mã đơn hàng.");
-      setIsLoading(false);
+      if (isMounted) {
+        setError("Không tìm thấy mã đơn hàng.");
+        setIsLoading(false);
+      }
     }
+
+    // 3. Hàm dọn dẹp sẽ được gọi khi component unmount
+    return () => {
+      isMounted = false;
+    };
   }, [invoiceId, clearCart]);
 
   const copyToClipboard = (text: string, fieldName: string) => {
