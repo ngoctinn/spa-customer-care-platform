@@ -1,6 +1,6 @@
 "use client";
 
-import { MultiImageUploader } from "@/components/common/MultiImageUploader";
+import { ImageSelectionInput } from "@/features/media/components/ImageSelectionInput";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -159,20 +159,11 @@ export default function TreatmentPlanFormFields() {
         control={form.control}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Hình ảnh liệu trình (Tùy chọn)</FormLabel>
+            <FormLabel>Hình ảnh liệu trình</FormLabel>
             <FormControl>
-              <MultiImageUploader
+              <ImageSelectionInput
                 value={field.value || []}
-                onFilesSelect={(files: File[]) => {
-                  // === FIX CONFLICT: Giữ lại phiên bản này ===
-                  field.onChange([...(field.value || []), ...files]);
-                }}
-                onRemoveImage={(imageToRemove) => {
-                  const updatedImages = (field.value || []).filter(
-                    (img) => img !== imageToRemove
-                  );
-                  field.onChange(updatedImages);
-                }}
+                onChange={field.onChange}
               />
             </FormControl>
             <FormMessage />

@@ -16,7 +16,7 @@ export const productFormSchema = z
     description: descriptionSchema,
     categories: z.array(z.string()).optional(),
     price: priceSchema.optional(),
-    images: z.array(imageUnionSchema).optional(),
+    images: z.array(imageSchema).optional(),
     isRetail: z.boolean(),
     isConsumable: z.boolean(),
     baseUnit: z.string().trim().min(1, "Đơn vị cơ sở không được để trống."),

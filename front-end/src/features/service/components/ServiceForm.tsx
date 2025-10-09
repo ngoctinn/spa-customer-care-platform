@@ -1,7 +1,6 @@
 "use client";
 
 import { CategorySelector } from "@/components/common/CategorySelector";
-import { MultiImageUploader } from "@/components/common/MultiImageUploader";
 import PriceInput from "@/components/common/PriceInput";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +23,7 @@ import { useProducts } from "@/features/product/hooks/useProducts";
 import { ServiceFormValues } from "@/features/service/schemas";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { ImageSelectionInput } from "@/features/media/components/ImageSelectionInput";
 
 export default function ServiceForm() {
   const form = useFormContext<ServiceFormValues>();
@@ -119,21 +119,11 @@ export default function ServiceForm() {
         control={form.control}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Hình ảnh dịch vụ (Tùy chọn)</FormLabel>
+            <FormLabel>Hình ảnh dịch vụ</FormLabel>
             <FormControl>
-              <MultiImageUploader
+              <ImageSelectionInput
                 value={field.value || []}
-                onFilesSelect={(files: File[]) => {
-                  // === FIX CONFLICT: GIỮ LẠI PHIÊN BẢN NÀY ===
-                  // Thêm trực tiếp các đối tượng File mới vào state của form
-                  field.onChange([...(field.value || []), ...files]);
-                }}
-                onRemoveImage={(imageToRemove) => {
-                  const updatedImages = (field.value || []).filter(
-                    (img) => img !== imageToRemove
-                  );
-                  field.onChange(updatedImages);
-                }}
+                onChange={field.onChange}
               />
             </FormControl>
             <FormMessage />

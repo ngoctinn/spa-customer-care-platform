@@ -1,5 +1,5 @@
 import { Category } from "@/features/category/types";
-import { ImageUrl } from "@/features/shared/types";
+import { MediaImage as ImageUrl } from "@/features/media/types";
 
 export interface Product {
   id: string;

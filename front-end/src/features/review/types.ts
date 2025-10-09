@@ -1,4 +1,4 @@
-import { ImageUrl } from "@/features/shared/types"; // Giả sử bạn có file này
+import { MediaImage as ImageUrl } from "@/features/media/types";
 
 export type ReviewItemType = "product" | "treatment" | "service";
 

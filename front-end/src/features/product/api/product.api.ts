@@ -3,7 +3,6 @@ import { Product } from "@/features/product/types";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
 import { ProductFormValues } from "@/features/product/schemas";
-import { handleImageUploads } from "@/features/upload/upload.api";
 
 /**
  * Thêm một sản phẩm mới
@@ -12,15 +11,10 @@ import { handleImageUploads } from "@/features/upload/upload.api";
 export async function addProduct(
   productData: ProductFormValues
 ): Promise<Product> {
-  const { images, ...otherData } = productData;
-  const processedImages = await handleImageUploads(images); // <--- Sử dụng hàm dùng chung
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
+  // Logic upload đã được loại bỏ
   return apiClient<Product>("/products", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(productData),
   });
 }
 
@@ -36,15 +30,10 @@ export async function updateProduct({
   productId: string;
   productData: Partial<ProductFormValues>;
 }): Promise<Product> {
-  const { images, ...otherData } = productData;
-  const processedImages = await handleImageUploads(images); // <--- Sử dụng hàm dùng chung
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
+  // Logic upload đã được loại bỏ
   return apiClient<Product>(`/products/${productId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(productData),
   });
 }
 

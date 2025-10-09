@@ -20,7 +20,7 @@ export const treatmentPlanFormSchema = z.object({
   steps: z
     .array(treatmentPlanStepSchema)
     .min(1, "Liệu trình phải có ít nhất một buổi."),
-  images: z.array(imageUnionSchema).optional(),
+  images: z.array(imageSchema).optional(),
 });
 
 export type TreatmentPlanFormValues = z.infer<typeof treatmentPlanFormSchema>;

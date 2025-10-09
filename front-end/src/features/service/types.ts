@@ -1,4 +1,4 @@
-import { ImageUrl } from "@/features/shared/types";
+import { MediaImage as ImageUrl } from "@/features/media/types";
 import { Category } from "@/features/category/types";
 
 export interface Service {

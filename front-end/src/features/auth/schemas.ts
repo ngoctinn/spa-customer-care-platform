@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { emailSchema, passwordSchema, nameSchema } from "@/lib/schemas"; // <-- Import schema chung
+import {
+  emailSchema,
+  passwordSchema,
+  nameSchema,
+  phoneSchema,
+} from "@/lib/schemas"; // <-- Import schema chung
+import { Phone } from "lucide-react";
+import { min } from "date-fns";
 
 // Sử dụng trực tiếp schema chung
 export const loginSchema = z.object({
@@ -7,11 +14,18 @@ export const loginSchema = z.object({
   password: z.string().min(1, { message: "Mật khẩu không được để trống." }), // Giữ lại vì password ở đây khác
 });
 
-export const registerSchema = z.object({
-  name: nameSchema,
-  email: emailSchema,
-  password: passwordSchema,
-});
+export const registerSchema = z
+  .object({
+    name: nameSchema,
+    email: emailSchema,
+    phone: phoneSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp!",
+    path: ["confirmPassword"], // Gắn lỗi vào trường confirmPassword
+  });
 
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
