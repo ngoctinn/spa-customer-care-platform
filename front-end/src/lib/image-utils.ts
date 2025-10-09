@@ -1,12 +1,14 @@
 // src/lib/image-utils.ts
-import { ImageUrl } from "@/features/shared/types";
+import { MediaImage as ImageUrl } from "@/features/media/types";
 
 /**
- * Lấy URL của ảnh chính từ một mảng các ảnh.
- * Ưu tiên ảnh có ID trùng với primaryImageId, nếu không có thì lấy ảnh đầu tiên.
+ * Lấy URL của ảnh chính từ một mảng các ảnh theo logic ưu tiên.
+ * 1. Ưu tiên ảnh có ID trùng với primaryImageId.
+ * 2. Nếu không có, lấy ảnh đầu tiên trong mảng.
+ * 3. Nếu không có ảnh nào, trả về ảnh mặc định.
  * @param images - Mảng các đối tượng ảnh (ImageUrl)
- * @param primaryImageId - ID của ảnh chính
- * @param placeholder - URL ảnh mặc định nếu không có ảnh nào
+ * @param primaryImageId - (Tùy chọn) ID của ảnh được đánh dấu là ảnh chính
+ * @param placeholder - (Tùy chọn) URL ảnh mặc định nếu không có ảnh nào
  * @returns URL của ảnh chính hoặc ảnh mặc định
  */
 export const getPrimaryImageUrl = (
@@ -14,10 +16,12 @@ export const getPrimaryImageUrl = (
   primaryImageId?: string | null,
   placeholder: string = "/images/placeholder.png"
 ): string => {
+  // Trường hợp cuối cùng: Mảng không tồn tại hoặc rỗng
   if (!images || images.length === 0) {
     return placeholder;
   }
 
+  // Ưu tiên hàng đầu: Tìm ảnh theo primaryImageId
   if (primaryImageId) {
     const primaryImage = images.find((img) => img.id === primaryImageId);
     if (primaryImage) {
@@ -25,5 +29,7 @@ export const getPrimaryImageUrl = (
     }
   }
 
+  // Ưu tiên thứ hai (Fallback): Lấy ảnh đầu tiên trong mảng
+  // Dùng `?.url` để phòng trường hợp object ảnh đầu tiên không có url
   return images[0]?.url || placeholder;
 };

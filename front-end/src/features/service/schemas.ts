@@ -24,7 +24,7 @@ export const serviceFormSchema = z.object({
   preparation_notes: z.string().optional(),
   aftercare_instructions: z.string().optional(),
   contraindications: z.string().optional(),
-  images: z.array(imageUnionSchema).optional(),
+  images: z.array(imageSchema).optional(),
   is_deleted: z.boolean().optional(),
 });
 

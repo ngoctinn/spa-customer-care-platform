@@ -1,12 +1,8 @@
 // src/features/treatment/api/treatment.api.ts
-import { ImageUrl } from "@/features/shared/types";
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { TreatmentPlan } from "@/features/treatment/types";
-import { uploadFile } from "@/features/upload/upload.api";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
-import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
-import { handleImageUploads } from "@/features/upload/upload.api";
 
 /**
  * Thêm một liệu trình mới
@@ -15,15 +11,10 @@ import { handleImageUploads } from "@/features/upload/upload.api";
 export async function addTreatmentPlan(
   planData: TreatmentPlanFormValues
 ): Promise<TreatmentPlan> {
-  const { images, ...otherData } = planData;
-  const processedImages = await handleImageUploads(images);
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
+  // Logic upload đã được loại bỏ
   return apiClient<TreatmentPlan>("/treatment-plans", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(planData),
   });
 }
 
@@ -39,15 +30,10 @@ export async function updateTreatmentPlan({
   planId: string;
   planData: Partial<TreatmentPlanFormValues>;
 }): Promise<TreatmentPlan> {
-  const { images, ...otherData } = planData;
-  const processedImages = await handleImageUploads(images);
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
+  // Logic upload đã được loại bỏ
   return apiClient<TreatmentPlan>(`/treatment-plans/${planId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(planData),
   });
 }
 

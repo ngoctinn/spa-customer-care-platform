@@ -3,7 +3,6 @@ import { ServiceFormValues } from "@/features/service/schemas";
 import { Service } from "@/features/service/types";
 import apiClient from "@/lib/apiClient";
 import { buildQueryString } from "@/lib/queryString";
-import { handleImageUploads } from "@/features/upload/upload.api";
 
 export interface GetServicesParams {
   skip?: number;
@@ -18,23 +17,10 @@ export interface GetServicesParams {
 export async function addService(
   serviceData: ServiceFormValues
 ): Promise<Service> {
-  // Tách riêng các file ảnh và các dữ liệu khác
-  const { images, ...otherData } = serviceData;
-
-  // 1. Tải các file ảnh mới lên và lấy URL
-  const processedImages = await handleImageUploads(images);
-
-  // 2. Gộp URL ảnh đã xử lý vào payload cuối cùng
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
-
-  console.log("Payload to send for addService:", payload);
-
+  // Logic upload đã được loại bỏ
   return apiClient<Service>("/services", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(serviceData),
   });
 }
 
@@ -50,22 +36,10 @@ export async function updateService({
   serviceId: string;
   serviceData: Partial<ServiceFormValues>;
 }): Promise<Service> {
-  const { images, ...otherData } = serviceData;
-
-  // 1. Tải các file ảnh mới lên và lấy URL
-  const processedImages = await handleImageUploads(images);
-
-  // 2. Gộp URL ảnh đã xử lý vào payload cuối cùng
-  const payload = {
-    ...otherData,
-    images: processedImages,
-  };
-
-  console.log("Payload to send for updateService:", payload);
-
+  // Logic upload đã được loại bỏ
   return apiClient<Service>(`/services/${serviceId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(serviceData),
   });
 }
 

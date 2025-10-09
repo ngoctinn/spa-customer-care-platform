@@ -38,7 +38,9 @@ export const RegisterForm = () => {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
@@ -47,7 +49,12 @@ export const RegisterForm = () => {
       // Gọi API đăng ký
 
       try {
-        const data = await register(values.email, values.name, values.password);
+        const data = await register(
+          values.email,
+          values.name,
+          values.phone,
+          values.password
+        );
         toast.success("Đăng ký thành công!", data);
       } catch (error: unknown) {
         if (error instanceof Error) {
@@ -108,10 +115,44 @@ export const RegisterForm = () => {
             />
             <FormField
               control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="09xxxxxxxx"
+                      {...field}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mật khẩu</FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      placeholder="••••••••"
+                      {...field}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Xác nhận mật khẩu</FormLabel>
                   <FormControl>
                     <PasswordInput
                       placeholder="••••••••"

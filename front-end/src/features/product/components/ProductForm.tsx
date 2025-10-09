@@ -1,7 +1,6 @@
 // src/features/product/components/EditProductForm.tsx
 "use client";
 
-import { MultiImageUploader } from "@/components/common/MultiImageUploader";
 import PriceInput from "@/components/common/PriceInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -16,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useFormContext } from "react-hook-form";
 import { ProductFormValues } from "../schemas";
 import { CategorySelector } from "@/components/common/CategorySelector";
+import { ImageSelectionInput } from "@/features/media/components/ImageSelectionInput";
 
 export default function ProductFormFields() {
   const form = useFormContext<ProductFormValues>();
@@ -175,20 +175,11 @@ export default function ProductFormFields() {
         control={form.control}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Hình ảnh sản phẩm (Tùy chọn)</FormLabel>
+            <FormLabel>Hình ảnh sản phẩm</FormLabel>
             <FormControl>
-              <MultiImageUploader
+              <ImageSelectionInput
                 value={field.value || []}
-                onFilesSelect={(files: File[]) => {
-                  // This is the correct logic to keep
-                  field.onChange([...(field.value || []), ...files]);
-                }}
-                onRemoveImage={(imageToRemove) => {
-                  const updatedImages = (field.value || []).filter(
-                    (img) => img !== imageToRemove
-                  );
-                  field.onChange(updatedImages);
-                }}
+                onChange={field.onChange}
               />
             </FormControl>
             <FormMessage />
