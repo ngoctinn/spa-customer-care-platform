@@ -1,6 +1,7 @@
 // src/features/media/components/ImageSelectionInput.tsx
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import {
   DndContext,
   closestCenter,
@@ -31,23 +32,32 @@ interface SortableImageProps {
 }
 
 const SortableImage = ({ image, isPrimary, onRemove }: SortableImageProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: image.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: image.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition || "transform 250ms ease-in-out",
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group aspect-square"
+      className={`
+        relative group aspect-square transition-all
+        ${isDragging ? "z-10 shadow-2xl scale-105" : "shadow-md"}
+      `}
     >
       {isPrimary && (
         <div
-          className="absolute top-1 left-1 z-10 bg-yellow-400 text-black p-1 rounded-full"
+          className="absolute top-1 left-1 z-10 bg-warning text-warning-foreground p-1 rounded-full"
           title="Ảnh chính"
         >
           <Crown className="h-4 w-4" />
@@ -59,7 +69,7 @@ const SortableImage = ({ image, isPrimary, onRemove }: SortableImageProps) => {
         fill
         className="object-cover rounded-md border"
       />
-      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+      <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
         <Button
           type="button"
           variant="destructive"
@@ -99,14 +109,17 @@ export function ImageSelectionInput({
   const { onOpen } = useMediaLibrary();
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const handleMediaSelect = (image: ImageUrl) => {
-    if (value.length < maxImages && !value.find((img) => img.id === image.id)) {
-      if (maxImages === 1) {
-        onChange([image]);
-      } else {
-        onChange([...value, image]);
-      }
-    }
+  const handleMediaSelect = (images: ImageUrl[]) => {
+    // Lọc ra những ảnh mới chưa có trong danh sách hiện tại
+    const newImages = images.filter(
+      (newImg) => !value.some((existingImg) => existingImg.id === newImg.id)
+    );
+
+    // Kết hợp ảnh cũ và ảnh mới
+    const combined = [...value, ...newImages];
+    // Cắt bớt nếu vượt quá giới hạn maxImages
+    const finalImages = combined.slice(0, maxImages);
+    onChange(finalImages);
   };
 
   const handleRemove = (id: string) => {
@@ -123,8 +136,12 @@ export function ImageSelectionInput({
   };
 
   const openMediaModal = () => {
-    (window as any).onMediaSelect = handleMediaSelect;
-    onOpen();
+    // Gọi onOpen từ store và truyền vào cấu hình
+    onOpen({
+      onSelect: handleMediaSelect,
+      // Tính toán số lượng ảnh còn lại có thể chọn
+      maxImages: maxImages - value.length,
+    });
   };
 
   // Chế độ chọn 1 ảnh (giao diện của FeaturedImageUploader cũ)
@@ -143,7 +160,7 @@ export function ImageSelectionInput({
                 height={400}
                 className="w-full h-auto aspect-video object-cover rounded-md"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -191,23 +208,39 @@ export function ImageSelectionInput({
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={value} strategy={rectSortingStrategy}>
-            {value.map((image, index) => (
-              <SortableImage
-                key={image.id}
-                image={image}
-                isPrimary={index === 0}
-                onRemove={handleRemove}
-              />
-            ))}
+            <AnimatePresence>
+              {value.map((image, index) => (
+                <motion.div
+                  key={image.id}
+                  layout // Quan trọng: tự động tạo hoạt ảnh khi vị trí thay đổi
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SortableImage
+                    image={image}
+                    isPrimary={index === 0}
+                    onRemove={handleRemove}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </SortableContext>
         </DndContext>
 
         {value.length < maxImages && (
           <div
             onClick={openMediaModal}
-            className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/50 transition-colors aspect-square"
+            className="
+      flex flex-col items-center justify-center p-2 
+      border-2 border-dashed border-border rounded-md 
+      cursor-pointer transition-all duration-300
+      hover:border-primary hover:bg-primary/5 hover:text-primary
+      group
+    "
           >
-            <ImageIcon className="h-10 w-10 text-muted-foreground" />
+            <ImageIcon className="h-5 w-5 text-muted-foreground" />
             <p className="mt-2 text-xs text-center text-muted-foreground">
               Thêm ảnh
             </p>
@@ -215,7 +248,7 @@ export function ImageSelectionInput({
         )}
       </div>
       <p className="text-xs text-muted-foreground mt-2">
-        Ảnh đầu tiên là ảnh đại diện. Kéo để sắp xếp lại.
+        Ảnh đầu tiên là ảnh chính. Kéo để sắp xếp lại.
       </p>
     </div>
   );

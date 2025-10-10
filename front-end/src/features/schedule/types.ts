@@ -1,3 +1,19 @@
+// Kiểu dữ liệu cho một ngày trong lịch mặc định
+export interface DefaultScheduleBase {
+  day_of_week: number; // 1-7 (T2-CN)
+  is_active: boolean;
+  start_time: string | null; // "HH:mm:ss" hoặc null
+  end_time: string | null; // "HH:mm:ss" hoặc null
+}
+
+// Kiểu dữ liệu nhận về từ API GET
+export type DefaultSchedulePublic = DefaultScheduleBase;
+
+// Kiểu dữ liệu gửi đi khi cập nhật (PUT)
+export interface DefaultScheduleUpdate {
+  schedules: DefaultScheduleBase[];
+}
+
 export interface DaySchedule {
   is_active: boolean;
   start_time: string; // "HH:mm"

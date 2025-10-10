@@ -77,9 +77,9 @@ const MyScheduleList = ({ schedules }: { schedules: FlexibleSchedule[] }) => {
   }
 
   const statusMap = {
-    pending: { icon: HelpCircle, color: "text-yellow-500", label: "Chờ duyệt" },
-    approved: { icon: CheckCircle, color: "text-green-500", label: "Đã duyệt" },
-    rejected: { icon: XCircle, color: "text-red-500", label: "Đã từ chối" },
+    pending: { icon: HelpCircle, color: "text-warning", label: "Chờ duyệt" },
+    approved: { icon: CheckCircle, color: "text-success", label: "Đã duyệt" },
+    rejected: { icon: XCircle, color: "text-destructive", label: "Đã từ chối" },
   };
 
   return (

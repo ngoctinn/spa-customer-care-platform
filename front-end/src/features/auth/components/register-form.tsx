@@ -38,7 +38,6 @@ export const RegisterForm = () => {
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
       password: "",
       confirmPassword: "",
     },
@@ -49,12 +48,7 @@ export const RegisterForm = () => {
       // Gọi API đăng ký
 
       try {
-        const data = await register(
-          values.email,
-          values.name,
-          values.phone,
-          values.password
-        );
+        const data = await register(values.email, values.name, values.password);
         toast.success("Đăng ký thành công!", data);
       } catch (error: unknown) {
         if (error instanceof Error) {
@@ -113,23 +107,7 @@ export const RegisterForm = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Số điện thoại</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="09xxxxxxxx"
-                      {...field}
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="password"

@@ -20,7 +20,7 @@ export async function getCustomers(): Promise<FullCustomerProfile[]> {
 export async function updateCustomerProfile(
   data: Partial<{ full_name: string; phone: string }>
 ): Promise<FullCustomerProfile> {
-  return apiClient<FullCustomerProfile>("/customers/me", {
+  return apiClient<FullCustomerProfile>("/users/me", {
     method: "PUT",
     body: JSON.stringify(data),
   });

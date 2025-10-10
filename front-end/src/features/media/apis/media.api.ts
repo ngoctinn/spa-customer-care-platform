@@ -7,5 +7,5 @@ import { MediaImage } from "@/features/media/types";
  * Giả sử endpoint là /media/images
  */
 export async function getMediaImages(): Promise<MediaImage[]> {
-  return apiClient<MediaImage[]>("/media/images");
+  return apiClient<MediaImage[]>("/images");
 }

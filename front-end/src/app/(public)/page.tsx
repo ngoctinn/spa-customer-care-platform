@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 // --- HERO SECTION COMPONENT ---
 function HeroSection() {
   return (
-    <section className="relative h-[60vh] min-h-[400px] w-full flex items-center justify-center text-center text-white">
+    <section className="relative h-[60vh] min-h-[400px] w-full flex items-center justify-center text-center text-foreground">
       {/* Background Video */}
       <video
         autoPlay

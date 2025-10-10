@@ -1,9 +1,11 @@
 // src/features/schedule/components/WorkScheduleForm.tsx
 "use client";
 
+import { useEffect } from "react";
 import { useForm, FormProvider, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
 import {
   useWorkSchedule,
   useUpdateWorkSchedule,
@@ -26,20 +28,21 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
-import { WorkSchedule } from "@/features/schedule/types";
+import { DefaultScheduleBase, DefaultScheduleUpdate } from "../types";
 
+// --- Schema mới cho form, khớp với backend ---
 const daySchema = z.object({
+  day_of_week: z.number(),
   is_active: z.boolean(),
-  start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "HH:mm"),
-  end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "HH:mm"),
+  start_time: z.string().nullable(),
+  end_time: z.string().nullable(),
 });
 
-const scheduleSchema = z.object({
-  schedule: z.array(daySchema),
+const scheduleFormSchema = z.object({
+  schedules: z.array(daySchema).length(7, "Phải có đủ 7 ngày trong tuần"),
 });
 
-type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
 
 const dayLabels = [
   "Thứ Hai",
@@ -50,49 +53,39 @@ const dayLabels = [
   "Thứ Bảy",
   "Chủ Nhật",
 ];
-const dayKeys = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
 
 export function WorkScheduleForm({ staffId }: { staffId: string }) {
   const { data: workSchedule, isLoading } = useWorkSchedule(staffId);
   const updateMutation = useUpdateWorkSchedule(staffId);
 
   const form = useForm<ScheduleFormValues>({
-    resolver: zodResolver(scheduleSchema),
+    resolver: zodResolver(scheduleFormSchema),
+    defaultValues: {
+      // Khởi tạo với mảng 7 ngày trống
+      schedules: Array.from({ length: 7 }, (_, i) => ({
+        day_of_week: i + 1,
+        is_active: false,
+        start_time: "09:00",
+        end_time: "17:00",
+      })),
+    },
   });
 
   const { fields } = useFieldArray({
     control: form.control,
-    name: "schedule",
+    name: "schedules",
   });
 
+  // Khi có dữ liệu từ API, reset form với dữ liệu đó
   useEffect(() => {
     if (workSchedule) {
-      // Chuyển đổi dữ liệu từ API sang dạng mảng cho useFieldArray
-      const scheduleArray = dayKeys.map(
-        (key) =>
-          workSchedule.schedule[key as keyof typeof workSchedule.schedule]
-      );
-      form.reset({ schedule: scheduleArray });
+      form.reset({ schedules: workSchedule });
     }
   }, [workSchedule, form]);
 
   const onSubmit = (data: ScheduleFormValues) => {
-    // Chuyển đổi lại dữ liệu từ mảng về object trước khi gửi đi
-    const scheduleObject = data.schedule.reduce((acc, dayData, index) => {
-      const dayKey = dayKeys[index] as keyof WorkSchedule["schedule"];
-      acc[dayKey] = dayData;
-      return acc;
-    }, {} as WorkSchedule["schedule"]);
-
-    updateMutation.mutate({ schedule: scheduleObject });
+    // Dữ liệu `data` đã có dạng { schedules: [...] } nên có thể gửi trực tiếp
+    updateMutation.mutate(data as DefaultScheduleUpdate);
   };
 
   if (isLoading) {
@@ -112,17 +105,18 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
           </CardHeader>
           <CardContent className="space-y-6">
             {fields.map((field, index) => {
-              const isActive = form.watch(`schedule.${index}.is_active`);
+              // Theo dõi trạng thái `is_active` của ngày hiện tại
+              const isActive = form.watch(`schedules.${index}.is_active`);
               return (
                 <div
                   key={field.id}
-                  className="grid grid-cols-4 items-center gap-4 p-4 border rounded-md"
+                  className="grid grid-cols-1 md:grid-cols-4 items-center gap-4 p-4 border rounded-md"
                 >
                   <FormField
                     control={form.control}
-                    name={`schedule.${index}.is_active`}
+                    name={`schedules.${index}.is_active`}
                     render={({ field }) => (
-                      <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormItem className="flex items-center space-x-3 space-y-0 md:col-span-1">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
@@ -135,29 +129,41 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name={`schedule.${index}.start_time`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input type="time" {...field} disabled={!isActive} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <span>-</span>
-                  <FormField
-                    control={form.control}
-                    name={`schedule.${index}.end_time`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input type="time" {...field} disabled={!isActive} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`schedules.${index}.start_time`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              {...field}
+                              value={field.value || ""} // Xử lý giá trị null
+                              disabled={!isActive}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="hidden sm:inline">-</span>
+                    <FormField
+                      control={form.control}
+                      name={`schedules.${index}.end_time`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              {...field}
+                              value={field.value || ""} // Xử lý giá trị null
+                              disabled={!isActive}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               );
             })}
