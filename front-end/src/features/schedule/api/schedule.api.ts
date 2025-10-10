@@ -6,28 +6,41 @@ import {
   WorkSchedule,
 } from "@/features/schedule/types";
 import { buildQueryString } from "@/lib/queryString";
+import {
+  DefaultScheduleUpdate,
+  DefaultSchedulePublic,
+} from "@/features/schedule/types";
 
 /**
  * Lấy lịch làm việc của một nhân viên
  * @param staffId ID của nhân viên
  */
-export async function getWorkSchedule(staffId: string): Promise<WorkSchedule> {
-  return apiClient<WorkSchedule>(`/schedules/work-schedule/${staffId}`);
+export async function getWorkSchedule(
+  staffId: string
+): Promise<DefaultSchedulePublic[]> {
+  // SỬA ĐỔI: Endpoint trỏ đến API quản lý lịch mặc định
+  return apiClient<DefaultSchedulePublic[]>(
+    `/admin/users/${staffId}/default-schedules`
+  );
 }
 
 /**
- * Cập nhật lịch làm việc của một nhân viên
+ * Cập nhật lịch làm việc mặc định của một nhân viên
  * @param staffId ID của nhân viên
- * @param scheduleData Dữ liệu lịch làm việc mới
+ * @param scheduleData Dữ liệu lịch làm việc mới (mảng 7 ngày)
  */
 export async function updateWorkSchedule(
   staffId: string,
-  scheduleData: Partial<WorkSchedule>
-): Promise<WorkSchedule> {
-  return apiClient<WorkSchedule>(`/schedules/work-schedule/${staffId}`, {
-    method: "PUT",
-    body: JSON.stringify(scheduleData),
-  });
+  schedules_data: DefaultScheduleUpdate
+): Promise<DefaultSchedulePublic[]> {
+  // SỬA ĐỔI: Endpoint và method
+  return apiClient<DefaultSchedulePublic[]>(
+    `/admin/users/${staffId}/default-schedules`,
+    {
+      method: "PUT",
+      body: JSON.stringify(schedules_data),
+    }
+  );
 }
 
 /**

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { UploadCloud, AlertCircle } from "lucide-react";
+import { UploadCloud, AlertCircle, Check } from "lucide-react";
 import Image from "next/image";
 import { useMediaLibrary } from "@/features/media/stores/use-media-library-store";
 import type { MediaImage, UploadingFile } from "@/features/media/types";
@@ -25,24 +25,51 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
-interface MediaLibraryModalProps {
-  onSelectImage: (image: MediaImage) => void;
-}
-
-export function MediaLibraryModal({ onSelectImage }: MediaLibraryModalProps) {
-  const { isOpen, onClose } = useMediaLibrary();
-  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+export function MediaLibraryModal() {
+  const { isOpen, onClose, onSelect, maxImages } = useMediaLibrary();
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
 
   const { data: media = [], isLoading, isError } = useMediaImages();
   const uploadMutation = useUploadImage();
 
+  const handleImageClick = (imageId: string) => {
+    setSelectedImageIds((prevSelected) => {
+      // Nếu ảnh đã được chọn -> bỏ chọn
+      if (prevSelected.includes(imageId)) {
+        return prevSelected.filter((id) => id !== imageId);
+      }
+
+      // Nếu là chế độ chọn 1 ảnh -> thay thế
+      if (maxImages === 1) {
+        return [imageId];
+      }
+
+      // Nếu chưa đạt giới hạn -> thêm vào danh sách
+      if (prevSelected.length < maxImages) {
+        return [...prevSelected, imageId];
+      }
+
+      // Nếu đã đạt giới hạn -> không làm gì
+      return prevSelected;
+    });
+  };
+
+  // Hàm xử lý khi nhấn nút "Chọn ảnh"
   const handleSelect = () => {
-    const selectedImage = media.find((img) => img.id === selectedImageId);
-    if (selectedImage) {
-      onSelectImage(selectedImage);
+    const selectedImages = media.filter((img) =>
+      selectedImageIds.includes(img.id)
+    );
+    if (selectedImages.length > 0) {
+      onSelect(selectedImages); // Gọi callback từ store với mảng ảnh đã chọn
       onClose();
+      setSelectedImageIds([]); // Reset lại lựa chọn sau khi đóng
     }
+  };
+
+  const onDialogClose = () => {
+    onClose();
+    setSelectedImageIds([]); // Reset lựa chọn khi đóng dialog
   };
 
   const onDrop = useCallback(
@@ -96,12 +123,18 @@ export function MediaLibraryModal({ onSelectImage }: MediaLibraryModalProps) {
           {/* Vùng Tải Lên */}
           <div
             {...getRootProps()}
-            className={`flex-shrink-0 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-              isDragActive ? "border-primary bg-primary/10" : "border-border"
-            }`}
+            className={`
+    flex-shrink-0 border-2 border-dashed rounded-lg p-6 text-center 
+    cursor-pointer transition-all duration-300 ease-in-out
+    group
+    ${
+      isDragActive
+        ? "border-primary bg-primary/10 border-solid scale-105"
+        : "border-border hover:border-primary/50 hover:bg-muted/50"
+    }`}
           >
             <input {...getInputProps()} />
-            <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground" />
+            <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground transition-transform duration-300 group-hover:scale-110" />
             <p className="mt-2 text-sm text-muted-foreground">
               {isDragActive
                 ? "Thả tệp vào đây..."
@@ -166,33 +199,64 @@ export function MediaLibraryModal({ onSelectImage }: MediaLibraryModalProps) {
                 </p>
               )}
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                {media.map((image) => (
-                  <Card
-                    key={image.id}
-                    onClick={() => setSelectedImageId(image.id)}
-                    className={`cursor-pointer transition-all ${
-                      selectedImageId === image.id ? "ring-2 ring-primary" : ""
-                    }`}
-                  >
-                    <CardContent className="p-0">
-                      <Image
-                        src={image.url}
-                        alt={image.alt_text || "media image"}
-                        width={150}
-                        height={150}
-                        className="aspect-square object-cover w-full h-full rounded-md"
-                      />
-                    </CardContent>
-                  </Card>
-                ))}
+                {media.map((image) => {
+                  const isSelected = selectedImageIds.includes(image.id);
+                  return (
+                    <Card
+                      key={image.id}
+                      onClick={() => handleImageClick(image.id)}
+                      className={`
+          cursor-pointer transition-all group relative overflow-hidden rounded-lg
+          ${
+            isSelected
+              ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+              : "ring-0"
+          }
+        `}
+                    >
+                      <CardContent className="p-0">
+                        <Image
+                          src={image.url}
+                          alt={image.alt_text || "media image"}
+                          width={150}
+                          height={150}
+                          className="aspect-square object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                        />
+                        {/* Lớp phủ khi hover */}
+                        <div className="absolute inset-0 bg-background/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </CardContent>
+
+                      {/* Checkbox giả để hiển thị trạng thái chọn */}
+                      <div
+                        className={`
+            absolute top-2 right-2 w-5 h-5 rounded-full border-2 border-foreground
+            flex items-center justify-center transition-all
+            ${isSelected ? "bg-primary border-primary" : "bg-background/40"}
+          `}
+                      >
+                        {isSelected && (
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </ScrollArea>
         </div>
 
         <div className="flex justify-end pt-4 border-t">
-          <Button onClick={handleSelect} disabled={!selectedImageId}>
-            Chọn ảnh
+          <Button
+            onClick={handleSelect}
+            disabled={selectedImageIds.length === 0}
+          >
+            {/* Cập nhật nội dung nút để hiển thị số lượng */}
+            Chọn{" "}
+            {selectedImageIds.length > 0
+              ? `(${selectedImageIds.length})`
+              : ""}{" "}
+            ảnh
           </Button>
         </div>
       </DialogContent>

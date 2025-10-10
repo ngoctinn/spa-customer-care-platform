@@ -41,21 +41,21 @@ export default function DashboardPage() {
           value={`+${totalCustomers}`}
           description="Tổng số khách hàng trong hệ thống"
           icon={Users}
-          iconColor="text-green-500"
+          iconColor="text-success"
         />
         <StatCard
           title="Tổng lịch hẹn"
           value={`${totalAppointments}`}
           description="Bao gồm tất cả các trạng thái"
           icon={CreditCard}
-          iconColor="text-orange-500"
+          iconColor="text-warning"
         />
         <StatCard
           title="Hoạt động"
           value="+573"
           description="+201 kể từ giờ trước"
           icon={Activity}
-          iconColor="text-blue-500"
+          iconColor="text-info"
         />
       </div>
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">

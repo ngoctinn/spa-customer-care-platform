@@ -60,7 +60,7 @@ export const DetailPageLayout = ({
         {/* Cột thư viện ảnh */}
         <div>
           <div
-            className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg shadow-lg border bg-white cursor-pointer"
+            className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg shadow-lg border bg-muted cursor-pointer"
             onClick={() => openLightbox(currentMainImageIndex)}
           >
             <Image
@@ -75,7 +75,7 @@ export const DetailPageLayout = ({
               <div
                 key={index}
                 className={cn(
-                  "relative w-20 h-20 rounded-md cursor-pointer overflow-hidden ring-2 ring-transparent transition-all hover:ring-primary/50 bg-white border",
+                  "relative w-20 h-20 rounded-md cursor-pointer overflow-hidden ring-2 ring-transparent transition-all hover:ring-primary/50 bg-muted",
                   mainImage === url && "ring-primary"
                 )}
                 onClick={() => onThumbnailClick(url)}

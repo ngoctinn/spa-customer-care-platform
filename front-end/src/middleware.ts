@@ -23,17 +23,15 @@ export async function middleware(req: NextRequest) {
         }
       ).then((res) => res.json());
 
-      const isSuperuser = user?.is_superuser;
+      // // Nếu đã đăng nhập và là superuser, vào trang admin bình thường
+      // if (isSuperuser && isAdminRoute) {
+      //   return NextResponse.next();
+      // }
 
-      // Nếu đã đăng nhập và là superuser, vào trang admin bình thường
-      if (isSuperuser && isAdminRoute) {
-        return NextResponse.next();
-      }
-
-      // Nếu đã đăng nhập nhưng không phải superuser mà cố vào trang admin -> đá về trang chủ
-      if (!isSuperuser && isAdminRoute) {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
+      // // Nếu đã đăng nhập nhưng không phải superuser mà cố vào trang admin -> đá về trang chủ
+      // if (!isSuperuser && isAdminRoute) {
+      //   return NextResponse.redirect(new URL("/", req.url));
+      // }
 
       // Nếu đã đăng nhập mà vào lại trang login/register -> đá về trang chủ
       if (isAuthRoute) {

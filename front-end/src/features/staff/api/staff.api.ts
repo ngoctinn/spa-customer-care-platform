@@ -67,7 +67,13 @@ export async function getStaffById(staffId: string): Promise<FullStaffProfile> {
 export async function getTechniciansByService(
   serviceId: string
 ): Promise<FullStaffProfile[]> {
-  return apiClient<FullStaffProfile[]>(
-    `/staff/technicians-by-service/${serviceId}`
+  // Backend chưa có API này, tạm thời trả về mảng rỗng để tránh lỗi
+  // Khi có API, bạn có thể thay thế bằng:
+  // return apiClient<FullStaffProfile[]>(
+  //   `/staff/technicians-by-service/${serviceId}`
+  // );
+  console.warn(
+    `API getTechniciansByService for serviceId=${serviceId} is not implemented on the backend yet.`
   );
+  return Promise.resolve([]);
 }

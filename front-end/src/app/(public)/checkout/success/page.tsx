@@ -91,7 +91,8 @@ export default function OrderSuccessPage() {
   return (
     <div className="container mx-auto max-w-2xl py-12">
       <div className="flex flex-col items-center text-center">
-        <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+        <CheckCircle2 className="w-16 h-16 text-success mb-4" />{" "}
+        {/* Thay đổi */}
         <h1 className="text-3xl font-bold mb-2">Đặt hàng thành công!</h1>
         <p className="text-muted-foreground mb-6">
           Cảm ơn bạn đã tin tưởng. Dưới đây là thông tin chi tiết đơn hàng của

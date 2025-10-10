@@ -172,7 +172,7 @@ export default function BookingPage() {
       </header>
 
       <div ref={topOfContentRef} className="max-w-4xl mx-auto space-y-8">
-        <div className="p-4 rounded-lg border bg-card">
+        <div className="p-4 rounded-lg border card">
           <BookingProgress steps={bookingSteps} currentStep={step} />
         </div>
         {step > 1 && (
