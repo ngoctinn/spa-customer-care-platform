@@ -113,7 +113,6 @@ export default function ServiceForm() {
           )}
         />
       </div>
-
       <FormField
         name="images"
         control={form.control}
@@ -130,7 +129,25 @@ export default function ServiceForm() {
           </FormItem>
         )}
       />
-
+      {/* // Ví dụ cho chế độ chọn 1 ảnh
+      <FormField
+        name="featuredImage" // giả sử có một trường ảnh đại diện
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Ảnh đại diện</FormLabel>
+            <FormControl>
+              <ImageSelectionInput
+                // Chuyển đổi qua lại giữa mảng và object đơn
+                value={field.value ? [field.value] : []}
+                onChange={(images) => field.onChange(images[0] || null)}
+                maxImages={1}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      /> */}
       <FormField
         control={form.control}
         name="preparation_notes"
@@ -179,7 +196,6 @@ export default function ServiceForm() {
           </FormItem>
         )}
       />
-
       <div>
         <FormLabel>Sản phẩm tiêu hao cho dịch vụ</FormLabel>
         <div className="space-y-4 mt-2">

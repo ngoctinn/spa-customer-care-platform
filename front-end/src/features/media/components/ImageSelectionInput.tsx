@@ -1,4 +1,4 @@
-// src/components/common/ImageSelectionInput.tsx
+// src/features/media/components/ImageSelectionInput.tsx
 "use client";
 
 import {
