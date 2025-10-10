@@ -11,6 +11,7 @@ from app.api import (
     treatment_plan_api,
     catalog_api,
     images_api,
+    customers_api,
 )
 
 router = APIRouter()

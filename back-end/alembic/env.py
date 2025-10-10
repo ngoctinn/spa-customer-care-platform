@@ -15,12 +15,19 @@ from app.core.config import settings
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from sqlmodel import SQLModel
-from app.models.users_model import User, Role, Permission
+from app.models.users_model import User, Role, Permission, UserRole, RolePermission
 from app.models.base_model import BaseUUIDModel
 from app.models.services_model import Service
 from app.models.products_model import Product
 from app.models.catalog_model import Category, Image
-from app.models.association_tables import ServiceCategoryLink, ProductCategoryLink
+from app.models.association_tables import (
+    ServiceCategoryLink,
+    ProductCategoryLink,
+    ProductImageLink,
+    ServiceImageLink,
+    TreatmentPlanImageLink,
+)
+from app.models.customers_model import Customer
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
 
 

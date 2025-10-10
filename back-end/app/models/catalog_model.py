@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from app.models.services_model import Service
     from app.models.products_model import Product
     from app.models.treatment_plans_model import TreatmentPlan
+    from app.models.users_model import User
 
 
 class Category(BaseUUIDModel, table=True):

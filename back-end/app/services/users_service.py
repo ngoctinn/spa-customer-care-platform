@@ -7,6 +7,8 @@ from sqlmodel import Session, select
 
 from app.core.security import get_password_hash
 from app.models.users_model import User
+from app.models.customers_model import Customer
+from app.services.customers_service import customers_service
 from app.schemas.users_schema import (
     AdminCreateUserRequest,
     UserCreate,
@@ -41,46 +43,27 @@ def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> Optional[User]
 # =================================================================
 
 
-def create_new_user(db_session: Session, *, user_in: UserCreate) -> User:
-    """
-    Tạo một người dùng mới và lưu vào database.
-    """
-    # Kiểm tra xem user hoặc email đã tồn tại chưa
-    existing_user = db_session.exec(
-        select(User).where((User.email == user_in.email))
-    ).first()
+def register_customer_account(
+    db_session: Session, *, user_in: UserCreate, customer: Customer
+) -> User:
+    """Tạo một tài khoản User và liên kết với một Customer profile đã có."""
+    existing_user = get_user_by_email(db_session, email=user_in.email)
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email đã tồn tại.",
-        )
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email đã tồn tại.")
 
-    # --- TÍCH HỢP GÁN VAI TRÒ MẶC ĐỊNH ---
-    # 1. Tìm vai trò "khách hàng"
-    customer_role = roles_service.get_role_by_name(db_session, name="khách hàng")
-    if not customer_role:
-        # --- SỬA LỖI Ở ĐÂY ---
-        # 1. Tạo một đối tượng RoleCreate từ dictionary
-        role_to_create = RoleCreate(
-            name="khách hàng",
-            description="Vai trò mặc định cho người dùng mới",
-        )
-        # 2. Truyền đối tượng đã tạo vào hàm
-        customer_role = roles_service.create_role(db_session, role_in=role_to_create)
-    # -----------------------------------------
-
-    # Băm mật khẩu
     hashed_password = get_password_hash(user_in.password)
-
-    # Tạo đối tượng User model từ schema
     user_data = user_in.model_dump(exclude={"password"})
-    db_user = User(**user_data, hashed_password=hashed_password)
 
-    # Lưu vào database
-    db_user.roles.append(customer_role)
+    db_user = User(**user_data, hashed_password=hashed_password, user_type="customer")
     db_session.add(db_user)
     db_session.commit()
     db_session.refresh(db_user)
+
+    # Liên kết với customer profile
+    customer.user_id = db_user.id
+    db_session.add(customer)
+    db_session.commit()
+    db_session.refresh(customer)
 
     return db_user
 

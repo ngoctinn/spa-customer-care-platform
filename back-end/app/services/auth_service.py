@@ -1,16 +1,22 @@
 # app/services/auth_service.py
 
+import token
 from typing import Optional
+import uuid
+from fastapi import HTTPException, Depends, Request, status
 from sqlmodel import Session
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+from app.core.dependencies import get_db_session
 from authlib.integrations.starlette_client import OAuth
 
 from app.core.mailing import send_email
 from app.core.security import get_password_hash, verify_password
 from app.models.users_model import User
-from app.services import users_service
+from app.services import users_service, customers_service
 from app.core.config import settings
 
+from app.schemas.customers_schema import CustomerCreate
+from app.schemas.users_schema import UserCreate
 
 email_verification_serializer = URLSafeTimedSerializer(
     settings.SECRET_KEY, salt="email-confirm-salt"
@@ -28,6 +34,70 @@ oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
+
+
+async def handle_google_login_or_register(
+    request: Request, db_session: Session
+) -> User:
+    """
+    Xử lý toàn bộ luồng OAuth2 của Google.
+    1. Lấy access token từ Google.
+    2. Lấy thông tin người dùng.
+    3. Kiểm tra nếu người dùng đã tồn tại trong hệ thống.
+    4. Nếu chưa, tạo mới CustomerProfile và User, sau đó liên kết chúng.
+    5. Tự động xác thực email.
+    6. Trả về đối tượng User cuối cùng.
+    """
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception as e:
+        # Lỗi ở đây là lỗi hệ thống hoặc cấu hình, nên raise lỗi 500 hoặc 401
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Không thể lấy token từ Google: {e}",
+        )
+
+    user_info = token.get("userinfo")
+    if not user_info or not user_info.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Không thể lấy thông tin người dùng từ Google",
+        )
+
+    email = user_info["email"]
+    user = users_service.get_user_by_email(db_session=db_session, email=email)
+
+    if user:
+        # Nếu user đã tồn tại, chỉ cần trả về user đó
+        return user
+
+    # --- Nếu user chưa tồn tại, thực hiện luồng đăng ký ---
+
+    # 1. Tạo CustomerProfile (với SĐT tạm thời)
+    customer_profile = customers_service.get_or_create_customer(
+        db=db_session,
+        customer_in=CustomerCreate(
+            phone_number=f"google_{uuid.uuid4().hex[:10]}",
+            full_name=user_info.get("name"),
+            email=email,
+        ),
+    )
+
+    # 2. Tạo dữ liệu cho tài khoản User
+    new_user_data = UserCreate(
+        email=email,
+        password=f"google_oauth_{uuid.uuid4()}",  # Mật khẩu ngẫu nhiên
+    )
+
+    # 3. Tạo User và liên kết với CustomerProfile
+    new_user = users_service.register_customer_account(
+        db_session=db_session, user_in=new_user_data, customer=customer_profile
+    )
+
+    # 4. Tự động xác thực email
+    verified_user = mark_email_as_verified(db_session=db_session, user=new_user)
+
+    return verified_user
 
 
 def authenticate(db_session: Session, *, email: str, password: str) -> Optional[User]:
