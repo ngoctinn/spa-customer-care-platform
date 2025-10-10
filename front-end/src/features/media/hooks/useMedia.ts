@@ -10,10 +10,10 @@ const queryKey = ["mediaImages"];
 /**
  * Hook để lấy danh sách ảnh từ thư viện media.
  */
-export const useMediaImages = () => {
+export const useMediaImages = (scope: "catalog" | "personal" = "personal") => {
   return useQuery<MediaImage[]>({
-    queryKey: queryKey,
-    queryFn: getMediaImages,
+    queryKey: [...queryKey, scope],
+    queryFn: () => getMediaImages(scope),
   });
 };
 

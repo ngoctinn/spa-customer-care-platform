@@ -209,7 +209,7 @@ export default function ServiceForm() {
             return (
               <div
                 key={field.id}
-                className="flex items-start gap-4 p-4 border rounded-md"
+                className="flex items-center gap-4 p-4 border rounded-md"
               >
                 <FormField
                   control={form.control}
