@@ -1,14 +1,59 @@
 # back-end/app/api/customers_api.py
 import uuid
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlmodel import Session
 
-from app.core.dependencies import get_db_session  # , get_current_admin_user
+from app.core.dependencies import (
+    get_db_session,
+    get_current_user,
+    get_current_admin_user,
+)
 from app.schemas.customers_schema import CustomerCreate, CustomerPublic, CustomerUpdate
+from app.models.users_model import User
 from app.services.customers_service import customers_service
+from app.services import images_service
 
 router = APIRouter()
+
+
+# Endpoint cho người dùng tự cập nhật hồ sơ của mình
+@router.put(
+    "/me/profile",
+    response_model=CustomerPublic,
+    summary="Cập nhật hồ sơ khách hàng của tôi",
+)
+def update_my_customer_profile(
+    *,
+    session: Session = Depends(get_db_session),
+    customer_in: CustomerUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Người dùng đã đăng nhập tự cập nhật thông tin hồ sơ khách hàng của mình.
+    Bao gồm cả việc thay đổi ảnh đại diện.
+    """
+    customer_profile = current_user.customer_profile
+    if not customer_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy hồ sơ khách hàng cho người dùng này.",
+        )
+
+    # Logic kiểm tra quyền sở hữu ảnh đại diện
+    if customer_in.avatar_id:
+        image = images_service.get_image_by_id(
+            db=session, image_id=customer_in.avatar_id
+        )
+        if image.uploaded_by_user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Không có quyền sử dụng hình ảnh này làm ảnh đại diện.",
+            )
+
+    return customers_service.update(
+        db=session, db_obj=customer_profile, obj_in=customer_in
+    )
 
 
 @router.post("", response_model=CustomerPublic, status_code=status.HTTP_201_CREATED)

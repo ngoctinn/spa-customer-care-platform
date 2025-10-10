@@ -26,7 +26,6 @@ class Category(BaseUUIDModel, table=True):
     description: Optional[str] = Field(default=None)
     category_type: str = Field(index=True, nullable=False)
 
-    # THAY ĐỔI: Cập nhật relationship với Service
     services: List["Service"] = Relationship(
         back_populates="categories", link_model=ServiceCategoryLink
     )
@@ -37,11 +36,21 @@ class Category(BaseUUIDModel, table=True):
     treatment_plans: List["TreatmentPlan"] = Relationship(back_populates="category")
 
 
-# ... (Phần còn lại của file Image model giữ nguyên)
 class Image(BaseUUIDModel, table=True):
     __tablename__ = "image"
     url: str = Field(nullable=False)
     alt_text: Optional[str] = Field(default=None)
+
+    uploaded_by_user_id: Optional[uuid.UUID] = Field(
+        default=None,
+        foreign_key="user.id",
+        nullable=True,  # Cho phép NULL cho các ảnh hệ thống/cũ
+        index=True,
+        description="ID của người dùng đã tải ảnh lên.",
+    )
+
+    uploaded_by: Optional["User"] = Relationship()
+
     products: List["Product"] = Relationship(
         back_populates="images", link_model=ProductImageLink
     )

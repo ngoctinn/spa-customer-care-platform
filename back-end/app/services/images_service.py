@@ -6,6 +6,7 @@ from uuid import UUID
 from typing import List, Optional, Type
 from fastapi import HTTPException, UploadFile, status
 from sqlmodel import Session, SQLModel, select
+from app.models.users_model import User
 
 from app.core import supabase_client
 from app.models.catalog_model import Image
@@ -40,44 +41,71 @@ OWNER_CONFIG = {
     },
 }
 
+
+async def _upload_file_to_storage(file: UploadFile) -> str:
+    """Tải file lên Supabase và trả về URL. Hàm này chỉ tập trung vào việc upload."""
+    if not getattr(file, "filename", None):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "File không hợp lệ.")
+
+    image_url = await supabase_client.upload_image(file=file)
+    if not image_url:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Không thể tải ảnh lên kho lưu trữ.",
+        )
+    return image_url
+
+
 # ==========================================
 # CÁC HÀM CỐT LÕI XỬ LÝ ẢNH
 # ==========================================
 
 
-async def create_image_to_library(
-    db: Session,
-    *,
-    file: UploadFile,
-    alt_text: Optional[str] = None,
+async def create_image(
+    db: Session, *, file: UploadFile, alt_text: str | None, uploader: User
 ) -> Image:
     """
-    Tải một file ảnh lên storage và tạo bản ghi trong DB.
+    Tải ảnh lên storage, tạo record Image trong DB và gán quyền sở hữu.
     """
-    if not getattr(file, "filename", None):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File không hợp lệ hoặc không được cung cấp.",
-        )
+    image_url = await _upload_file_to_storage(file)
 
-    image_url = await supabase_client.upload_image(file=file)
-    if not image_url:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Không thể tải ảnh lên kho lưu trữ.",
-        )
-
-    db_image = Image(url=image_url, alt_text=alt_text or file.filename)
+    db_image = Image(
+        url=image_url,
+        alt_text=alt_text,
+        uploaded_by_user_id=uploader.id,  # Gán ID người tải lên
+    )
     db.add(db_image)
     db.commit()
     db.refresh(db_image)
     return db_image
 
 
-def get_all_images(db: Session) -> List[Image]:
-    """Lấy danh sách tất cả ảnh trong kho lưu trữ."""
-    images = db.exec(select(Image).where(Image.is_deleted == False)).all()
+def get_catalog_images(db: Session) -> List[Image]:
+    """
+    Lấy danh sách ảnh thuộc thư viện chung (catalog).
+    Quy ước: Ảnh catalog là ảnh do admin hoặc nhân viên tải lên.
+    """
+    # Join với bảng User và Role để lọc chính xác
+    # Tạm thời, ta có thể giả định is_admin là một property trên model User
+    # và chỉ lấy ảnh của các admin.
+    statement = (
+        select(Image)
+        .join(User)
+        .where(
+            Image.is_deleted == False,
+            User.is_admin == True,  # Giả sử is_admin là property
+        )
+    )
+    images = db.exec(statement).all()
     return images
+
+
+def get_images_by_user(db: Session, *, user: User) -> List[Image]:
+    """Lấy danh sách ảnh do chính một người dùng cụ thể tải lên."""
+    statement = select(Image).where(
+        Image.uploaded_by_user_id == user.id, Image.is_deleted == False
+    )
+    return db.exec(statement).all()
 
 
 def get_image_by_id(db: Session, image_id: UUID) -> Image:
