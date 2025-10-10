@@ -16,14 +16,7 @@ from app.schemas.roles_schema import RolePublic, RolePublicWithPermissions
 
 
 class UserBase(SQLModel):
-    email: EmailStr  # Tự động validate định dạng email
-    phone: str | None = Field(
-        default=None,
-        max_length=15,
-        # Ví dụ về regex cho SĐT Việt Nam
-        pattern=r"^(0|\+84)(\s|\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\d)(\s|\.)?(\d{3})(\s|\.)?(\d{3})$",
-    )
-    full_name: Optional[str] = Field(default=None, max_length=100)
+    email: EmailStr
 
 
 class UserCreate(UserBase):
@@ -34,6 +27,21 @@ class UserCreate(UserBase):
         # Ví dụ: yêu cầu mật khẩu có cả chữ và số
         if not re.search(r"[A-Za-z]", v) or not re.search(r"[0-9]", v):
             raise ValueError("Mật khẩu phải chứa cả chữ và số")
+        return v
+    
+class CustomerRegistrationSchema(SQLModel):
+    full_name: str = Field(max_length=100)
+    # Lấy regex từ customers_schema để đảm bảo nhất quán
+    phone_number: str = Field(max_length=20, pattern=r"^(0|\+84)(\s|\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\d)(\s|\.)?(\d{3})(\s|\.)?(\d{3})$")
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not any(char.isdigit() for char in v):
+            raise ValueError("Mật khẩu phải chứa ít nhất một chữ số")
+        if not any(char.isalpha() for char in v):
+            raise ValueError("Mật khẩu phải chứa ít nhất một chữ cái")
         return v
 
 
@@ -81,7 +89,7 @@ class ResetPasswordRequest(SQLModel):
 class UserPublic(UserBase):
     id: uuid.UUID
     is_active: bool
-    is_superuser: bool
+    user_type: str
 
 
 # Schema cho admin cập nhật thông tin người dùng khác
@@ -94,7 +102,6 @@ class UserUpdateByAdmin(SQLModel):
         pattern=r"^(0|\+84)(\s|\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\d)(\s|\.)?(\d{3})(\s|\.)?(\d{3})$",
     )
     is_active: bool | None = Field(default=None)
-    is_superuser: bool | None = Field(default=None)
 
 
 # Schema hiển thị thông tin người dùng KÈM THEO vai trò và quyền của họ

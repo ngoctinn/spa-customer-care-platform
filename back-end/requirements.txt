@@ -19,6 +19,7 @@ itsdangerous
 python-dotenv
 pydantic[email]
 pydantic_settings
+google-auth
 
 # Other
 python-multipart

@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 from app.models.base_model import BaseUUIDModel
 from app.models.schedules_model import DefaultSchedule
+from app.models.customers_model import Customer
 
 
 class UserRole(SQLModel, table=True):
@@ -35,12 +36,12 @@ class User(BaseUUIDModel, table=True):
     __tablename__ = "user"
 
     email: str = Field(index=True, nullable=False, unique=True)
-    phone: str | None = Field(default=None, index=True, unique=True, nullable=True)
-    full_name: str | None = Field(default=None, nullable=True)
+    full_name: str | None = Field(default=None, max_length=100)
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True, nullable=False)
-    is_superuser: bool = Field(default=False, nullable=False)
     is_email_verified: bool = Field(default=False, nullable=False)
+
+    user_type: str = Field(default="customer", nullable=False, index=True)
 
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRole)
 
@@ -48,6 +49,7 @@ class User(BaseUUIDModel, table=True):
     default_schedules: List["DefaultSchedule"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
+    customer_profile: Optional["Customer"] = Relationship(back_populates="user")
 
 
 class Role(BaseUUIDModel, table=True):
