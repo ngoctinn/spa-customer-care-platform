@@ -43,28 +43,21 @@ def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> Optional[User]
 # =================================================================
 
 
-def register_customer_account(
-    db_session: Session, *, user_in: UserCreate, customer: Customer
-) -> User:
-    """Tạo một tài khoản User và liên kết với một Customer profile đã có."""
-    existing_user = get_user_by_email(db_session, email=user_in.email)
-    if existing_user:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email đã tồn tại.")
+def create_online_user(db_session: Session, *, user_in: UserCreate) -> User:
+    """
+    Xử lý luồng đăng ký online (cả Email và Google).
+    """
+    if get_user_by_email(db_session, email=user_in.email):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email đã được sử dụng.")
 
     hashed_password = get_password_hash(user_in.password)
     user_data = user_in.model_dump(exclude={"password"})
 
-    db_user = User(**user_data, hashed_password=hashed_password, user_type="customer")
+    db_user = User(**user_data, hashed_password=hashed_password)
+
     db_session.add(db_user)
     db_session.commit()
     db_session.refresh(db_user)
-
-    # Liên kết với customer profile
-    customer.user_id = db_user.id
-    db_session.add(customer)
-    db_session.commit()
-    db_session.refresh(customer)
-
     return db_user
 
 

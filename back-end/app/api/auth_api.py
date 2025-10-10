@@ -11,7 +11,6 @@ from app.core.dependencies import get_db_session
 from app.core.config import settings
 from app.core import security
 from app.schemas.users_schema import (
-    CustomerRegistrationSchema,
     ForgotPasswordRequest,
     ResetPasswordRequest,
     UserCreate,
@@ -77,25 +76,13 @@ def login_for_access_token(
 @router.post(
     "/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED
 )
-async def register_customer_user(
-    *, session: Session = Depends(get_db_session), user_in: CustomerRegistrationSchema, request: Request
+async def register_user(
+    *, session: Session = Depends(get_db_session), user_in: UserCreate
 ):
     """
-    Khách hàng tự đăng ký tài khoản online.
+    Khách hàng tự đăng ký tài khoản online chỉ bằng Email, Tên và Mật khẩu.
     """
-    # Bước 1: Tìm hoặc tạo Customer profile bằng SĐT
-    customer_profile = customers_service.get_or_create_customer(
-        db=session,
-        customer_in=CustomerCreate(
-            phone_number=user_in.phone_number, email=user_in.email
-        ),
-    )
-
-    # Bước 2: Tạo tài khoản User và liên kết
-    user = users_service.register_customer_account(
-        db_session=session, user_in=user_in, customer=customer_profile
-    )
-
+    user = users_service.create_online_user(db_session=session, user_in=user_in)
     await auth_service.send_verification_email(user)
     return user
 
@@ -125,6 +112,7 @@ async def login_google(request: Request):
     """
     redirect_uri = request.url_for("auth_google")
     return await auth_service.oauth.google.authorize_redirect(request, redirect_uri)
+
 
 # --- Endpoint callback của Google (MỚI) ---
 @router.get("/google")
@@ -210,6 +198,7 @@ def reset_password(
     )
 
     return {"message": "Mật khẩu đã được đặt lại thành công."}
+
 
 @router.post("/logout")
 def logout(response: Response):

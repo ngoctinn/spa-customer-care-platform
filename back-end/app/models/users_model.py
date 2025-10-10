@@ -40,16 +40,19 @@ class User(BaseUUIDModel, table=True):
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True, nullable=False)
     is_email_verified: bool = Field(default=False, nullable=False)
-
-    user_type: str = Field(default="customer", nullable=False, index=True)
-
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRole)
 
     # Mối quan hệ một-nhiều: một User có thể có nhiều lịch mặc định
     default_schedules: List["DefaultSchedule"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
-    customer_profile: Optional["Customer"] = Relationship(back_populates="user")
+    customer_profile: Optional["Customer"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+
+    @property
+    def is_admin(self) -> bool:
+        return any(role.name == "admin" for role in self.roles)
 
 
 class Role(BaseUUIDModel, table=True):

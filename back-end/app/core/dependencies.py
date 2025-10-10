@@ -79,10 +79,7 @@ def get_user_permissions(user: User) -> Set[str]:
 def has_permission(required_permission: str):
     def permission_checker(current_user: User = Depends(get_current_user)) -> None:
         user_permissions = get_user_permissions(current_user)
-        if (
-            required_permission not in user_permissions
-            and not current_user.is_superuser
-        ):
+        if required_permission not in user_permissions and not current_user.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Không đủ quyền truy cập.",
@@ -103,7 +100,7 @@ def get_role_by_id_from_path(
 
 
 def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_superuser:
+    if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Yêu cầu quyền quản trị viên.",
