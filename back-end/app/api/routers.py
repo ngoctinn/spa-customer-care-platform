@@ -37,3 +37,4 @@ router.include_router(
     treatment_plan_api.router, prefix="/treatment-plans", tags=["Treatment Plans"]
 )
 router.include_router(images_api.router, prefix="/images", tags=["Images"])
+router.include_router(customers_api.router, prefix="/customers", tags=["Customers"])
