@@ -54,7 +54,7 @@ export async function resetPassword(data: {
 export async function changePassword(
   data: ChangePasswordFormValues
 ): Promise<{ message: string }> {
-  return apiClient("/users/me/change-password", {
+  return apiClient("/users/me/update-password", {
     method: "POST",
     body: JSON.stringify({
       current_password: data.oldPassword,

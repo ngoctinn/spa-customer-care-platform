@@ -30,7 +30,7 @@ const CalendarLegend = () => (
           <span>Sắp tới</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-green-500"></div>
+          <div className="w-3 h-3 rounded-sm bg-success"></div>
           <span>Đã hoàn thành</span>
         </div>
         <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export default function InteractiveCalendar({
       case "upcoming":
         return "after:bg-primary";
       case "completed":
-        return "after:bg-green-500"; // Sử dụng màu cụ thể để nhất quán
+        return "after:bg-success";
       case "cancelled":
         return "after:bg-destructive";
       default:

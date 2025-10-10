@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  emailSchema,
-  passwordSchema,
-  nameSchema,
-  phoneSchema,
-} from "@/lib/schemas"; // <-- Import schema chung
+import { emailSchema, passwordSchema, nameSchema } from "@/lib/schemas"; // <-- Import schema chung
 import { Phone } from "lucide-react";
 import { min } from "date-fns";
 
@@ -18,7 +13,6 @@ export const registerSchema = z
   .object({
     name: nameSchema,
     email: emailSchema,
-    phone: phoneSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
   })

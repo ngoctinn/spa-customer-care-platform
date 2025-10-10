@@ -12,10 +12,8 @@ interface DataStateMessageProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<DataStateVariant, string> = {
-  empty:
-    "border border-dashed border-border/60 bg-muted/40 text-muted-foreground",
-  error:
-    "border border-destructive/40 bg-destructive/10 text-destructive",
+  empty: "border border-dashed border-border/60 muted/40 text-muted-foreground",
+  error: "border border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 const descriptionStyles: Record<DataStateVariant, string> = {

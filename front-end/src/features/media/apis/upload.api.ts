@@ -3,7 +3,7 @@ import { MediaImage as ImageUrl } from "@/features/media/types";
 
 // Giả sử backend trả về một đối tượng ImageUrl sau khi upload thành công
 // Bạn cần một endpoint backend, ví dụ: /uploads, để xử lý việc này
-const UPLOAD_ENDPOINT = "/uploads";
+const UPLOAD_ENDPOINT = "/images";
 
 /**
  * Tải một file lên server.

@@ -47,7 +47,7 @@ export default function LoyaltyCard({ customer }: LoyaltyCardProps) {
           </div>
           {currentTier && (
             <div
-              className="px-3 py-1 rounded-full text-sm font-semibold text-white"
+              className="px-3 py-1 rounded-full text-sm font-semibold text-foreground"
               style={{ backgroundColor: currentTier.color_hex }}
             >
               {currentTier.name}
