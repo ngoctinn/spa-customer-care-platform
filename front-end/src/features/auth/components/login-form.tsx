@@ -67,9 +67,9 @@ export const LoginForm = () => {
   const handleGoogleLogin = () => {
     // Logic xử lý đăng nhập bằng Google
     // test toast
-    toast("Chức năng đăng nhập bằng Google đang được phát triển.");
-  };
 
+    window.location.href = "http://127.0.0.1:8000/auth/login/google"; // Chuyển hướng đến endpoint đăng nhập Google};
+  };
   return (
     <>
       <CardHeader className="text-center">
