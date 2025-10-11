@@ -18,4 +18,5 @@ export interface Product {
   is_deleted?: boolean;
   created_at?: string;
   updated_at?: string;
+  low_stock_threshold: number;
 }
