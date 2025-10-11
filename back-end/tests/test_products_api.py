@@ -1,60 +1,74 @@
+# back-end/tests/test_products_api.py
 import uuid
+from fastapi.testclient import TestClient
+from sqlmodel import Session
 
-from app.models.catalog_model import Category, Image
-from app.models.products_model import Product
+from app.models.catalog_model import Category
 from app.schemas.catalog_schema import CategoryTypeEnum
 
 
-def test_get_all_products_returns_data(client, session):
-    category = Category(
-        name="Chăm sóc da",
-        description="Danh mục sản phẩm",
+def test_create_product_success(client: TestClient, db_session: Session):
+    """
+    Kiểm tra việc tạo sản phẩm thành công.
+    """
+    # Bước 1: Chuẩn bị dữ liệu cần thiết (tạo một category cho sản phẩm)
+    category_data = Category(
+        name="Dưỡng da",
+        description="Sản phẩm dưỡng da",
         category_type=CategoryTypeEnum.product,
     )
-    session.add(category)
-    session.commit()
-    session.refresh(category)
+    db_session.add(category_data)
+    db_session.commit()
+    db_session.refresh(category_data)
 
-    product = Product(
-        name="Sữa rửa mặt",
-        description="Làm sạch dịu nhẹ",
-        price=120000,
-        stock=10,
-        is_retail=True,
-        is_consumable=False,
-        base_unit="chai",
-        categories=[category],
-    )
-    session.add(product)
-    session.commit()
-    session.refresh(product)
+    # Bước 2: Định nghĩa dữ liệu đầu vào cho API
+    product_data = {
+        "name": "Serum cấp ẩm B5",
+        "description": "Serum phục hồi và cấp ẩm cho da",
+        "price": 550000,
+        "stock": 100,
+        "is_retail": True,
+        "is_consumable": False,
+        "base_unit": "chai",
+        "category_ids": [str(category_data.id)],  # Chuyển UUID thành string
+        "existing_image_ids": [],
+        "primary_image_id": None,
+    }
 
-    image = Image(
-        url="https://example.com/image.jpg",
-        alt_text="Sản phẩm",
-        product_id=product.id,
-    )
-    session.add(image)
-    session.commit()
-    session.refresh(image)
+    # Bước 3: Gọi API endpoint
+    response = client.post("/products", json=product_data)
 
-    product.primary_image_id = image.id
-    session.add(product)
-    session.commit()
-    session.refresh(product)
-
-    response = client.get("/products")
-    assert response.status_code == 200
+    # Bước 4: Kiểm tra kết quả
+    assert response.status_code == 201, response.text
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["id"] == str(product.id)
-    assert len(data[0]["categories"]) == 1
-    assert data[0]["categories"][0]["id"] == str(category.id)
-    assert data[0]["images"][0]["url"] == image.url
-    assert data[0]["primary_image_id"] == str(image.id)
+    assert data["name"] == product_data["name"]
+    assert data["price"] == product_data["price"]
+    assert data["description"] == product_data["description"]
+    assert "id" in data
+    assert len(data["categories"]) == 1
+    assert data["categories"][0]["name"] == "Dưỡng da"
 
 
-def test_get_product_not_found_returns_404(client):
-    response = client.get(f"/products/{uuid.uuid4()}")
+def test_create_product_with_non_existent_category(
+    client: TestClient, db_session: Session
+):
+    """
+    Kiểm tra lỗi khi tạo sản phẩm với category không tồn tại.
+    """
+    non_existent_uuid = str(uuid.uuid4())
+    product_data = {
+        "name": "Sản phẩm lỗi",
+        "description": "Test lỗi",
+        "price": 10000,
+        "stock": 10,
+        "is_retail": True,
+        "base_unit": "cái",
+        "category_ids": [non_existent_uuid],
+    }
+
+    response = client.post("/products", json=product_data)
+
+    # Service của bạn sẽ raise lỗi 404 khi không tìm thấy category
     assert response.status_code == 404
-    assert "Product" in response.json()["detail"]
+    data = response.json()
+    assert "không được tìm thấy" in data["detail"]

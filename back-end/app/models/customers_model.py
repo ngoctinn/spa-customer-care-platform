@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 class Customer(BaseUUIDModel, table=True):
     __tablename__ = "customers"
 
+    full_name: str | None = Field(default=None, max_length=100)
     phone_number: str = Field(index=True, nullable=False, unique=True)
     email: str | None = Field(default=None, index=True, unique=True, nullable=True)
 

@@ -93,7 +93,7 @@ async def send_verification_email(user: User):
     Gửi email xác thực tài khoản.
     """
     token = email_verification_serializer.dumps(str(user.id), salt="email-confirm-salt")
-    verification_link = f"http://localhost:8000/auth/verify-email?token={token}"
+    verification_link = f"{settings.FRONTEND_URL}/auth/verify-email?token={token}"
 
     body = f"""
     <p>Chào {user.full_name},</p>
@@ -112,7 +112,7 @@ async def send_welcome_and_set_password_email(user: User):
     Gửi email chào mừng kèm liên kết đặt mật khẩu.
     """
     token = password_reset_serializer.dumps(str(user.id))
-    set_password_link = f"http://localhost:3000/auth/reset-password?token={token}"
+    set_password_link = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
 
     body = f"""
     <p>Chào {user.full_name},</p>
@@ -183,7 +183,7 @@ async def send_password_reset_email(user: User):
     """
     # Token có hiệu lực trong 15 phút (900 giây)
     token = password_reset_serializer.dumps(str(user.id))
-    reset_link = f"http://localhost:3000/reset-password?token={token}"  # Link đến trang reset trên frontend của bạn
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"  # Link đến trang reset trên frontend của bạn
 
     body = f"""
     <p>Chào {user.full_name},</p>

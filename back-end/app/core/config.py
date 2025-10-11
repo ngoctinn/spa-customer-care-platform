@@ -1,4 +1,5 @@
 # core/config.py
+import os
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,7 +33,12 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_BUCKET_NAME: str
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    model_config = SettingsConfigDict(
+        env_file=os.getenv("ENV_FILE", ".env"),  # Đọc biến ENV_FILE, mặc định là .env
+        extra="ignore",
+    )
 
 
 settings = Settings()

@@ -15,9 +15,9 @@ class ServiceBase(SQLModel):
     duration_minutes: int = Field(
         gt=0, description="Thời lượng dịch vụ (phút) phải lớn hơn 0"
     )
-    preparation_notes: str | None
-    aftercare_instructions: str | None
-    contraindications: str | None
+    preparation_notes: str | None = None
+    aftercare_instructions: str | None = None
+    contraindications: str | None = None
 
     # THAY ĐỔI: Chấp nhận một danh sách các ID danh mục
     category_ids: list[uuid.UUID] = Field(description="Danh sách ID của các danh mục")

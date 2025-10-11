@@ -9,10 +9,17 @@ from app.core.dependencies import (
     get_current_user,
     get_current_admin_user,
 )
-from app.schemas.customers_schema import CustomerCreate, CustomerPublic, CustomerUpdate
+from app.schemas.customers_schema import (
+    CustomerCreate,
+    CustomerCreateAtStore,
+    CustomerPublic,
+    CustomerUpdate,
+)
 from app.models.users_model import User
 from app.services.customers_service import customers_service
 from app.services import images_service
+from app.utils.common import get_object_or_404
+from app.models.customers_model import Customer
 
 router = APIRouter()
 
@@ -56,19 +63,32 @@ def update_my_customer_profile(
     )
 
 
-@router.post("", response_model=CustomerPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=CustomerPublic,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(get_current_admin_user)],
+)
 def create_customer(
-    *, session: Session = Depends(get_db_session), customer_in: CustomerCreate
+    *, session: Session = Depends(get_db_session), customer_in: CustomerCreateAtStore
 ):
     """[Nhân viên] Tạo một hồ sơ khách hàng mới (khách vãng lai)."""
-    return customers_service.get_or_create_customer(db=session, customer_in=customer_in)
+    return customers_service.find_or_create_offline_customer(
+        db=session, customer_in=customer_in
+    )
 
 
 # Thêm các endpoint khác cho get_all, get_by_id, update, delete...
 
 
-@router.get("", response_model=List[CustomerPublic])
-def get_all_customers(session: Session = Depends(get_db_session)):
+@router.get(
+    "",
+    response_model=List[CustomerPublic],
+    dependencies=[Depends(get_current_admin_user)],
+)
+def get_all_customers(
+    session: Session = Depends(get_db_session),
+):
     """[Nhân viên] Lấy danh sách tất cả khách hàng."""
     return customers_service.get_all(db=session)
 
@@ -78,36 +98,32 @@ def get_customer_by_id(
     customer_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):
     """[Nhân viên] Lấy thông tin chi tiết một khách hàng bằng ID."""
-    customer = customers_service.get(db=session, id=customer_id)
-    if not customer or customer.is_deleted:
-        from fastapi import HTTPException
-
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Khách hàng không tồn tại")
-    return customer
+    return get_object_or_404(session, model=Customer, obj_id=customer_id)
 
 
-@router.put("/{customer_id}", response_model=CustomerPublic)
+@router.put(
+    "/{customer_id}",
+    response_model=CustomerPublic,
+    dependencies=[Depends(get_current_admin_user)],
+)
 def update_customer(
     customer_id: uuid.UUID,
     customer_in: CustomerUpdate,
     session: Session = Depends(get_db_session),
 ):
     """[Nhân viên] Cập nhật thông tin một khách hàng."""
-    customer = customers_service.get(db=session, id=customer_id)
-    if not customer or customer.is_deleted:
-        from fastapi import HTTPException
-
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Khách hàng không tồn tại")
+    customer = get_object_or_404(session, model=Customer, obj_id=customer_id)
     return customers_service.update(db=session, db_obj=customer, obj_in=customer_in)
 
 
-@router.delete("/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{customer_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(get_current_admin_user)],
+)
 def delete_customer(customer_id: uuid.UUID, session: Session = Depends(get_db_session)):
     """[Nhân viên] Xóa mềm một khách hàng."""
-    customer = customers_service.get(db=session, id=customer_id)
-    if not customer or customer.is_deleted:
-        from fastapi import HTTPException
-
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Khách hàng không tồn tại")
-    customers_service.remove(db=session, id=customer_id)
+    # <<< SỬA: Dùng hàm tiện ích và gọi đúng phương thức `delete`
+    customer_to_delete = get_object_or_404(session, model=Customer, obj_id=customer_id)
+    customers_service.delete(db=session, db_obj=customer_to_delete)
     return None
