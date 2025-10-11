@@ -55,14 +55,17 @@ def get_product_by_id(
 
 @router.put("/{product_id}", response_model=ProductPublicWithDetails)
 async def update_product(
-    *, session: Session = Depends(get_db_session), product_in: ProductUpdate
+    *,
+    session: Session = Depends(get_db_session),
+    product_id: uuid.UUID,
+    product_in: ProductUpdate,
 ):
     """Cập nhật sản phẩm theo ID."""
-
+    db_product = products_service.get_by_id(db=session, product_id=product_id)
     return await products_service.update(
         db=session,
-        product_in=product_in,
-        product_id=product_in.id,
+        db_obj=db_product,
+        obj_in=product_in,
     )
 
 

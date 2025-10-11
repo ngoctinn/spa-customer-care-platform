@@ -81,6 +81,7 @@ class VerifyOTPRequest(LinkPhoneNumberRequest):
 class UserPublic(UserBase):
     id: uuid.UUID
     is_active: bool
+    is_deleted: bool = False
 
 
 # Schema cho admin cập nhật thông tin người dùng khác

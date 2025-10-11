@@ -40,18 +40,27 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         """
         customer = self.get_by_phone_number(db, phone_number=customer_in.phone_number)
         if customer:
-            # Cập nhật thông tin nếu có
-            if customer_in.full_name and not customer.full_name:
-                customer.full_name = customer_in.full_name
-            if customer_in.email and not customer.email:
-                customer.email = customer_in.email
-            db.add(customer)
-            db.commit()
-            db.refresh(customer)
+            # Nếu khách hàng đã tồn tại, chỉ cập nhật các trường còn thiếu
+            # mà không ghi đè dữ liệu đã có.
+            update_data = customer_in.model_dump(exclude_unset=True)
+            updated = False
+            if update_data.get("full_name") and not customer.full_name:
+                customer.full_name = update_data["full_name"]
+                updated = True
+            if update_data.get("email") and not customer.email:
+                customer.email = update_data["email"]
+                updated = True
+
+            if updated:
+                db.add(customer)
+                db.commit()
+                db.refresh(customer)
             return customer
 
-        # Nếu không tìm thấy, tạo mới hồ sơ customer vãng lai
-        return self.create(db, obj_in=customer_in)
+        # Nếu không tìm thấy, tạo mới hồ sơ customer vãng lai từ schema CustomerCreate
+        # để đảm bảo tất cả các trường đều được xử lý nếu cần
+        new_customer_schema = CustomerCreate(**customer_in.model_dump())
+        return self.create(db, obj_in=new_customer_schema)
 
 
 # Tạo một instance duy nhất
