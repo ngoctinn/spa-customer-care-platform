@@ -36,7 +36,7 @@ export default function TimeSelection({
       <CardHeader>
         <CardTitle>Bước 3: Chọn thời gian</CardTitle>
       </CardHeader>
-      <CardContent className="grid md:grid-cols-2 gap-8">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h3 className="text-lg font-semibold mb-3">Chọn ngày</h3>
           <Calendar

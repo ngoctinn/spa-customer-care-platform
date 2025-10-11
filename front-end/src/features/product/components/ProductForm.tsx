@@ -168,6 +168,26 @@ export default function ProductFormFields() {
             )}
           />
         )}
+        <FormField
+          control={form.control}
+          name="low_stock_threshold"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ngưỡng cảnh báo tồn kho</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="VD: 10"
+                  {...field}
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value, 10) || 0)
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       <FormField

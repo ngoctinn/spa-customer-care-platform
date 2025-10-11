@@ -22,6 +22,7 @@ export const productFormSchema = z
     baseUnit: z.string().trim().min(1, "Đơn vị cơ sở không được để trống."),
     consumableUnit: z.string().trim().optional(),
     conversionRate: z.number().optional(),
+    low_stock_threshold: z.number().min(0, "Ngưỡng phải là số không âm."),
   })
   .superRefine((data, ctx) => {
     // Quy tắc 1: Phải chọn ít nhất một loại (bán lẻ hoặc tiêu hao)

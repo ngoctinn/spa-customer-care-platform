@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // Assuming you have an Input component
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -47,6 +47,7 @@ import { useTheme } from "next-themes";
 import useCartStore from "@/features/cart/stores/cart-store";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "/services", label: "Dịch vụ" },
@@ -65,6 +66,16 @@ export function Header() {
   const isLoggedIn = !!user;
 
   const { items } = useCartStore();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!searchQuery.trim()) return; // Không tìm kiếm nếu input rỗng
+
+    const params = new URLSearchParams({ q: searchQuery.trim() });
+    router.push(`/search?${params.toString()}`);
+  };
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -153,14 +164,19 @@ export function Header() {
         <div className="flex-1" />
 
         <div className="flex items-center gap-4">
-          <div className="relative flex-1 md:flex-none">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative flex-1 md:flex-none"
+          >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Tìm kiếm dịch vụ..."
-              className="w-64 pl-9"
+              placeholder="Tìm kiếm..."
+              className="w-full md:w-64 pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
+          </form>
 
           <Button className="hidden md:flex items-center gap-2">
             <Link href="/booking" className="flex items-center gap-2">

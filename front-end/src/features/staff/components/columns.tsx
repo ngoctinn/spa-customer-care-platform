@@ -104,7 +104,11 @@ export const getStaffColumns = (
   {
     accessorKey: "phone",
     header: "Số điện thoại",
-    cell: ({ row }) => row.getValue("phone") || "N/A",
+    cell: ({ row }) => (
+      <div className="hidden md:table-cell">
+        {row.getValue("phone") || "N/A"}
+      </div>
+    ),
     meta: { headerTitle: "Số điện thoại" },
   },
   {

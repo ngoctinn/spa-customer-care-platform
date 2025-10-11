@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   adjustStock,
   getInventoryHistory,
-} from "@/features/inventory/api/inventory.api";
+} from "@/features/inventory/apis/inventory.api";
 import { StockAdjustmentFormValues } from "@/features/product/schemas";
 
 export const useAdjustStock = () => {

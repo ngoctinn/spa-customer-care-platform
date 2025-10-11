@@ -27,7 +27,7 @@ export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
       <CardContent className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold mb-3">Dịch vụ lẻ</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {services?.map((service) => (
               <Button
                 key={service.id}
@@ -42,7 +42,7 @@ export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
         </div>
         <div>
           <h3 className="text-lg font-semibold mb-3">Liệu trình trọn gói</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {treatments?.map((treatment) => (
               <Button
                 key={treatment.id}
