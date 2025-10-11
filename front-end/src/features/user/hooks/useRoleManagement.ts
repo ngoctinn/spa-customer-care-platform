@@ -17,8 +17,8 @@ export function useRoleManagement() {
     updateMutation,
     deleteMutation,
     isFormOpen,
-    editingItem: editingRole, // Đổi tên để phù hợp ngữ cảnh
-    itemToDelete: roleToDelete, // Đổi tên để phù hợp ngữ cảnh
+    editingItem,
+    itemToDelete,
     handleOpenAddForm,
     handleOpenEditForm,
     handleCloseForm,
@@ -51,8 +51,8 @@ export function useRoleManagement() {
   };
 
   const handleFormSubmit = (data: RoleFormValues) => {
-    if (editingRole) {
-      updateMutation.mutate({ id: editingRole.id, data });
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data });
     } else {
       addMutation.mutate(data);
     }
@@ -61,11 +61,11 @@ export function useRoleManagement() {
   // ✅ Step 3: Trả về các giá trị đã được quản lý tập trung
   return {
     isLoading,
-    roles,
+    data: roles,
     form,
     isFormOpen,
-    editingRole,
-    roleToDelete,
+    editingItem,
+    itemToDelete,
     isSubmitting: addMutation.isPending || updateMutation.isPending,
     handleOpenAddForm: handleOpenAddFormWithReset,
     handleOpenEditForm: handleOpenEditFormWithReset,

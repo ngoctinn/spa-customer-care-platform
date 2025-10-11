@@ -24,7 +24,7 @@ export const useStaff = () => {
 
 export const useStaffMutations = () => {
   return useCrudMutations<
-    UserPublic,
+    FullStaffProfile,
     StaffFormValues,
     Partial<StaffFormValues>
   >(

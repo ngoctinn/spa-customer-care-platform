@@ -2,10 +2,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
+import { useState, useTransition } from "react";
+import { MailCheck } from "lucide-react";
 import Link from "next/link";
 
 import { PasswordInput } from "@/components/common/password-input";
@@ -32,6 +32,7 @@ import { register } from "../apis/register_api";
 
 export const RegisterForm = () => {
   const [isPending, startTransition] = useTransition();
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -49,6 +50,7 @@ export const RegisterForm = () => {
 
       try {
         const data = await register(values.email, values.name, values.password);
+        setIsSuccess(true);
         toast.success("Đăng ký thành công!", data);
       } catch (error: unknown) {
         if (error instanceof Error) {
@@ -61,6 +63,34 @@ export const RegisterForm = () => {
       console.log(values);
     });
   };
+
+  if (isSuccess) {
+    return (
+      <>
+        <CardHeader className="text-center">
+          <div className="mx-auto bg-success/80 rounded-full p-3">
+            <MailCheck className="h-10 w-10 text-success " />
+          </div>
+          <CardTitle className="mt-4">Đăng ký thành công!</CardTitle>
+          <CardDescription>
+            Chúng tôi đã gửi một liên kết xác thực đến địa chỉ email của bạn.
+            Vui lòng kiểm tra hộp thư đến (và cả mục spam) để hoàn tất.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Button asChild size="lg">
+            <a
+              href="https://mail.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Đi đến Gmail
+            </a>
+          </Button>
+        </CardContent>
+      </>
+    );
+  }
 
   return (
     <>

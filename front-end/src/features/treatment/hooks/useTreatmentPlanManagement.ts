@@ -1,15 +1,17 @@
-// src/features/service/hooks/useServiceManagement.ts
+// src/features/treatment/hooks/useTreatmentPlanManagement.ts
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useServices, useServiceMutations } from "./useServices";
-import { Service } from "../types";
-import { ServiceFormValues, serviceFormSchema } from "../schemas";
+import {
+  useTreatmentPlans,
+  useTreatmentPlanMutations,
+} from "./useTreatmentPlans";
+import { TreatmentPlan } from "../types";
+import { TreatmentPlanFormValues, treatmentPlanFormSchema } from "../schemas";
 
-export function useServiceManagement() {
-  const { data: services = [], isLoading } = useServices();
+export function useTreatmentPlanManagement() {
+  const { data: plans = [], isLoading } = useTreatmentPlans();
 
-  // ✅ Step 1: Lấy tất cả state và handlers từ useServiceMutations
   const {
     addMutation,
     updateMutation,
@@ -23,41 +25,38 @@ export function useServiceManagement() {
     handleOpenDeleteDialog,
     handleCloseDeleteDialog,
     handleConfirmDelete,
-  } = useServiceMutations();
+  } = useTreatmentPlanMutations();
 
-  const form = useForm<ServiceFormValues>({
-    resolver: zodResolver(serviceFormSchema),
+  const form = useForm<TreatmentPlanFormValues>({
+    resolver: zodResolver(treatmentPlanFormSchema),
     defaultValues: {
       name: "",
       description: "",
       categories: [],
       price: 0,
-      duration_minutes: 30,
+      steps: [{ serviceId: "" }],
+      images: [],
     },
   });
 
-  // ✅ Step 2: Tạo các hàm "wrapper" để reset form
   const handleOpenAddFormWithReset = useCallback(() => {
     handleOpenAddForm();
     form.reset();
   }, [form, handleOpenAddForm]);
 
   const handleOpenEditFormWithReset = useCallback(
-    (service: Service) => {
-      handleOpenEditForm(service);
+    (plan: TreatmentPlan) => {
+      handleOpenEditForm(plan);
       form.reset({
-        ...service,
-        categories: service.categories.map((c) => c.id),
-        description: service.description || "",
-        preparation_notes: service.preparation_notes || "",
-        aftercare_instructions: service.aftercare_instructions || "",
-        contraindications: service.contraindications || "",
+        ...plan,
+        categories: plan.category ? [plan.category.id] : [],
+        steps: plan.steps.map((s) => ({ serviceId: s.service_id })),
       });
     },
     [form, handleOpenEditForm]
   );
 
-  const handleFormSubmit = (data: ServiceFormValues) => {
+  const handleFormSubmit = (data: TreatmentPlanFormValues) => {
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data });
     } else {
@@ -65,10 +64,9 @@ export function useServiceManagement() {
     }
   };
 
-  // ✅ Step 3: Trả về các giá trị đã được quản lý tập trung
   return {
+    data: plans,
     isLoading,
-    data: services,
     form,
     isFormOpen,
     editingItem,

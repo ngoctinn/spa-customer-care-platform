@@ -1,121 +1,110 @@
-// src/app/(admin)/dashboard/products/page.tsx (Refactored)
+// src/app/(admin)/dashboard/products/page.tsx (Refactored Version)
+
 "use client";
+import { ColumnDef } from "@tanstack/react-table";
 
-import { useMemo } from "react";
-import { PlusCircle } from "lucide-react";
-import { getProductColumns } from "@/features/product/components/columns";
-import { useProductManagement } from "@/features/product/hooks/useProductManagement"; // <- Import hook
-
-import { DataTable } from "@/components/common/data-table/data-table";
-import { PageHeader } from "@/components/common/PageHeader";
-import { Button } from "@/components/ui/button";
-import { FormDialog } from "@/components/common/FormDialog";
-import { ConfirmationModal } from "@/components/common/ConfirmationModal";
-import { FullPageLoader } from "@/components/ui/spinner";
+// --- Import các thành phần cần thiết ---
+import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
+import { Product } from "@/features/product/types";
+import { ProductFormValues } from "@/features/product/schemas";
+import { useProductManagement } from "@/features/product/hooks/useProductManagement";
 import ProductFormFields from "@/features/product/components/ProductForm";
-import StockAdjustmentForm from "@/features/inventory/components/StockAdjustmentForm";
+
+// --- Import các hàm và component cần thiết cho cột ---
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { getPrimaryImageUrl } from "@/lib/image-utils";
+import { Category } from "@/features/category/types";
+import { cn } from "@/lib/utils";
+
+// --- Định nghĩa các cột (không cần cột Actions) ---
+const columns: ColumnDef<Product>[] = [
+  // Cột select vẫn có thể giữ lại nếu bạn muốn có bulk actions
+  // { id: "select", ... },
+  {
+    accessorKey: "name",
+    header: "Tên sản phẩm",
+    cell: ({ row }) => {
+      const primaryImage = getPrimaryImageUrl(
+        row.original.images,
+        "/images/placeholder.png"
+      );
+      return (
+        <div className="flex items-center gap-3">
+          <Image
+            src={primaryImage}
+            alt={row.original.name}
+            width={40}
+            height={40}
+            className="rounded-md object-cover border"
+          />
+          <span className="font-medium">{row.original.name}</span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "price",
+    header: "Giá (VND)",
+    cell: ({ row }) =>
+      new Intl.NumberFormat("vi-VN").format(row.original.price),
+  },
+  {
+    accessorKey: "stock",
+    header: "Tồn kho",
+    cell: ({ row }) => (
+      <Badge variant={row.original.stock > 10 ? "outline" : "destructive"}>
+        {row.original.stock}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "categories",
+    header: "Danh mục",
+    cell: ({ row }) => (
+      <div className="flex flex-wrap gap-1">
+        {row.original.categories?.map((cat: Category) => (
+          <Badge key={cat.id} variant="secondary">
+            {cat.name}
+          </Badge>
+        ))}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "is_deleted",
+    header: "Trạng thái",
+    cell: ({ row }) => {
+      const isInactive = row.original.is_deleted;
+      return (
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isInactive ? "bg-muted" : "bg-success"
+            )}
+          ></span>
+          <span>{isInactive ? "Ngừng bán" : "Đang bán"}</span>
+        </div>
+      );
+    },
+  },
+];
 
 export default function ProductsDashboardPage() {
-  const {
-    isLoading,
-    products,
-    productForm,
-    stockForm,
-    isProductFormOpen,
-    editingProduct,
-    isStockFormOpen,
-    productToAdjust,
-    productToDelete,
-    isSubmitting,
-    isAdjustingStock,
-    handleOpenAddProductForm,
-    handleOpenEditProductForm,
-    handleCloseProductForm,
-    handleProductFormSubmit,
-    handleOpenAdjustStockForm,
-    handleCloseStockForm,
-    handleStockFormSubmit,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleConfirmDelete,
-  } = useProductManagement();
-
-  const columns = useMemo(
-    () =>
-      getProductColumns(
-        handleOpenEditProductForm,
-        handleOpenDeleteDialog,
-        handleOpenAdjustStockForm
-      ),
-    [
-      handleOpenEditProductForm,
-      handleOpenDeleteDialog,
-      handleOpenAdjustStockForm,
-    ]
-  );
-
-  if (isLoading) {
-    return <FullPageLoader text="Đang tải danh sách sản phẩm..." />;
-  }
-
+  // Toàn bộ trang giờ chỉ còn là component layout này
   return (
-    <>
-      <PageHeader
-        title="Quản lý Sản phẩm"
-        description="Thêm mới, chỉnh sửa và quản lý tất cả sản phẩm của spa."
-        actionNode={
-          <Button onClick={handleOpenAddProductForm}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Thêm sản phẩm
-          </Button>
-        }
-      />
-      <DataTable
-        columns={columns}
-        data={products}
-        toolbarProps={{
-          searchColumnId: "name",
-          searchPlaceholder: "Lọc theo tên sản phẩm...",
-        }}
-      />
-
-      {/* Product Add/Edit Dialog */}
-      <FormDialog
-        isOpen={isProductFormOpen}
-        onClose={handleCloseProductForm}
-        title={editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
-        description="Điền đầy đủ các thông tin cần thiết dưới đây."
-        form={productForm}
-        onFormSubmit={handleProductFormSubmit}
-        isSubmitting={isSubmitting}
-        submitText={editingProduct ? "Lưu thay đổi" : "Tạo mới"}
-      >
-        <ProductFormFields />
-      </FormDialog>
-
-      {/* Stock Adjustment Dialog */}
-      <FormDialog
-        isOpen={isStockFormOpen}
-        onClose={handleCloseStockForm}
-        title={`Điều chỉnh tồn kho - ${productToAdjust?.name}`}
-        description="Nhập số lượng để thêm hoặc bớt khỏi kho hiện tại."
-        form={stockForm}
-        onFormSubmit={handleStockFormSubmit}
-        isSubmitting={isAdjustingStock}
-        submitText="Xác nhận"
-      >
-        <StockAdjustmentForm isProductLocked={true} />
-      </FormDialog>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationModal
-        isOpen={!!productToDelete}
-        onClose={handleCloseDeleteDialog}
-        onConfirm={handleConfirmDelete}
-        title="Xác nhận xóa sản phẩm"
-        description={`Bạn có chắc chắn muốn xóa sản phẩm "${productToDelete?.name}" không?`}
-        isDestructive
-      />
-    </>
+    <ResourcePageLayout<Product, ProductFormValues>
+      title="Quản lý Sản phẩm"
+      description="Thêm mới, chỉnh sửa và quản lý tất cả sản phẩm của spa."
+      entityName="sản phẩm"
+      columns={columns}
+      useManagementHook={useProductManagement}
+      FormComponent={ProductFormFields}
+      toolbarProps={{
+        searchColumnId: "name",
+        searchPlaceholder: "Lọc theo tên sản phẩm...",
+      }}
+    />
   );
 }

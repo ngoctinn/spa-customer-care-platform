@@ -14,8 +14,8 @@ export function useStaffManagement() {
     updateMutation,
     deleteMutation,
     isFormOpen,
-    editingItem: editingStaff,
-    itemToDelete: staffToDelete,
+    editingItem,
+    itemToDelete,
     handleOpenAddForm,
     handleOpenEditForm,
     handleCloseForm,
@@ -50,8 +50,8 @@ export function useStaffManagement() {
   }, [form, handleOpenAddForm]);
 
   const handleFormSubmit = (data: StaffFormValues) => {
-    if (editingStaff) {
-      updateMutation.mutate({ id: editingStaff.id, data });
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data });
     } else {
       addMutation.mutate(data);
     }
@@ -59,12 +59,12 @@ export function useStaffManagement() {
 
   return {
     isLoading,
-    staffList,
+    data: staffList,
     form,
     // Trả về các state và handler đã được quản lý tập trung
     isFormOpen,
-    editingStaff,
-    staffToDelete,
+    editingItem,
+    itemToDelete,
     isSubmitting: addMutation.isPending || updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     handleOpenAddForm: handleOpenAddFormWithReset,

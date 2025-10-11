@@ -23,8 +23,8 @@ export function useSupplierManagement() {
     updateMutation,
     deleteMutation,
     isFormOpen,
-    editingItem: editingSupplier,
-    itemToDelete: supplierToDelete,
+    editingItem,
+    itemToDelete,
     handleOpenAddForm,
     handleOpenEditForm,
     handleCloseForm,
@@ -65,8 +65,8 @@ export function useSupplierManagement() {
   );
 
   const handleFormSubmit = (data: SupplierFormValues) => {
-    if (editingSupplier) {
-      updateMutation.mutate({ id: editingSupplier.id, data });
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data });
     } else {
       addMutation.mutate(data);
     }
@@ -74,11 +74,11 @@ export function useSupplierManagement() {
 
   return {
     isLoading,
-    suppliers,
+    data: suppliers,
     form,
     isFormOpen,
-    editingSupplier,
-    supplierToDelete,
+    editingItem,
+    itemToDelete,
     isSubmitting: addMutation.isPending || updateMutation.isPending,
     handleOpenAddForm: handleOpenAddFormWithReset,
     handleOpenEditForm: handleOpenEditFormWithReset,
