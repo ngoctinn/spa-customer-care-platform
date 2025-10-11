@@ -1,4 +1,4 @@
-// src/features/product/hooks/useProductManagement.ts
+// src/features/product/hooks/useProductManagement.ts (Corrected Version)
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,27 +16,27 @@ export function useProductManagement() {
   const { data: products = [], isLoading } = useProducts();
   const adjustStockMutation = useAdjustStock();
 
-  // ✅ Step 1: Lấy logic CRUD từ useProductMutations
   const {
     addMutation,
     updateMutation,
     deleteMutation,
-    isFormOpen: isProductFormOpen, // Đổi tên để phân biệt
-    editingItem: editingProduct,
-    itemToDelete: productToDelete,
+    isFormOpen,
+    editingItem, // Changed from editingProduct
+    itemToDelete, // Changed from productToDelete
     handleOpenAddForm,
     handleOpenEditForm,
-    handleCloseForm: handleCloseProductForm, // Đổi tên
+    handleCloseForm,
     handleOpenDeleteDialog,
     handleCloseDeleteDialog,
     handleConfirmDelete,
   } = useProductMutations();
 
-  // --- Logic cho Dialog điều chỉnh kho (GIỮ NGUYÊN) ---
+  // --- State & Forms for additional logic (stock adjustment) ---
   const [isStockFormOpen, setIsStockFormOpen] = useState(false);
   const [productToAdjust, setProductToAdjust] = useState<Product | null>(null);
 
-  const productForm = useForm<ProductFormValues>({
+  const form = useForm<ProductFormValues>({
+    // Changed from productForm
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
@@ -55,34 +55,34 @@ export function useProductManagement() {
     defaultValues: { productId: "", quantity: 1, notes: "" },
   });
 
-  // ✅ Step 2: Tạo các hàm "wrapper" để reset form sản phẩm
-  const handleOpenAddProductForm = useCallback(() => {
-    handleOpenAddForm(); // Gọi hàm gốc
-    productForm.reset();
-  }, [productForm, handleOpenAddForm]);
+  const handleOpenAddFormWithReset = useCallback(() => {
+    handleOpenAddForm();
+    form.reset();
+  }, [form, handleOpenAddForm]);
 
-  const handleOpenEditProductForm = useCallback(
+  const handleOpenEditFormWithReset = useCallback(
     (product: Product) => {
-      handleOpenEditForm(product); // Gọi hàm gốc
-      productForm.reset({
+      handleOpenEditForm(product);
+      form.reset({
         ...product,
         categories: product.categories.map((c) => c.id),
         price: product.price || 0,
         description: product.description || "",
       });
     },
-    [productForm, handleOpenEditForm]
+    [form, handleOpenEditForm]
   );
 
-  const handleProductFormSubmit = (data: ProductFormValues) => {
-    if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data });
+  const handleFormSubmit = (data: ProductFormValues) => {
+    // Changed from handleProductFormSubmit
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data });
     } else {
       addMutation.mutate(data);
     }
   };
 
-  // --- Handlers cho Stock Adjustment (GIỮ NGUYÊN) ---
+  // --- Stock Adjustment Handlers ---
   const handleOpenAdjustStockForm = useCallback(
     (product: Product) => {
       setProductToAdjust(product);
@@ -100,29 +100,30 @@ export function useProductManagement() {
     });
   };
 
-  // ✅ Step 3: Trả về các giá trị đã được kết hợp
+  // Return object now matches the UseManagementHookResult interface
   return {
-    // Data & state
+    data: products, // Changed from products
     isLoading,
-    products,
-    productForm,
-    stockForm,
-    isProductFormOpen,
-    editingProduct,
-    isStockFormOpen,
-    productToAdjust,
-    productToDelete,
+    form, // Changed from productForm
+    isFormOpen,
+    editingItem,
+    itemToDelete,
     isSubmitting: addMutation.isPending || updateMutation.isPending,
-    isAdjustingStock: adjustStockMutation.isPending,
-    // CRUD Handlers (đã tối ưu)
-    handleOpenAddProductForm,
-    handleOpenEditProductForm,
-    handleCloseProductForm,
-    handleProductFormSubmit,
+    handleOpenAddForm: handleOpenAddFormWithReset,
+    handleOpenEditForm: handleOpenEditFormWithReset,
+    handleCloseForm,
+    handleFormSubmit, // Changed from handleProductFormSubmit
     handleOpenDeleteDialog,
     handleCloseDeleteDialog,
     handleConfirmDelete,
-    // Stock Adjustment Handlers (giữ nguyên)
+
+    // You can decide if these extra properties should be part of the interface
+    // or handled differently. For now, let's assume they are specific to this hook's consumer
+    // and not part of the generic interface.
+    stockForm,
+    isStockFormOpen,
+    productToAdjust,
+    isAdjustingStock: adjustStockMutation.isPending,
     handleOpenAdjustStockForm,
     handleCloseStockForm,
     handleStockFormSubmit,

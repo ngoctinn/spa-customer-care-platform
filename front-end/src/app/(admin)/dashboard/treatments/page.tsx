@@ -1,27 +1,22 @@
-// src/app/(admin)/dashboard/services/page.tsx (Refactored)
+// src/app/(admin)/dashboard/treatments/page.tsx
 "use client";
 
-import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 
-// --- Import các thành phần chung & cần thiết ---
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
-import ServiceFormFields from "@/features/service/components/ServiceForm";
-import { useServiceManagement } from "@/features/service/hooks/useServiceManagement";
-import { Service } from "@/features/service/types";
-import { ServiceFormValues } from "@/features/service/schemas";
+import TreatmentPlanFormFields from "@/features/treatment/components/TreatmentPlanForm";
+import { useTreatmentPlanManagement } from "@/features/treatment/hooks/useTreatmentPlanManagement";
+import { TreatmentPlan } from "@/features/treatment/types";
+import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { getPrimaryImageUrl } from "@/lib/image-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useCategories } from "@/features/category/hooks/useCategories";
 
-// --- Định nghĩa cột ngay tại đây (không cần file riêng) ---
-// (Lưu ý: Không còn cột Actions)
-const serviceColumns: ColumnDef<Service>[] = [
+const columns: ColumnDef<TreatmentPlan>[] = [
   {
     accessorKey: "name",
-    header: "Tên dịch vụ",
+    header: "Tên liệu trình",
     cell: ({ row }) => {
       const primaryImage = getPrimaryImageUrl(
         row.original.images,
@@ -49,22 +44,16 @@ const serviceColumns: ColumnDef<Service>[] = [
       new Intl.NumberFormat("vi-VN").format(row.original.price),
   },
   {
-    accessorKey: "duration_minutes",
-    header: "Thời lượng (phút)",
-    cell: ({ row }) => <div>{row.original.duration_minutes}</div>,
+    accessorKey: "total_sessions",
+    header: "Số buổi",
   },
   {
-    accessorKey: "categories",
+    accessorKey: "category",
     header: "Danh mục",
-    cell: ({ row }) => (
-      <div className="flex flex-wrap gap-1">
-        {row.original.categories.map((cat) => (
-          <Badge key={cat.id} variant="secondary">
-            {cat.name}
-          </Badge>
-        ))}
-      </div>
-    ),
+    cell: ({ row }) =>
+      row.original.category ? (
+        <Badge variant="secondary">{row.original.category.name}</Badge>
+      ) : null,
   },
   {
     accessorKey: "is_deleted",
@@ -86,19 +75,18 @@ const serviceColumns: ColumnDef<Service>[] = [
   },
 ];
 
-export default function ServicesDashboardPage() {
-  // Component giờ chỉ là một lời gọi duy nhất!
+export default function TreatmentsDashboardPage() {
   return (
-    <ResourcePageLayout<Service, ServiceFormValues>
-      title="Quản lý Dịch vụ"
-      description="Thêm mới, chỉnh sửa và quản lý tất cả dịch vụ của spa."
-      entityName="dịch vụ"
-      columns={serviceColumns}
-      useManagementHook={useServiceManagement}
-      FormComponent={ServiceFormFields}
+    <ResourcePageLayout<TreatmentPlan, TreatmentPlanFormValues>
+      title="Quản lý Liệu trình"
+      description="Tạo, chỉnh sửa và quản lý các gói liệu trình chuyên sâu."
+      entityName="liệu trình"
+      columns={columns}
+      useManagementHook={useTreatmentPlanManagement}
+      FormComponent={TreatmentPlanFormFields}
       toolbarProps={{
         searchColumnId: "name",
-        searchPlaceholder: "Lọc theo tên dịch vụ...",
+        searchPlaceholder: "Lọc theo tên liệu trình...",
       }}
     />
   );

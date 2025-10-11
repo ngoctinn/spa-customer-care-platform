@@ -3,15 +3,16 @@ import { useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 
-// Định nghĩa các kiểu dữ liệu cho hàm
-type AddFunc<TData, TVariables> = (variables: TVariables) => Promise<TData>;
-type UpdateFunc<TData, TVariables> = (variables: {
+// --- CẬP NHẬT CÁC ĐỊNH NGHĨA HÀM ---
+// Các hàm này giờ có thể trả về bất kỳ kiểu dữ liệu nào (Promise<any>)
+// vì chúng ta chỉ quan tâm đến việc invalidate query sau khi thành công.
+type AddFunc<TVariables> = (variables: TVariables) => Promise<any>;
+type UpdateFunc<TVariables> = (variables: {
   id: string;
   data: TVariables;
-}) => Promise<TData>;
-type DeleteFunc<TData> = (id: string) => Promise<TData>;
+}) => Promise<any>;
+type DeleteFunc = (id: string) => Promise<void>;
 
-// Định nghĩa các thông báo tùy chỉnh
 interface CustomMessages {
   addSuccess?: string;
   addError?: string;
@@ -21,34 +22,24 @@ interface CustomMessages {
   deleteError?: string;
 }
 
-/**
- * Một custom hook để trừu tượng hóa logic mutations cho các hoạt động CRUD,
- * đồng thời quản lý state cho dialog form và dialog xác nhận xóa.
- * @param queryKey - Key của query trong React Query để invalidate.
- * @param addFn - Hàm để thực hiện việc thêm mới.
- * @param updateFn - Hàm để thực hiện việc cập nhật.
- * @param deleteFn - Hàm để thực hiện việc xóa.
- * @param customMessages - (Tùy chọn) Các thông báo tùy chỉnh.
- */
 export function useCrudMutations<
-  TItem extends { id: string }, // Thêm ràng buộc TItem phải có id
+  TItem extends { id: string }, // TItem là kiểu đầy đủ (vd: FullStaffProfile)
   TAddVariables = any,
   TUpdateVariables = any
 >(
   queryKey: QueryKey,
-  addFn: AddFunc<TItem, TAddVariables>,
-  updateFn: UpdateFunc<TItem, TUpdateVariables>,
-  deleteFn: DeleteFunc<void>,
+  addFn: AddFunc<TAddVariables>,
+  updateFn: UpdateFunc<TUpdateVariables>,
+  deleteFn: DeleteFunc,
   customMessages: CustomMessages = {}
 ) {
   const queryClient = useQueryClient();
 
-  // --- NEW: Quản lý State ---
   const [isFormOpen, setIsFormOpen] = useState(false);
+  // State `editingItem` và `itemToDelete` vẫn sử dụng kiểu TItem đầy đủ
   const [editingItem, setEditingItem] = useState<TItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<TItem | null>(null);
 
-  // --- NEW: Các hàm xử lý (Handlers) ---
   const handleOpenAddForm = useCallback(() => {
     setEditingItem(null);
     setIsFormOpen(true);
@@ -81,12 +72,13 @@ export function useCrudMutations<
     deleteError: customMessages.deleteError || "Xóa thất bại",
   };
 
-  const addMutation = useMutation<TItem, Error, TAddVariables>({
+  // Kiểu dữ liệu trả về của useMutation giờ là `any`
+  const addMutation = useMutation<any, Error, TAddVariables>({
     mutationFn: addFn,
     onSuccess: () => {
       toast.success(messages.addSuccess);
       queryClient.invalidateQueries({ queryKey });
-      handleCloseForm(); // Tự động đóng form sau khi thành công
+      handleCloseForm();
     },
     onError: (error) => {
       toast.error(messages.addError, { description: error.message });
@@ -94,7 +86,7 @@ export function useCrudMutations<
   });
 
   const updateMutation = useMutation<
-    TItem,
+    any,
     Error,
     { id: string; data: TUpdateVariables }
   >({
@@ -102,7 +94,7 @@ export function useCrudMutations<
     onSuccess: () => {
       toast.success(messages.updateSuccess);
       queryClient.invalidateQueries({ queryKey });
-      handleCloseForm(); // Tự động đóng form sau khi thành công
+      handleCloseForm();
     },
     onError: (error) => {
       toast.error(messages.updateError, { description: error.message });
@@ -114,14 +106,13 @@ export function useCrudMutations<
     onSuccess: () => {
       toast.success(messages.deleteSuccess);
       queryClient.invalidateQueries({ queryKey });
-      handleCloseDeleteDialog(); // Tự động đóng dialog sau khi thành công
+      handleCloseDeleteDialog();
     },
     onError: (error) => {
       toast.error(messages.deleteError, { description: error.message });
     },
   });
 
-  // Xử lý xác nhận xóa
   const handleConfirmDelete = () => {
     if (itemToDelete) {
       deleteMutation.mutate(itemToDelete.id);
@@ -132,7 +123,6 @@ export function useCrudMutations<
     addMutation,
     updateMutation,
     deleteMutation,
-    // Trả về các state và hàm xử lý mới
     isFormOpen,
     editingItem,
     itemToDelete,
