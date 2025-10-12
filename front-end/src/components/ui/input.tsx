@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
@@ -8,6 +8,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, icon, onIconClick, ...props }, ref) => {
+    // Lấy trạng thái invalid từ props
+    const isInvalid = props["aria-invalid"];
+
     return (
       <div className="relative">
         <input
@@ -24,7 +27,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         />
         {icon && (
           <div
-            className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3"
+            className={cn(
+              "absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3",
+              // ✅ CHỈ ÁP DỤNG ANIMATION CHO ICON WRAPPER KHI CÓ LỖI
+              isInvalid && "animate-shake"
+            )}
             onClick={onIconClick}
           >
             {icon}

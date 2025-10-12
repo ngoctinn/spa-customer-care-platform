@@ -1,19 +1,21 @@
 // src/features/auth/components/forgot-password-form.tsx
 "use client";
 
-import Link from "next/link";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { AlertCircle, Loader2, Mail, MailCheck } from "lucide-react";
+import Link from "next/link";
 import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 
-import { forgotPasswordSchema } from "@/features/auth/schemas";
+import { Button } from "@/components/ui/button";
 import {
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Form,
@@ -24,8 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { forgotPasswordSchema } from "@/features/auth/schemas";
 
 export const ForgotPasswordForm = () => {
   const [isPending, startTransition] = useTransition();
@@ -36,34 +37,34 @@ export const ForgotPasswordForm = () => {
     defaultValues: {
       email: "",
     },
+    mode: "onChange",
   });
 
   const onSubmit = (values: z.infer<typeof forgotPasswordSchema>) => {
     startTransition(async () => {
       try {
-        //await forgotPassword(values.email);
+        // await forgotPassword(values.email);
         toast.success("Yêu cầu đã được gửi đi!", {
           description: "Vui lòng kiểm tra email để đặt lại mật khẩu.",
         });
-        setIsSubmitted(true); // Cập nhật state khi gửi thành công
-        console.log("Yêu cầu đặt lại mật khẩu đã được gửi cho:", values.email);
+        setIsSubmitted(true);
       } catch (error: unknown) {
         if (error instanceof Error) {
           toast.error(error.message);
-          console.error("Lỗi khi yêu cầu đặt lại mật khẩu:", error.message);
         } else {
           toast.error("Gửi yêu cầu thất bại. Vui lòng thử lại.");
-          console.error("Lỗi không xác định:", error);
         }
       }
     });
   };
 
-  // Nếu đã gửi thành công, hiển thị thông báo
   if (isSubmitted) {
     return (
       <CardHeader className="text-center">
-        <CardTitle>Kiểm tra Email của bạn</CardTitle>
+        <div className="mx-auto bg-primary/10 rounded-full p-3">
+          <MailCheck className="h-10 w-10 text-primary" />
+        </div>
+        <CardTitle className="mt-4">Kiểm tra Email của bạn</CardTitle>
         <CardDescription>
           Chúng tôi đã gửi một đường link đặt lại mật khẩu đến email của bạn.
           Vui lòng kiểm tra hộp thư đến (và cả mục spam).
@@ -71,6 +72,7 @@ export const ForgotPasswordForm = () => {
       </CardHeader>
     );
   }
+
   return (
     <>
       <CardHeader className="text-center">
@@ -85,7 +87,7 @@ export const ForgotPasswordForm = () => {
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
@@ -93,6 +95,13 @@ export const ForgotPasswordForm = () => {
                       placeholder="email@example.com"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -100,6 +109,7 @@ export const ForgotPasswordForm = () => {
               )}
             />
             <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isPending ? "Đang gửi..." : "Gửi link đặt lại mật khẩu"}
             </Button>
           </CardContent>

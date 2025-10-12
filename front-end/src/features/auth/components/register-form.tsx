@@ -2,13 +2,21 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useState, useTransition } from "react";
-import { MailCheck } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Loader2,
+  Mail,
+  MailCheck,
+  User,
+} from "lucide-react";
 import Link from "next/link";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 
-import { PasswordInput } from "@/components/common/password-input";
 import { Button } from "@/components/ui/button";
 import {
   CardContent,
@@ -27,12 +35,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { registerSchema } from "@/features/auth/schemas";
-import { toast } from "sonner";
 import { register } from "../apis/register_api";
 
 export const RegisterForm = () => {
   const [isPending, startTransition] = useTransition();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -42,25 +51,22 @@ export const RegisterForm = () => {
       password: "",
       confirmPassword: "",
     },
+    mode: "onChange",
   });
 
   const onSubmit = (values: z.infer<typeof registerSchema>) => {
     startTransition(async () => {
-      // Gọi API đăng ký
-
       try {
-        const data = await register(values.email, values.name, values.password);
+        await register(values.email, values.name, values.password);
         setIsSuccess(true);
-        toast.success("Đăng ký thành công!", data);
+        toast.success("Đăng ký thành công!");
       } catch (error: unknown) {
         if (error instanceof Error) {
           toast.error(error.message);
         } else {
-          // toast.error("Đăng ký thất bại. Vui lòng thử lại.");
-          console.error("Đăng ký thất bại", error);
+          toast.error("Đăng ký thất bại. Vui lòng thử lại.");
         }
       }
-      console.log(values);
     });
   };
 
@@ -68,8 +74,8 @@ export const RegisterForm = () => {
     return (
       <>
         <CardHeader className="text-center">
-          <div className="mx-auto bg-success/80 rounded-full p-3">
-            <MailCheck className="h-10 w-10 text-success " />
+          <div className="mx-auto bg-success/10 rounded-full p-3">
+            <MailCheck className="h-10 w-10 text-success" />
           </div>
           <CardTitle className="mt-4">Đăng ký thành công!</CardTitle>
           <CardDescription>
@@ -106,7 +112,7 @@ export const RegisterForm = () => {
             <FormField
               control={form.control}
               name="name"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Họ và Tên</FormLabel>
                   <FormControl>
@@ -114,6 +120,13 @@ export const RegisterForm = () => {
                       placeholder="Nguyễn Văn A"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <User className="h-4 w-4 text-muted-foreground" />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -123,7 +136,7 @@ export const RegisterForm = () => {
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
@@ -131,24 +144,46 @@ export const RegisterForm = () => {
                       placeholder="email@example.com"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="password"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Mật khẩu</FormLabel>
                   <FormControl>
-                    <PasswordInput
+                    <Input
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : showPassword ? (
+                          <EyeOff
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowPassword(false)}
+                          />
+                        ) : (
+                          <Eye
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowPassword(true)}
+                          />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -158,14 +193,30 @@ export const RegisterForm = () => {
             <FormField
               control={form.control}
               name="confirmPassword"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Xác nhận mật khẩu</FormLabel>
                   <FormControl>
-                    <PasswordInput
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : showConfirmPassword ? (
+                          <EyeOff
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowConfirmPassword(false)}
+                          />
+                        ) : (
+                          <Eye
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowConfirmPassword(true)}
+                          />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -173,6 +224,7 @@ export const RegisterForm = () => {
               )}
             />
             <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isPending ? "Đang xử lý..." : "Tạo tài khoản"}
             </Button>
           </CardContent>
