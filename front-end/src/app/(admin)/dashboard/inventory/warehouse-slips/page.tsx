@@ -19,6 +19,7 @@ export default function SlipHistoryPage() {
     slipToDelete,
     slipToView,
     handleDeleteSlip,
+    handleEditSlip,
     handleViewDetails,
     handleCloseDeleteDialog,
     handleCloseViewDialog,
@@ -26,8 +27,8 @@ export default function SlipHistoryPage() {
   } = useWarehouseSlipManagement();
 
   const columns = useMemo(
-    () => getSlipColumns(handleViewDetails, handleDeleteSlip),
-    [handleViewDetails, handleDeleteSlip]
+    () => getSlipColumns(handleViewDetails, handleEditSlip, handleDeleteSlip),
+    [handleViewDetails, handleEditSlip, handleDeleteSlip]
   );
 
   const typeFilterOptions = [

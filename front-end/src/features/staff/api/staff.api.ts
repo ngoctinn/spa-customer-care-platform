@@ -1,4 +1,5 @@
 // src/features/staff/api/staff.api.ts
+
 import apiClient from "@/lib/apiClient";
 import { FullStaffProfile } from "@/features/staff/types";
 import { StaffFormValues } from "@/features/staff/schemas";
@@ -67,13 +68,8 @@ export async function getStaffById(staffId: string): Promise<FullStaffProfile> {
 export async function getTechniciansByService(
   serviceId: string
 ): Promise<FullStaffProfile[]> {
-  // Backend chưa có API này, tạm thời trả về mảng rỗng để tránh lỗi
-  // Khi có API, bạn có thể thay thế bằng:
-  // return apiClient<FullStaffProfile[]>(
-  //   `/staff/technicians-by-service/${serviceId}`
-  // );
-  console.warn(
-    `API getTechniciansByService for serviceId=${serviceId} is not implemented on the backend yet.`
+  // CẬP NHẬT: Gọi đến endpoint mới của backend thay vì trả về mảng rỗng.
+  return apiClient<FullStaffProfile[]>(
+    `/staff/technicians-by-service/${serviceId}`
   );
-  return Promise.resolve([]);
 }

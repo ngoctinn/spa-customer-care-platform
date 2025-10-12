@@ -13,7 +13,7 @@ import {
   addSupplier,
   updateSupplier,
   deleteSupplier,
-} from "@/features/inventory/apis/supplier.api"; // ++ IMPORT API FUNCTIONS ++
+} from "@/features/inventory/apis/supplier.api";
 
 export function useSupplierManagement() {
   const { data: suppliers = [], isLoading } = useSuppliers();
@@ -43,17 +43,18 @@ export function useSupplierManagement() {
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierFormSchema),
-  });
-
-  const handleOpenAddFormWithReset = useCallback(() => {
-    handleOpenAddForm();
-    form.reset({
+    defaultValues: {
       name: "",
       contact_person: "",
       phone: "",
       email: "",
       address: "",
-    });
+    },
+  });
+
+  const handleOpenAddFormWithReset = useCallback(() => {
+    handleOpenAddForm();
+    form.reset();
   }, [form, handleOpenAddForm]);
 
   const handleOpenEditFormWithReset = useCallback(

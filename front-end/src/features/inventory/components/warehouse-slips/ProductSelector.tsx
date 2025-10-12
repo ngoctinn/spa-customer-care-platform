@@ -10,6 +10,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -36,31 +37,37 @@ export function ProductSelector({ onSelect }: ProductSelectorProps) {
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {isLoading ? "Đang tải..." : "Chọn sản phẩm..."}
+          {isLoading ? "Đang tải..." : "Thêm sản phẩm vào phiếu..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder="Tìm sản phẩm..." />
-          <CommandEmpty>Không tìm thấy sản phẩm.</CommandEmpty>
-          <CommandGroup>
-            {products.map((product) => (
-              <CommandItem
-                key={product.id}
-                value={product.name}
-                onSelect={() => {
-                  onSelect(product);
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={"mr-2 h-4 w-4 opacity-0"} // Can add logic to show check if selected
-                />
-                {product.name}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          <CommandList>
+            <CommandEmpty>Không tìm thấy sản phẩm.</CommandEmpty>
+            <CommandGroup>
+              {products.map((product) => (
+                <CommandItem
+                  key={product.id}
+                  value={product.name}
+                  onSelect={() => {
+                    onSelect(product);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={"mr-2 h-4 w-4 opacity-0"} />
+                  {/* Cập nhật hiển thị */}
+                  <span>
+                    {product.name}{" "}
+                    <span className="text-muted-foreground">
+                      (Tồn: {product.stock})
+                    </span>
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>

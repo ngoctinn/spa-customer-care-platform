@@ -1,5 +1,6 @@
 // src/app/(public)/booking/page.tsx
 "use client";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
@@ -35,6 +36,7 @@ const bookingSteps = [
 ];
 
 export default function BookingPage() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const initialServiceId = searchParams.get("serviceId") || undefined;
   const router = useRouter();
@@ -63,13 +65,20 @@ export default function BookingPage() {
   const handlePrevStep = () => setStep((prev) => prev - 1);
 
   const handleSelectService = (id: string, type: "service" | "treatment") => {
-    // Nếu là liệu trình, chuyển hướng đến trang chi tiết của nó
-    if (type === "treatment") {
+    // NẾU: chọn một liệu trình VÀ người dùng chưa đăng nhập (ý định là mua mới)
+    // => Chuyển hướng đến trang chi tiết để xem trước khi mua.
+    if (type === "treatment" && !user) {
       router.push(`/treatment-plans/${id}`);
-      return; // Dừng hàm tại đây
+      return;
     }
-    // Nếu là service, tiếp tục logic như cũ
-    setBookingState({ serviceId: id, technicianId: "any" });
+
+    // NẾU: là dịch vụ lẻ HOẶC là liệu trình đã mua (do người dùng đã đăng nhập)
+    // => Cập nhật state và chuyển sang bước tiếp theo.
+    setBookingState({
+      ...bookingState, // Giữ lại state cũ
+      serviceId: type === "service" ? id : undefined, // Gán ID nếu là service
+      treatmentId: type === "treatment" ? id : undefined, // Gán ID nếu là treatment
+    });
     handleNextStep();
   };
 

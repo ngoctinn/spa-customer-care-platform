@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link"; // ++ IMPORT LINK ++
+import Link from "next/link";
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
 import SupplierForm from "@/features/inventory/components/suppliers/SupplierForm";
@@ -10,7 +10,6 @@ import { useSupplierManagement } from "@/features/inventory/hooks/useSupplierMan
 import { Supplier } from "@/features/inventory/types";
 import { SupplierFormValues } from "@/features/inventory/schemas/supplier.schema";
 
-// ++ CẬP NHẬT CỘT TÊN NHÀ CUNG CẤP ++
 const supplierColumns: ColumnDef<Supplier>[] = [
   {
     accessorKey: "name",

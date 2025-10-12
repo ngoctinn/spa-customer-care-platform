@@ -1,5 +1,6 @@
 // src/features/inventory/hooks/useWarehouseSlipManagement.ts
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
 import {
   useWarehouseSlips,
   useWarehouseSlipMutations,
@@ -7,6 +8,7 @@ import {
 import { WarehouseSlip } from "../types";
 
 export function useWarehouseSlipManagement() {
+  const router = useRouter();
   const { data: slips = [], isLoading } = useWarehouseSlips();
   const { deleteMutation } = useWarehouseSlipMutations();
 
@@ -20,6 +22,17 @@ export function useWarehouseSlipManagement() {
   const handleCloseViewDialog = useCallback(() => {
     setSlipToView(null);
   }, []);
+
+  const handleEditSlip = useCallback(
+    (slip: WarehouseSlip) => {
+      const path =
+        slip.type === "IMPORT"
+          ? `/dashboard/inventory/warehouse-slips/import/${slip.id}/edit`
+          : `/dashboard/inventory/warehouse-slips/export/${slip.id}/edit`;
+      router.push(path);
+    },
+    [router]
+  );
 
   const handleDeleteSlip = useCallback((slip: WarehouseSlip) => {
     setSlipToDelete(slip);
@@ -46,6 +59,7 @@ export function useWarehouseSlipManagement() {
     slipToDelete,
     handleViewDetails,
     handleCloseViewDialog,
+    handleEditSlip,
     handleDeleteSlip,
     handleCloseDeleteDialog,
     handleConfirmDelete,

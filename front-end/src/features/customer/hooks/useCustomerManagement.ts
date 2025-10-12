@@ -1,29 +1,36 @@
-// src/features/customer/hooks/useCustomerManagement.ts
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCustomers, useCustomerMutations } from "./useCustomers";
 import { FullCustomerProfile } from "../types";
 import { z } from "zod";
+import {
+  emailSchema,
+  nameSchema,
+  passwordSchema,
+  phoneSchema,
+} from "@/lib/schemas";
 
-// Tạo schema tạm thời cho form chỉnh sửa khách hàng
 const customerFormSchema = z.object({
-  full_name: z.string().min(3, "Tên phải có ít nhất 3 ký tự."),
-  phone: z.string().optional(),
+  full_name: nameSchema,
+  email: emailSchema,
+  phone: phoneSchema.optional().or(z.literal("")),
+  password: passwordSchema.optional(),
   notes: z.string().optional(),
 });
-type CustomerFormValues = z.infer<typeof customerFormSchema>;
+export type CustomerFormValues = z.infer<typeof customerFormSchema>;
 
 export function useCustomerManagement() {
   const { data: customers = [], isLoading } = useCustomers();
 
-  // Giả sử có customer mutations, dù thực tế có thể không cần add/delete
   const {
+    addMutation,
     updateMutation,
-    deleteMutation, // Giả sử là deactivate
+    deleteMutation,
     isFormOpen,
     editingItem,
     itemToDelete,
+    handleOpenAddForm,
     handleOpenEditForm,
     handleCloseForm,
     handleOpenDeleteDialog,
@@ -35,13 +42,26 @@ export function useCustomerManagement() {
     resolver: zodResolver(customerFormSchema),
   });
 
+  const handleOpenAddFormWithReset = useCallback(() => {
+    handleOpenAddForm();
+    form.reset({
+      full_name: "",
+      email: "",
+      phone: "",
+      password: "",
+      notes: "",
+    });
+  }, [form, handleOpenAddForm]);
+
   const handleOpenEditFormWithReset = useCallback(
     (customer: FullCustomerProfile) => {
       handleOpenEditForm(customer);
       form.reset({
         full_name: customer.full_name,
+        email: customer.email,
         phone: customer.phone || "",
         notes: customer.customer_profile.notes || "",
+        password: "", // Không hiển thị password cũ
       });
     },
     [form, handleOpenEditForm]
@@ -49,13 +69,11 @@ export function useCustomerManagement() {
 
   const handleFormSubmit = (data: CustomerFormValues) => {
     if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data });
+      const { password, ...updateData } = data;
+      updateMutation.mutate({ id: editingItem.id, data: updateData });
+    } else {
+      addMutation.mutate(data);
     }
-  };
-
-  // Vì không có form thêm mới, ta sẽ trả về một hàm trống
-  const handleOpenAddForm = () => {
-    console.warn("Adding customers from the dashboard is not supported.");
   };
 
   return {
@@ -65,8 +83,8 @@ export function useCustomerManagement() {
     isFormOpen,
     editingItem,
     itemToDelete,
-    isSubmitting: updateMutation.isPending,
-    handleOpenAddForm, // Hàm trống
+    isSubmitting: addMutation.isPending || updateMutation.isPending,
+    handleOpenAddForm: handleOpenAddFormWithReset,
     handleOpenEditForm: handleOpenEditFormWithReset,
     handleCloseForm,
     handleFormSubmit,

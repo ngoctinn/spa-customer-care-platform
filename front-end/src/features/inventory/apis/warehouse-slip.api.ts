@@ -1,4 +1,4 @@
-// src/features/inventory/api/warehouse-slip.api.ts
+// src/features/inventory/apis/warehouse-slip.api.ts
 import apiClient from "@/lib/apiClient";
 import { WarehouseSlip } from "@/features/inventory/types";
 import {
@@ -14,6 +14,13 @@ export async function getWarehouseSlips(): Promise<WarehouseSlip[]> {
 }
 
 /**
+ * Lấy chi tiết một phiếu kho bằng ID.
+ */
+export async function getWarehouseSlipById(id: string): Promise<WarehouseSlip> {
+  return apiClient<WarehouseSlip>(`/warehouse-slips/${id}`);
+}
+
+/**
  * Tạo một phiếu kho mới (nhập hoặc xuất).
  * @param slipData Dữ liệu từ form.
  */
@@ -24,6 +31,23 @@ export async function createWarehouseSlip(
 ): Promise<WarehouseSlip> {
   return apiClient<WarehouseSlip>("/warehouse-slips", {
     method: "POST",
+    body: JSON.stringify(slipData),
+  });
+}
+
+/**
+ * Cập nhật một phiếu kho.
+ * @param id ID của phiếu kho.
+ * @param slipData Dữ liệu cập nhật từ form.
+ */
+export async function updateWarehouseSlip(
+  id: string,
+  slipData: (ImportSlipFormValues | ExportSlipFormValues) & {
+    type: "IMPORT" | "EXPORT";
+  }
+): Promise<WarehouseSlip> {
+  return apiClient<WarehouseSlip>(`/warehouse-slips/${id}`, {
+    method: "PUT",
     body: JSON.stringify(slipData),
   });
 }

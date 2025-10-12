@@ -1,13 +1,16 @@
 // src/features/customer/hooks/useCustomers.ts
+// src/features/customer/hooks/useCustomers.ts
 import { useQuery } from "@tanstack/react-query";
 import {
   getCustomers,
   updateCustomerById,
   deactivateCustomer,
-  getCustomerById, // ++ IMPORT HÀM MỚI ++
+  getCustomerById,
+  addCustomer, // ++ IMPORT HÀM MỚI ++
 } from "@/features/customer/api/customer.api";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { CustomerFormValues } from "./useCustomerManagement";
 
 const queryKey = ["customers"];
 
@@ -32,22 +35,18 @@ export const useCustomerById = (customerId: string) => {
 
 // ++ TẠO CUSTOMER MUTATIONS ++
 export const useCustomerMutations = () => {
-  // Vì không có hàm "add", ta truyền một hàm giả
-  const fakeAdd = async () => Promise.resolve();
-
   return useCrudMutations<
     FullCustomerProfile,
-    any,
-    Partial<{ full_name: string; phone: string; notes: string }>
+    CustomerFormValues,
+    Partial<CustomerFormValues>
   >(
     queryKey,
-    fakeAdd,
-    (vars: {
-      id: string;
-      data: Partial<{ full_name: string; phone: string; notes: string }>;
-    }) => updateCustomerById(vars.id, vars.data),
+    addCustomer, // <-- THAY THẾ HÀM GIẢ
+    (vars: { id: string; data: Partial<CustomerFormValues> }) =>
+      updateCustomerById(vars.id, vars.data),
     deactivateCustomer,
     {
+      addSuccess: "Thêm khách hàng thành công!",
       updateSuccess: "Cập nhật thông tin khách hàng thành công!",
       deleteSuccess: "Đã vô hiệu hóa khách hàng!",
     }

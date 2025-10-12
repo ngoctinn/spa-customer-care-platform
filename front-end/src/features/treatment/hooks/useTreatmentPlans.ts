@@ -5,7 +5,7 @@ import {
   addTreatmentPlan,
   updateTreatmentPlan,
   deleteTreatmentPlan,
-} from "@/features/treatment/api/treatment.api";
+} from "@/features/treatment/apis/treatment.api";
 import { TreatmentPlan } from "@/features/treatment/types";
 import { useCrudMutations } from "@/hooks/useCrudMutations"; // Import hook CRUD chung
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
