@@ -4,6 +4,7 @@ from typing import Annotated
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
@@ -114,40 +115,49 @@ async def login_google(request: Request):
     return await auth_service.oauth.google.authorize_redirect(request, redirect_uri)
 
 
-# --- Endpoint callback của Google (MỚI) ---
 @router.get("/google")
 async def auth_google(
     request: Request, response: Response, session: Session = Depends(get_db_session)
 ):
     """
     Callback endpoint cho Google OAuth.
-    Điều phối việc đăng nhập/đăng ký qua Google thông qua auth_service.
+    Điều phối việc đăng nhập/đăng ký qua Google, tạo token và chuyển hướng về frontend.
     """
-    # Bước 1: Gọi một hàm duy nhất từ service để xử lý tất cả logic nghiệp vụ
-    user = await auth_service.handle_google_login_or_register(
-        request=request, db_session=session
-    )
-
-    # Nếu service không trả về user (dù trường hợp này ít xảy ra do đã xử lý lỗi bên trong)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Xác thực Google thất bại."
+    try:
+        user = await auth_service.handle_google_login_or_register(
+            request=request, db_session=session
         )
 
-    # Bước 2: Tạo token và thiết lập cookie (trách nhiệm của tầng API)
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = security.create_access_token(
-        data={"sub": str(user.id)}, expires_delta=access_token_expires
-    )
+        if not user:
+            # Chuyển hướng về trang đăng nhập của frontend với thông báo lỗi
+            error_url = f"{settings.FRONTEND_URL}/auth/login?error=google_failed"
+            return RedirectResponse(url=error_url)
 
-    response.set_cookie(
-        key="access_token",
-        value=f"Bearer {access_token}",
-        httponly=True,
-        expires=access_token_expires.total_seconds(),
-    )
+        # Tạo token và thiết lập cookie (như cũ)
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = security.create_access_token(
+            data={"sub": str(user.id)}, expires_delta=access_token_expires
+        )
 
-    return {"message": "Xác thực qua Google thành công."}
+        response.set_cookie(
+            key="access_token",
+            value=f"Bearer {access_token}",
+            httponly=True,
+            expires=access_token_expires.total_seconds(),
+            samesite="lax",  # Thêm để tăng cường bảo mật
+        )
+
+        # Chuyển hướng người dùng về trang chính sau khi đăng nhập thành công
+        # Bạn có thể thay đổi "/dashboard" thành trang bạn muốn
+        success_url = f"http://localhost:3000/dashboard"
+        # Gắn response đã set cookie vào RedirectResponse
+        return RedirectResponse(url=success_url, headers=response.headers)
+
+    except HTTPException as e:
+        # Nếu có lỗi cụ thể từ service, chuyển hướng về trang đăng nhập với lỗi đó
+        error_detail = e.detail.replace(" ", "_").lower()
+        error_url = f"http://localhost:3000/auth/login?error={error_detail}"
+        return RedirectResponse(url=error_url)
 
 
 # ==================================================================
