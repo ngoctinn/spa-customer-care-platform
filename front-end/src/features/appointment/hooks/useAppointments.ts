@@ -5,6 +5,7 @@ import {
   createAppointmentAdmin,
   updateAppointment,
   deleteAppointment,
+  getAppointmentById,
 } from "@/features/appointment/apis/appointment.api";
 import { Appointment } from "@/features/appointment/types";
 import { toast } from "sonner";
@@ -17,6 +18,18 @@ export const useAppointments = () => {
   return useQuery<Appointment[]>({
     queryKey: queryKey,
     queryFn: getAppointments,
+  });
+};
+
+/**
+ * ++ HOOK MỚI: Lấy chi tiết lịch hẹn bằng ID. ++
+ * @param appointmentId ID của lịch hẹn
+ */
+export const useAppointmentById = (appointmentId: string) => {
+  return useQuery<Appointment>({
+    queryKey: ["appointments", appointmentId],
+    queryFn: () => getAppointmentById(appointmentId),
+    enabled: !!appointmentId,
   });
 };
 

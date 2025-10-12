@@ -4,6 +4,7 @@ import {
   addService,
   updateService,
   deleteService,
+  getServiceById, // Import hàm API cần thiết
 } from "@/features/service/api/service.api";
 import { Service } from "@/features/service/types";
 import { useCrudMutations } from "@/hooks/useCrudMutations";
@@ -18,6 +19,15 @@ export const useServices = () => {
     queryFn: () => getServices(),
   });
   return { data, isLoading, isError, error };
+};
+
+// Hook để lấy chi tiết một dịch vụ bằng ID
+export const useServiceById = (serviceId: string) => {
+  return useQuery<Service>({
+    queryKey: [...queryKey, serviceId],
+    queryFn: () => getServiceById(serviceId),
+    enabled: !!serviceId, // Chỉ chạy query khi có serviceId
+  });
 };
 
 // Hook để quản lý các mutations cho dịch vụ

@@ -1,5 +1,3 @@
-// src/components/common/ResourcePageLayout.tsx
-
 "use client";
 
 import React from "react";
@@ -26,6 +24,7 @@ import {
   ResourcePageLayoutProps,
   UseManagementHookResult,
 } from "@/features/management-pages/types";
+
 // Component Actions cho mỗi dòng, được layout tự quản lý
 const RowActions = <T extends { id: string }>({
   item,

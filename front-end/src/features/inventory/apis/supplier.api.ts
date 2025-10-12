@@ -11,6 +11,13 @@ export async function getSuppliers(): Promise<Supplier[]> {
 }
 
 /**
+ * ++ HÀM MỚI: Lấy thông tin chi tiết một nhà cung cấp bằng ID. ++
+ */
+export async function getSupplierById(id: string): Promise<Supplier> {
+  return apiClient<Supplier>(`/suppliers/${id}`);
+}
+
+/**
  * Thêm một nhà cung cấp mới.
  * @param supplierData Dữ liệu từ form.
  */

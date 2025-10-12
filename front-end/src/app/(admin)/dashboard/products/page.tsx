@@ -19,8 +19,6 @@ import { cn } from "@/lib/utils";
 
 // --- Định nghĩa các cột (không cần cột Actions) ---
 const columns: ColumnDef<Product>[] = [
-  // Cột select vẫn có thể giữ lại nếu bạn muốn có bulk actions
-  // { id: "select", ... },
   {
     accessorKey: "name",
     header: "Tên sản phẩm",

@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getCustomers,
   updateCustomerById,
-  deactivateCustomer, // Giả sử có hàm này
+  deactivateCustomer,
+  getCustomerById, // ++ IMPORT HÀM MỚI ++
 } from "@/features/customer/api/customer.api";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { useCrudMutations } from "@/hooks/useCrudMutations";
@@ -14,6 +15,18 @@ export const useCustomers = () => {
   return useQuery<FullCustomerProfile[]>({
     queryKey: queryKey,
     queryFn: getCustomers,
+  });
+};
+
+/**
+ * ++ HOOK MỚI: Lấy thông tin chi tiết một khách hàng bằng ID. ++
+ * @param customerId ID của khách hàng
+ */
+export const useCustomerById = (customerId: string) => {
+  return useQuery<FullCustomerProfile>({
+    queryKey: ["customers", customerId],
+    queryFn: () => getCustomerById(customerId),
+    enabled: !!customerId, // Chỉ chạy query khi customerId có giá trị
   });
 };
 

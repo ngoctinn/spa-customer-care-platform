@@ -8,7 +8,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import { EventClickArg, EventDropArg } from "@fullcalendar/core";
-
+import { useRouter } from "next/navigation";
 import {
   useAppointments,
   useAddAppointmentAdmin,
@@ -39,6 +39,7 @@ import { Card, CardContent } from "@/components/ui/card";
 // import "@fullcalendar/timegrid/main.css";
 
 export default function AppointmentsPage() {
+  const router = useRouter();
   const { data: appointments = [], isLoading: isLoadingAppointments } =
     useAppointments();
   const { data: customers = [], isLoading: isLoadingCustomers } =
@@ -80,17 +81,9 @@ export default function AppointmentsPage() {
   }, [appointments, customers, services]);
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-    // Mở dialog chi tiết hoặc dialog chỉnh sửa
-    const appointment = clickInfo.event.extendedProps as Appointment;
-    setEditingAppointment(appointment);
-    form.reset({
-      customer_id: appointment.customer_id,
-      service_id: appointment.service_id,
-      technician_id: appointment.technician_id,
-      start_time: new Date(appointment.start_time),
-      customer_note: appointment.customer_note,
-    });
-    setIsFormOpen(true);
+    // ++ THAY ĐỔI LOGIC: ĐIỀU HƯỚNG ĐẾN TRANG CHI TIẾT ++
+    const appointmentId = clickInfo.event.id;
+    router.push(`/dashboard/appointments/${appointmentId}`);
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
