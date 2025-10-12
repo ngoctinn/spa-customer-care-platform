@@ -43,6 +43,14 @@ export async function getAppointments(): Promise<Appointment[]> {
 }
 
 /**
+ * ++ HÀM MỚI: Lấy thông tin chi tiết một lịch hẹn bằng ID ++
+ * @param id ID của lịch hẹn
+ */
+export async function getAppointmentById(id: string): Promise<Appointment> {
+  return apiClient<Appointment>(`/appointments/${id}`);
+}
+
+/**
  * Tạo lịch hẹn mới từ trang admin
  * @param appointmentData Dữ liệu từ form của admin
  */

@@ -1,4 +1,5 @@
-// src/features/product/hooks/useProductManagement.ts (Corrected Version)
+// src/features/product/hooks/useProductManagement.ts
+
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,8 +22,8 @@ export function useProductManagement() {
     updateMutation,
     deleteMutation,
     isFormOpen,
-    editingItem, // Changed from editingProduct
-    itemToDelete, // Changed from productToDelete
+    editingItem,
+    itemToDelete,
     handleOpenAddForm,
     handleOpenEditForm,
     handleCloseForm,
@@ -36,7 +37,6 @@ export function useProductManagement() {
   const [productToAdjust, setProductToAdjust] = useState<Product | null>(null);
 
   const form = useForm<ProductFormValues>({
-    // Changed from productForm
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
@@ -74,7 +74,6 @@ export function useProductManagement() {
   );
 
   const handleFormSubmit = (data: ProductFormValues) => {
-    // Changed from handleProductFormSubmit
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data });
     } else {
@@ -102,9 +101,9 @@ export function useProductManagement() {
 
   // Return object now matches the UseManagementHookResult interface
   return {
-    data: products, // Changed from products
+    data: products,
     isLoading,
-    form, // Changed from productForm
+    form,
     isFormOpen,
     editingItem,
     itemToDelete,
@@ -112,14 +111,12 @@ export function useProductManagement() {
     handleOpenAddForm: handleOpenAddFormWithReset,
     handleOpenEditForm: handleOpenEditFormWithReset,
     handleCloseForm,
-    handleFormSubmit, // Changed from handleProductFormSubmit
+    handleFormSubmit,
     handleOpenDeleteDialog,
     handleCloseDeleteDialog,
     handleConfirmDelete,
 
-    // You can decide if these extra properties should be part of the interface
-    // or handled differently. For now, let's assume they are specific to this hook's consumer
-    // and not part of the generic interface.
+    // Extra properties specific to this hook
     stockForm,
     isStockFormOpen,
     productToAdjust,

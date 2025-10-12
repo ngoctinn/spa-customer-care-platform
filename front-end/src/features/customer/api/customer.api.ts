@@ -13,6 +13,17 @@ export async function getCustomers(): Promise<FullCustomerProfile[]> {
   }
   return response.json();
 }
+
+/**
+ * Lấy thông tin chi tiết một khách hàng bằng ID (cho admin)
+ * @param customerId ID của khách hàng
+ */
+export async function getCustomerById(
+  customerId: string
+): Promise<FullCustomerProfile> {
+  return apiClient<FullCustomerProfile>(`/admin/customers/${customerId}`);
+}
+
 /**
  * Cập nhật thông tin profile của khách hàng đang đăng nhập
  * @param data Dữ liệu cần cập nhật (full_name, phone)

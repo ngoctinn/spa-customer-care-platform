@@ -1,14 +1,13 @@
-// src/app/(admin)/dashboard/customers/page.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
 import { z } from "zod";
+import Link from "next/link"; // Import Link
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
 import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
 import { FullCustomerProfile } from "@/features/customer/types";
-import CustomerFormFields from "@/features/customer/components/CustomerFormFields"; // Sẽ tạo component này
+import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 
 const customerFormSchema = z.object({
   full_name: z.string().min(3, "Tên phải có ít nhất 3 ký tự."),
@@ -17,13 +16,28 @@ const customerFormSchema = z.object({
 });
 type CustomerFormValues = z.infer<typeof customerFormSchema>;
 
+// Update columns to include a link
 const columns: ColumnDef<FullCustomerProfile>[] = [
-  { accessorKey: "full_name", header: "Tên khách hàng" },
+  {
+    accessorKey: "full_name",
+    header: "Tên khách hàng",
+    cell: ({ row }) => (
+      <Link
+        href={`/dashboard/customers/${row.original.id}`}
+        className="font-medium text-primary hover:underline"
+      >
+        {row.original.full_name}
+      </Link>
+    ),
+  },
   { accessorKey: "email", header: "Email" },
   { accessorKey: "phone", header: "Số điện thoại" },
   {
     accessorKey: "customer_profile.loyalty_points",
     header: "Điểm thưởng",
+    cell: ({ row }) =>
+      row.original.customer_profile.loyalty_points?.toLocaleString("vi-VN") ||
+      0,
   },
   {
     accessorKey: "customer_profile.last_visit",

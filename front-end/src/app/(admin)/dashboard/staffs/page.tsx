@@ -1,9 +1,8 @@
-// src/app/(admin)/dashboard/staff/page.tsx (Refactored)
 "use client";
 
 import React, { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
+import Link from "next/link"; // Đảm bảo đã import Link
 import { MoreHorizontal, Edit, Trash2, CalendarClock } from "lucide-react";
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
@@ -22,7 +21,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Component RowActions tùy chỉnh cho Staff
 const StaffRowActions = ({
   item,
   onEdit,
@@ -45,7 +43,7 @@ const StaffRowActions = ({
         Chỉnh sửa
       </DropdownMenuItem>
       <DropdownMenuItem asChild>
-        <Link href={`/dashboard/staff/${item.id}/schedule`}>
+        <Link href={`/dashboard/staffs/${item.id}/schedule`}>
           <CalendarClock className="mr-2 h-4 w-4" />
           Quản lý lịch
         </Link>
@@ -66,7 +64,19 @@ export default function StaffPage() {
 
   const staffColumns = useMemo<ColumnDef<FullStaffProfile>[]>(
     () => [
-      { accessorKey: "full_name", header: "Họ và tên" },
+      {
+        accessorKey: "full_name",
+        header: "Họ và tên",
+        cell: ({ row }) => (
+          // Bọc tên nhân viên trong Link để trỏ đến trang chi tiết
+          <Link
+            href={`/dashboard/staffs/${row.original.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {row.original.full_name}
+          </Link>
+        ),
+      },
       { accessorKey: "email", header: "Email" },
       {
         accessorKey: "phone",
