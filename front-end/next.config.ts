@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        protocol: "https",
+        hostname: "picsum.photos", // Thêm tên miền picsum.photos vào danh sách
+        // Bạn có thể thêm các cấu hình path và port nếu cần,
+        // nhưng với picsum.photos thì chỉ cần hostname là đủ.
+      },
     ],
   },
 };
