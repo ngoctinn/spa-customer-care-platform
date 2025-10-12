@@ -12,6 +12,7 @@ from app.api import (
     catalog_api,
     images_api,
     customers_api,
+    staff_api,
 )
 
 router = APIRouter()
@@ -38,3 +39,4 @@ router.include_router(
 )
 router.include_router(images_api.router, prefix="/images", tags=["Images"])
 router.include_router(customers_api.router, prefix="/customers", tags=["Customers"])
+router.include_router(staff_api.router, prefix="/staff", tags=["Staff Management"])

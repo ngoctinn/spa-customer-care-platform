@@ -1,11 +1,14 @@
 # app/models/users_model.py
 import uuid
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from app.models.base_model import BaseUUIDModel
 from app.models.schedules_model import DefaultSchedule
 from app.models.customers_model import Customer
+
+if TYPE_CHECKING:
+    from app.models.staff_model import StaffProfile
 
 
 class UserRole(SQLModel, table=True):
@@ -47,6 +50,9 @@ class User(BaseUUIDModel, table=True):
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
     customer_profile: Optional["Customer"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+    staff_profile: Optional["StaffProfile"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
 
