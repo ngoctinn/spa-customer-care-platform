@@ -1,4 +1,3 @@
-// src/components/common/DetailPageLayout.tsx
 "use client";
 
 import Image from "next/image";
@@ -61,7 +60,11 @@ export const DetailPageLayout = ({
         <div>
           <div
             className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg shadow-lg border bg-muted cursor-pointer"
-            onClick={() => openLightbox(currentMainImageIndex)}
+            onClick={() =>
+              openLightbox(
+                currentMainImageIndex >= 0 ? currentMainImageIndex : 0
+              )
+            }
           >
             <Image
               src={mainImage || "/images/product-placeholder.png"}
@@ -97,7 +100,6 @@ export const DetailPageLayout = ({
           {description}
           <div className="flex items-center gap-6 my-6">{details}</div>
           {purchaseActions}
-          {/* Hiển thị TreatmentSteps nếu được cung cấp */}
         </div>
       </div>
       <div className="mt-12">{children}</div>

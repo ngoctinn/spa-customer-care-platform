@@ -40,11 +40,14 @@ import {
   ExportSlipFormValues,
 } from "@/features/inventory/schemas/warehouse-slip.schema";
 import { useSuppliers } from "../../hooks/useSuppliers";
+import { WarehouseSlip } from "../../types";
 
 interface CreateWarehouseSlipFormProps {
   type: "IMPORT" | "EXPORT";
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
+  // Prop mới để truyền dữ liệu phiếu cần sửa
+  initialData?: WarehouseSlip;
 }
 
 type WarehouseSlipFormValues = ImportSlipFormValues | ExportSlipFormValues;
@@ -53,8 +56,9 @@ export function CreateWarehouseSlipForm({
   type,
   onSubmit,
   isSubmitting,
+  initialData,
 }: CreateWarehouseSlipFormProps) {
-  const { items, addItem, removeItem, updateItem, clearItems } =
+  const { items, addItem, removeItem, updateItem, clearItems, setItems } =
     useSlipFormStore();
   const isImport = type === "IMPORT";
 
@@ -70,18 +74,36 @@ export function CreateWarehouseSlipForm({
     },
   });
 
+  // Điền dữ liệu cho form sửa
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        notes: initialData.notes || "",
+        ...(isImport && { supplier_id: initialData.supplier?.id }),
+      });
+      setItems(initialData.items);
+    }
+  }, [initialData, form, setItems, isImport]);
+
   useEffect(() => {
     form.setValue("items", items);
   }, [items, form]);
 
   useEffect(() => {
+    // Xóa item trong store khi component unmount
     return () => clearItems();
   }, [clearItems]);
 
   const handleProductSelect = (product: Product) => {
+    // Không cho phép xuất quá tồn kho
+    if (!isImport && product.stock <= 0) {
+      alert("Sản phẩm đã hết hàng, không thể xuất kho.");
+      return;
+    }
     addItem(product, isImport);
   };
 
+  // Tự động tính tổng tiền
   const totalAmount = items.reduce(
     (sum, item) => sum + item.quantity * (item.unit_price || 0),
     0
@@ -234,7 +256,7 @@ export function CreateWarehouseSlipForm({
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Đang xử lý..." : "Tạo Phiếu"}
+            {isSubmitting ? "Đang xử lý..." : "Lưu Phiếu"}
           </Button>
         </div>
       </form>

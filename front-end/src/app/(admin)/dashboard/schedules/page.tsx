@@ -1,4 +1,3 @@
-// src/app/(admin)/dashboard/schedules/page.tsx
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -13,6 +12,7 @@ import {
   getAdminSchedules,
   approveSchedule,
   rejectSchedule,
+  getTimeEntries,
 } from "@/features/schedule/api/schedule.api";
 import { useStaff } from "@/features/staff/hooks/useStaff";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -29,15 +29,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-import { FlexibleSchedule } from "@/features/schedule/types";
+import { Check, X, Clock, LogIn, LogOut } from "lucide-react";
+import { FlexibleSchedule, TimeEntry } from "@/features/schedule/types";
+import { Badge } from "@/components/ui/badge";
 
 const statusColors = {
   pending: "bg-warning",
   approved: "bg-success",
   rejected: "bg-destructive",
 };
-
 export default function ScheduleManagementPage() {
   const queryClient = useQueryClient();
   const [dateRange, setDateRange] = useState({
@@ -58,23 +58,45 @@ export default function ScheduleManagementPage() {
         dateRange.end.toISOString()
       ),
   });
+  const { data: timeEntries = [], isLoading: isLoadingTimeEntries } = useQuery({
+    queryKey: ["allTimeEntries"], // Lấy tất cả time entries
+    queryFn: getTimeEntries,
+  });
 
   const staffMap = useMemo(
     () => new Map(staffList.map((s) => [s.id, s.full_name])),
     [staffList]
   );
 
+  const timeEntryMap = useMemo(() => {
+    return new Map<string, TimeEntry>();
+  }, [timeEntries]);
+
   const calendarEvents = useMemo(() => {
-    return schedules.map((schedule) => ({
-      id: schedule.id,
-      title: staffMap.get(schedule.user_id) || "Không rõ",
-      start: new Date(schedule.start_time),
-      end: new Date(schedule.end_time),
-      backgroundColor: statusColors[schedule.status],
-      borderColor: statusColors[schedule.status],
-      extendedProps: schedule,
-    }));
-  }, [schedules, staffMap]);
+    return schedules.map((schedule) => {
+      const timeEntry = timeEntryMap.get(schedule.id);
+      let timeStatus = null;
+      if (schedule.status === "approved") {
+        if (timeEntry?.check_out_time) {
+          timeStatus = "checked-out";
+        } else if (timeEntry?.check_in_time) {
+          timeStatus = "checked-in";
+        } else {
+          timeStatus = "not-checked-in";
+        }
+      }
+
+      return {
+        id: schedule.id,
+        title: staffMap.get(schedule.user_id) || "Không rõ",
+        start: new Date(schedule.start_time),
+        end: new Date(schedule.end_time),
+        backgroundColor: statusColors[schedule.status],
+        borderColor: statusColors[schedule.status],
+        extendedProps: { ...schedule, timeStatus },
+      };
+    });
+  }, [schedules, staffMap, timeEntryMap]);
 
   const approveMutation = useMutation({
     mutationFn: approveSchedule,
@@ -105,19 +127,29 @@ export default function ScheduleManagementPage() {
       setIsDialogOpen(true);
     }
   };
-
   const renderEventContent = (eventInfo: EventContentArg) => {
+    const { timeStatus } = eventInfo.event.extendedProps;
     return (
-      <div className="p-1">
+      <div className="p-1 w-full overflow-hidden">
         <b>{eventInfo.timeText}</b>
         <p className="whitespace-nowrap overflow-hidden text-ellipsis">
           {eventInfo.event.title}
         </p>
+        {timeStatus === "checked-in" && (
+          <Badge variant="outline" className="mt-1 bg-green-100 text-green-800">
+            <LogIn className="h-3 w-3 mr-1" /> Đã vào
+          </Badge>
+        )}
+        {timeStatus === "checked-out" && (
+          <Badge variant="outline" className="mt-1">
+            <LogOut className="h-3 w-3 mr-1" /> Đã về
+          </Badge>
+        )}
       </div>
     );
   };
 
-  if (isLoadingStaff || isLoadingSchedules) {
+  if (isLoadingStaff || isLoadingSchedules || isLoadingTimeEntries) {
     return <FullPageLoader text="Đang tải dữ liệu lịch làm việc..." />;
   }
 
@@ -172,8 +204,13 @@ export default function ScheduleManagementPage() {
               <p>
                 Thời gian:{" "}
                 <strong>
-                  {selectedEvent?.start_time.toLocaleString()} -{" "}
-                  {selectedEvent?.end_time.toLocaleString()}
+                  {selectedEvent?.start_time &&
+                    new Date(selectedEvent.start_time).toLocaleString(
+                      "vi-VN"
+                    )}{" "}
+                  -{" "}
+                  {selectedEvent?.end_time &&
+                    new Date(selectedEvent.end_time).toLocaleString("vi-VN")}
                 </strong>
               </p>
               Bạn muốn duyệt hay từ chối ca làm việc này?

@@ -8,7 +8,7 @@ import PromotionCard from "@/features/promotion/components/PromotionCard";
 import { getPromotions } from "@/features/promotion/api/promotion.api";
 import { getServices } from "@/features/service/api/service.api";
 import ServiceCard from "@/features/service/components/ServiceCard";
-import { getTreatmentPlans } from "@/features/treatment/api/treatment.api";
+import { getTreatmentPlans } from "@/features/treatment/apis/treatment.api";
 import TreatmentPlanCard from "@/features/treatment/components/TreatmentPlanCard";
 import Link from "next/link";
 import { CalendarPlus } from "lucide-react";

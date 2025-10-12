@@ -2,7 +2,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Eye, Printer, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Printer, Trash2, Edit } from "lucide-react"; // Thêm icon Edit
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,10 +18,12 @@ import { WarehouseSlip } from "../../types";
 const SlipRowActions = ({
   slip,
   onView,
+  onEdit, // Thêm prop onEdit
   onDelete,
 }: {
   slip: WarehouseSlip;
   onView: (slip: WarehouseSlip) => void;
+  onEdit: (slip: WarehouseSlip) => void; // Định nghĩa kiểu
   onDelete: (slip: WarehouseSlip) => void;
 }) => (
   <DropdownMenu>
@@ -35,6 +37,10 @@ const SlipRowActions = ({
       <DropdownMenuLabel>Hành động</DropdownMenuLabel>
       <DropdownMenuItem onClick={() => onView(slip)}>
         <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
+      </DropdownMenuItem>
+      {/* Thêm mục Sửa */}
+      <DropdownMenuItem onClick={() => onEdit(slip)}>
+        <Edit className="mr-2 h-4 w-4" /> Sửa phiếu
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => alert(`In phiếu ${slip.code}`)}>
         <Printer className="mr-2 h-4 w-4" /> In phiếu
@@ -52,6 +58,7 @@ const SlipRowActions = ({
 // Hàm tạo danh sách các cột cho bảng
 export const getSlipColumns = (
   onView: (slip: WarehouseSlip) => void,
+  onEdit: (slip: WarehouseSlip) => void, // Thêm onEdit
   onDelete: (slip: WarehouseSlip) => void
 ): ColumnDef<WarehouseSlip>[] => [
   {
@@ -81,9 +88,9 @@ export const getSlipColumns = (
       new Date(row.original.created_at).toLocaleDateString("vi-VN"),
   },
   {
-    accessorKey: "supplier",
+    accessorKey: "supplier.name", // Cập nhật để sort/filter
     header: "Nhà Cung Cấp",
-    cell: ({ row }) => row.original.supplier || "N/A",
+    cell: ({ row }) => row.original.supplier?.name || "N/A",
   },
   {
     accessorKey: "total_amount",
@@ -96,7 +103,12 @@ export const getSlipColumns = (
   {
     id: "actions",
     cell: ({ row }) => (
-      <SlipRowActions slip={row.original} onView={onView} onDelete={onDelete} />
+      <SlipRowActions
+        slip={row.original}
+        onView={onView}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
     ),
   },
 ];

@@ -4,13 +4,14 @@ import { toast } from "sonner";
 import {
   getWarehouseSlips,
   createWarehouseSlip,
+  updateWarehouseSlip,
+  deleteWarehouseSlip,
 } from "@/features/inventory/apis/warehouse-slip.api";
 import {
   ImportSlipFormValues,
   ExportSlipFormValues,
 } from "@/features/inventory/schemas/warehouse-slip.schema";
 import { WarehouseSlip } from "@/features/inventory/types";
-import { deleteWarehouseSlip } from "@/features/inventory/apis/warehouse-slip.api";
 
 const queryKey = ["warehouseSlips"];
 
@@ -43,6 +44,29 @@ export const useWarehouseSlipMutations = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      slipData,
+    }: {
+      id: string;
+      slipData: (ImportSlipFormValues | ExportSlipFormValues) & {
+        type: "IMPORT" | "EXPORT";
+      };
+    }) => updateWarehouseSlip(id, slipData),
+    onSuccess: () => {
+      toast.success("Cập nhật phiếu kho thành công!");
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventoryHistory"] });
+    },
+    onError: (error) => {
+      toast.error("Cập nhật phiếu kho thất bại", {
+        description: error.message,
+      });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (slipId: string) => deleteWarehouseSlip(slipId),
     onSuccess: () => {
@@ -58,5 +82,5 @@ export const useWarehouseSlipMutations = () => {
     },
   });
 
-  return { createMutation, deleteMutation };
+  return { createMutation, updateMutation, deleteMutation };
 };

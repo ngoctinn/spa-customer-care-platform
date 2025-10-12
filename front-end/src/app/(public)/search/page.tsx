@@ -1,6 +1,6 @@
 import { getProducts } from "@/features/product/api/product.api";
 import { getServices } from "@/features/service/api/service.api";
-import { getTreatmentPlans } from "@/features/treatment/api/treatment.api";
+import { getTreatmentPlans } from "@/features/treatment/apis/treatment.api";
 import { Suspense } from "react";
 import { SearchResultList } from "@/features/search/components/SearchResultList";
 import { DataStateMessage } from "@/components/common/DataStateMessage";

@@ -1,3 +1,4 @@
+// src/features/checkout/api/invoice.api.ts
 // src/features/billing/api/invoice.api.ts
 import { Invoice, ShippingAddress } from "@/features/checkout/types";
 import { v4 as uuidv4 } from "uuid";
@@ -44,6 +45,17 @@ export async function createOrder(
 export async function getInvoiceById(invoiceId: string): Promise<Invoice> {
   // Giả sử endpoint của bạn là /invoices/:id
   return apiClient<Invoice>(`/invoices/${invoiceId}`);
+}
+
+/**
+ * Lấy danh sách hóa đơn theo ID khách hàng.
+ * @param customerId ID của khách hàng.
+ * @returns Promise chứa danh sách hóa đơn.
+ */
+export async function getInvoicesByCustomerId(
+  customerId: string
+): Promise<Invoice[]> {
+  return apiClient<Invoice[]>(`/invoices?customerId=${customerId}`);
 }
 
 export type InvoiceCreationData = Omit<

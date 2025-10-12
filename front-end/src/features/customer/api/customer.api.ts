@@ -1,5 +1,6 @@
 import { FullCustomerProfile } from "@/features/customer/types";
 import apiClient from "@/lib/apiClient";
+import { CustomerFormValues } from "../hooks/useCustomerManagement";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -38,7 +39,7 @@ export async function updateCustomerProfile(
 }
 
 /**
- * ++ HÀM MỚI: Admin cập nhật thông tin của một khách hàng bất kỳ ++
+ * Admin cập nhật thông tin của một khách hàng bất kỳ
  * @param customerId ID của khách hàng cần cập nhật
  * @param data Dữ liệu cần cập nhật
  */
@@ -54,7 +55,20 @@ export async function updateCustomerById(
 }
 
 /**
- * ++ HÀM MỚI: Vô hiệu hóa một tài khoản khách hàng ++
+ * Admin thêm một khách hàng mới
+ * @param customerData Dữ liệu khách hàng từ form
+ */
+export async function addCustomer(
+  customerData: CustomerFormValues
+): Promise<FullCustomerProfile> {
+  return apiClient<FullCustomerProfile>("/admin/customers", {
+    method: "POST",
+    body: JSON.stringify(customerData),
+  });
+}
+
+/**
+ * Vô hiệu hóa một tài khoản khách hàng
  * @param customerId ID của khách hàng cần vô hiệu hóa
  */
 export async function deactivateCustomer(customerId: string): Promise<void> {

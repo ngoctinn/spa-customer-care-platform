@@ -1,4 +1,3 @@
-// src/features/product/components/columns.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -147,7 +146,6 @@ export const getProductColumns = (
       </div>
     ),
     filterFn: (row, id, value) => {
-      // Logic filter cũng được đơn giản hóa
       const categoryNames = row.original.categories.map((c) => c.name);
       return value.some((val: string) => categoryNames.includes(val));
     },

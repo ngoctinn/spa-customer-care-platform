@@ -32,9 +32,9 @@ import {
   XCircle,
   HelpCircle,
 } from "lucide-react";
-import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { FlexibleSchedule } from "@/features/schedule/types";
+import { format, isWithinInterval, subMinutes } from "date-fns";
 
 const scheduleSubmissionSchema = z
   .object({
@@ -205,15 +205,21 @@ export default function EmployeeSchedulePage() {
     [timeEntries]
   );
 
-  // Tìm ca làm việc ĐÃ ĐƯỢC DUYỆT trong ngày hôm nay mà CHƯA CÓ time entry
-  const approvedScheduleForToday = useMemo(() => {
-    return mySchedules.find(
-      (schedule) =>
-        schedule.status === "approved" &&
-        !timeEntries.some((entry) => entry.schedule_id === schedule.id)
-    );
-  }, [mySchedules, timeEntries]);
+  const availableScheduleForCheckIn = useMemo(() => {
+    const now = new Date();
+    return mySchedules.find((schedule) => {
+      const startTime = new Date(schedule.start_time);
+      const endTime = new Date(schedule.end_time);
+      // Cho phép check-in trước 15 phút
+      const checkInWindow = { start: subMinutes(startTime, 15), end: endTime };
 
+      return (
+        schedule.status === "approved" &&
+        !timeEntries.some((entry) => entry.schedule_id === schedule.id) &&
+        isWithinInterval(now, checkInWindow)
+      );
+    });
+  }, [mySchedules, timeEntries]);
   return (
     <div className="space-y-6">
       <PageHeader title="Lịch làm việc & Chấm công của tôi" />
@@ -253,15 +259,17 @@ export default function EmployeeSchedulePage() {
               size="lg"
               onClick={() =>
                 checkInMutation.mutate({
-                  schedule_id: approvedScheduleForToday!.id,
+                  schedule_id: availableScheduleForCheckIn!.id,
                 })
               }
-              disabled={checkInMutation.isPending || !approvedScheduleForToday}
+              disabled={
+                checkInMutation.isPending || !availableScheduleForCheckIn
+              }
             >
               <LogIn className="mr-2" /> Check In
             </Button>
           )}
-          {!approvedScheduleForToday && !activeTimeEntry && (
+          {!availableScheduleForCheckIn && !activeTimeEntry && (
             <p className="text-sm text-muted-foreground">
               Bạn không có ca làm việc nào được duyệt hôm nay để check-in.
             </p>

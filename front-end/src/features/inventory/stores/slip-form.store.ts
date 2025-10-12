@@ -9,6 +9,7 @@ interface SlipFormState {
   removeItem: (productId: string) => void;
   updateItem: (productId: string, newValues: Partial<SlipItem>) => void;
   clearItems: () => void;
+  setItems: (items: SlipItem[]) => void;
 }
 
 export const useSlipFormStore = create<SlipFormState>((set) => ({
@@ -41,4 +42,5 @@ export const useSlipFormStore = create<SlipFormState>((set) => ({
       ),
     })),
   clearItems: () => set({ items: [] }),
+  setItems: (items) => set({ items }),
 }));
