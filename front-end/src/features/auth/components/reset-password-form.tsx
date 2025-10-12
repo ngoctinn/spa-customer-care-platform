@@ -2,11 +2,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useTransition } from "react";
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import * as z from "zod";
+
+import { Button } from "@/components/ui/button";
 import {
   CardContent,
   CardDescription,
@@ -21,8 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/common/password-input";
+import { Input } from "@/components/ui/input";
 import { resetPassword } from "@/features/auth/apis/password.api";
 import { resetPasswordFormSchema } from "@/features/auth/schemas";
 
@@ -33,6 +35,8 @@ export const ResetPasswordForm = () => {
   const token = searchParams.get("token");
 
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof resetPasswordFormSchema>>({
     resolver: zodResolver(resetPasswordFormSchema),
@@ -40,15 +44,12 @@ export const ResetPasswordForm = () => {
       password: "",
       confirmPassword: "",
     },
+    mode: "onChange",
   });
 
   const onSubmit = (values: z.infer<typeof resetPasswordFormSchema>) => {
-    alert(values.password);
-    alert(token);
-
     if (!token) {
       toast.error("Đường dẫn không hợp lệ hoặc đã hết hạn.");
-      console.error("Không tìm thấy token trong URL.");
       return;
     }
 
@@ -72,12 +73,10 @@ export const ResetPasswordForm = () => {
             ? error.message
             : "Đã xảy ra lỗi không xác định. Vui lòng thử lại.";
         toast.error("Thao tác thất bại", { description: errorMessage });
-        console.error("Lỗi khi đặt lại/thiết lập mật khẩu:", error);
       }
     });
   };
 
-  // Nếu không có token, hiển thị thông báo lỗi
   if (!token) {
     return (
       <CardHeader className="text-center">
@@ -104,14 +103,30 @@ export const ResetPasswordForm = () => {
             <FormField
               control={form.control}
               name="password"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Mật khẩu mới</FormLabel>
                   <FormControl>
-                    <PasswordInput
+                    <Input
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : showPassword ? (
+                          <EyeOff
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowPassword(false)}
+                          />
+                        ) : (
+                          <Eye
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowPassword(true)}
+                          />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -121,14 +136,30 @@ export const ResetPasswordForm = () => {
             <FormField
               control={form.control}
               name="confirmPassword"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Xác nhận mật khẩu mới</FormLabel>
                   <FormControl>
-                    <PasswordInput
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       {...field}
                       disabled={isPending}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : showConfirmPassword ? (
+                          <EyeOff
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowConfirmPassword(false)}
+                          />
+                        ) : (
+                          <Eye
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowConfirmPassword(true)}
+                          />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -136,6 +167,7 @@ export const ResetPasswordForm = () => {
               )}
             />
             <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isPending ? "Đang xử lý..." : "Xác nhận"}
             </Button>
           </CardContent>

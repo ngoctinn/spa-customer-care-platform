@@ -2,17 +2,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle } from "lucide-react"; // <--- Thêm icons
+import { AlertCircle, Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation"; // <--- Import useSearchParams
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
 import * as z from "zod";
 
-import { PasswordInput } from "@/components/common/password-input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // <--- Import Alert
 import { Button } from "@/components/ui/button";
 import {
   CardContent,
@@ -30,23 +28,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner"; // <--- Import Spinner (giả sử bạn đã có)
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { loginSchema } from "@/features/auth/schemas";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const searchParams = useSearchParams();
 
-  // Xử lý lỗi từ redirect của Google OAuth
   useEffect(() => {
     const googleError = searchParams.get("error");
     if (googleError) {
       setError("Đăng nhập với Google thất bại. Vui lòng thử lại.");
-      // Có thể thay thế bằng toast nếu muốn
-      // toast.error("Đăng nhập với Google thất bại", { description: "Vui lòng thử lại." });
     }
   }, [searchParams]);
 
@@ -56,17 +51,17 @@ export const LoginForm = () => {
       email: "",
       password: "",
     },
+    mode: "onChange",
   });
 
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
-    setError(null); // Xóa lỗi cũ khi submit lại
+    setError(null);
     startTransition(async () => {
       try {
         await login(values);
         toast.success("Đăng nhập thành công!", {
           description: "Chào mừng bạn đã quay trở lại.",
         });
-        // Chuyển hướng sẽ được xử lý trong AuthContext
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -78,8 +73,6 @@ export const LoginForm = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Chuyển hướng đến backend để xử lý OAuth
-    // Đảm bảo NEXT_PUBLIC_API_URL được cấu hình trong .env.local
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     window.location.href = `${apiUrl}/auth/login/google`;
   };
@@ -87,25 +80,24 @@ export const LoginForm = () => {
   return (
     <>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Đăng nhập</CardTitle>
+        <CardTitle className="text-2xl">Chào mừng trở lại!</CardTitle>
         <CardDescription>
-          Nhập email và mật khẩu để truy cập tài khoản của bạn.
+          Đăng nhập để tiếp tục hành trình chăm sóc của bạn.
         </CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <CardContent className="space-y-4">
             {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Lỗi</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="flex items-center gap-x-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <p>{error}</p>
+              </div>
             )}
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
@@ -114,6 +106,13 @@ export const LoginForm = () => {
                       {...field}
                       disabled={isPending}
                       type="email"
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -123,7 +122,7 @@ export const LoginForm = () => {
             <FormField
               control={form.control}
               name="password"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
                     <FormLabel>Mật khẩu</FormLabel>
@@ -136,10 +135,27 @@ export const LoginForm = () => {
                     </Link>
                   </div>
                   <FormControl>
-                    <PasswordInput
+                    <Input
                       placeholder="••••••••"
                       {...field}
                       disabled={isPending}
+                      type={showPassword ? "text" : "password"}
+                      icon={
+                        fieldState.error ? (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        ) : showPassword ? (
+                          <EyeOff
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowPassword(false)}
+                          />
+                        ) : (
+                          <Eye
+                            className="h-4 w-4 text-muted-foreground"
+                            onClick={() => setShowPassword(true)}
+                          />
+                        )
+                      }
+                      // ✅ ĐÃ XÓA CLASS `animate-shake` TẠI ĐÂY
                     />
                   </FormControl>
                   <FormMessage />
@@ -147,7 +163,8 @@ export const LoginForm = () => {
               )}
             />
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? <Spinner /> : "Đăng Nhập"}
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending ? "Đang xử lý..." : "Đăng Nhập"}
             </Button>
           </CardContent>
         </form>
@@ -170,7 +187,7 @@ export const LoginForm = () => {
           onClick={handleGoogleLogin}
           disabled={isPending}
         >
-          <FcGoogle className="size-5 mr-2" aria-hidden="true" />
+          <FcGoogle className="mr-2 h-5 w-5" />
           Google
         </Button>
       </CardContent>

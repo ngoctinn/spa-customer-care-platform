@@ -21,10 +21,11 @@ export const emailSchema = z
   .string()
   .email({ message: "Địa chỉ email không hợp lệ." });
 
-// Dùng cho mật khẩu
+// Dùng cho mật khẩu phải có ít nhất 6 ký tự và một chữ số
 export const passwordSchema = z
   .string()
-  .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." });
+  .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." })
+  .regex(/[0-9]/, { message: "Mật khẩu phải chứa ít nhất một chữ số." });
 
 // Dùng cho số điện thoại
 export const phoneSchema = z.string().regex(/(0[3|5|7|8|9])+([0-9]{8})\b/, {
