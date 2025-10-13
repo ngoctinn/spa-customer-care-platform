@@ -2,7 +2,6 @@
 import uuid
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
-from datetime import datetime
 from app.models.base_model import BaseUUIDModel
 from app.models.schedules_model import DefaultSchedule
 from app.models.customers_model import Customer
@@ -11,53 +10,37 @@ from app.models.staff_model import StaffProfile, StaffTimeOff
 
 class UserRole(SQLModel, table=True):
     __tablename__ = "user_role"
-    user_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        primary_key=True,
-    )
-    role_id: uuid.UUID = Field(
-        foreign_key="role.id",
-        primary_key=True,
-    )
+    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
+    role_id: uuid.UUID = Field(foreign_key="role.id", primary_key=True)
 
 
 class RolePermission(SQLModel, table=True):
     __tablename__ = "role_permission"
-    role_id: uuid.UUID = Field(
-        foreign_key="role.id",
-        primary_key=True,
-    )
-    permission_id: uuid.UUID = Field(
-        foreign_key="permission.id",
-        primary_key=True,
-    )
+    role_id: uuid.UUID = Field(foreign_key="role.id", primary_key=True)
+    permission_id: uuid.UUID = Field(foreign_key="permission.id", primary_key=True)
 
 
 class User(BaseUUIDModel, table=True):
     __tablename__ = "user"
 
     email: str = Field(index=True, nullable=False, unique=True)
-    full_name: str | None = Field(default=None, max_length=100)
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True, nullable=False)
     is_email_verified: bool = Field(default=False, nullable=False)
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRole)
 
-    # Mối quan hệ một-nhiều: một User có thể có nhiều lịch mặc định
     default_schedules: List["DefaultSchedule"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
     customer_profile: Optional["Customer"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
-
-    # Mối quan hệ một-một với StaffProfile
     staff_profile: Optional["StaffProfile"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
     )
 
-    # Mối quan hệ với đơn nghỉ phép (với tư cách người duyệt)
+    # THÊM MỚI: Mối quan hệ ngược lại với StaffTimeOff
     approved_time_off_requests: List["StaffTimeOff"] = Relationship(
         back_populates="approver"
     )
@@ -66,13 +49,19 @@ class User(BaseUUIDModel, table=True):
     def is_admin(self) -> bool:
         return any(role.name == "admin" for role in self.roles)
 
+    @property
+    def full_name(self) -> str | None:
+        if self.staff_profile and self.staff_profile.full_name:
+            return self.staff_profile.full_name
+        if self.customer_profile and self.customer_profile.full_name:
+            return self.customer_profile.full_name
+        return None
+
 
 class Role(BaseUUIDModel, table=True):
     __tablename__ = "role"
-
     name: str = Field(index=True, nullable=False, unique=True)
     description: str | None = Field(default=None, nullable=True)
-
     users: List[User] = Relationship(back_populates="roles", link_model=UserRole)
     permissions: List["Permission"] = Relationship(
         back_populates="roles", link_model=RolePermission
@@ -81,10 +70,8 @@ class Role(BaseUUIDModel, table=True):
 
 class Permission(BaseUUIDModel, table=True):
     __tablename__ = "permission"
-
     name: str = Field(index=True, nullable=False, unique=True)
     description: str | None = Field(default=None, nullable=True)
-
     roles: List[Role] = Relationship(
         back_populates="permissions", link_model=RolePermission
     )

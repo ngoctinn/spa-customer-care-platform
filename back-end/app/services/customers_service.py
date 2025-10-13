@@ -1,15 +1,14 @@
-# app/services/customers_service.py (Mã đã Refactor)
+# app/services/customers_service.py
 import uuid
-from typing import List, Optional
-from sqlmodel import Session, select
-from fastapi import HTTPException, status
+from typing import List, Optional, Tuple
 
-# Thêm import Load từ sqlalchemy.orm
+from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload, Load
+from sqlmodel import Session, select
 
 from app.models.customers_model import Customer
-from app.models.users_model import User  # NEW: Import User for relationships
-from app.models.catalog_model import Image  # NEW: Import Image for relationships
+from app.models.users_model import User
+from app.models.catalog_model import Image
 from app.schemas.customers_schema import (
     CustomerCreate,
     CustomerCreateAtStore,
@@ -22,7 +21,6 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
     def __init__(self):
         super().__init__(Customer)
 
-    # --- BƯỚC 1: IMPLEMENT HOOK: Tải quan hệ ---
     def _get_load_options(self) -> List[Load]:
         """Tải các mối quan hệ cần thiết cho Customer."""
         return [
@@ -30,25 +28,19 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             selectinload(Customer.avatar),
         ]
 
-    # --- BƯỚC 2: IMPLEMENT HOOK: Lọc quan hệ soft-delete ---
     def _filter_relationships(self, customer: Customer) -> Customer:
         """Lọc các mối quan hệ soft-deleted."""
-        # Lọc user soft-deleted
         if customer.user and customer.user.is_deleted:
             customer.user = None
             customer.user_id = None
-        # Lọc avatar soft-deleted
         if customer.avatar and customer.avatar.is_deleted:
             customer.avatar = None
             customer.avatar_id = None
-
         return customer
 
-    # --- CẬP NHẬT: get_by_phone_number (Sử dụng hooks để tải và lọc) ---
     def get_by_phone_number(
         self, db: Session, *, phone_number: str
     ) -> Optional[Customer]:
-        # Tái sử dụng logic BaseService: áp dụng load options
         statement = (
             select(self.model)
             .where(
@@ -56,61 +48,108 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             )
             .options(*self._get_load_options())
         )
-
         customer = db.exec(statement).first()
-
         if customer:
-            # Áp dụng lọc quan hệ
             return self._filter_relationships(customer)
         return None
 
-    # --- CẬP NHẬT: get_by_email (Sử dụng hooks để tải và lọc) ---
-    def get_by_email(self, db: Session, *, email: str) -> Optional[Customer]:
-        # Tái sử dụng logic BaseService: áp dụng load options
+    def get_by_user_id(self, db: Session, *, user_id: uuid.UUID) -> Optional[Customer]:
+        """Lấy hồ sơ khách hàng bằng user_id."""
         statement = (
             select(self.model)
-            .where(self.model.email == email, self.model.is_deleted == False)
+            .where(self.model.user_id == user_id, self.model.is_deleted == False)
             .options(*self._get_load_options())
         )
-
         customer = db.exec(statement).first()
-
         if customer:
-            # Áp dụng lọc quan hệ
             return self._filter_relationships(customer)
         return None
 
-    # --- CẬP NHẬT: find_or_create_offline_customer ---
     def find_or_create_offline_customer(
         self, db: Session, *, customer_in: CustomerCreateAtStore
-    ) -> Customer:
-        # get_by_phone_number đã được cập nhật để trả về model có relationship
+    ) -> Tuple[Customer, bool]:
+        """
+        Tìm khách hàng bằng SĐT. Nếu tồn tại, trả về khách hàng đó.
+        Nếu không, tạo mới và trả về.
+        Trả về một tuple (customer, created_flag).
+        """
         customer = self.get_by_phone_number(db, phone_number=customer_in.phone_number)
-
         if customer:
-            # ... (giữ nguyên logic update)
-            update_data = customer_in.model_dump(exclude_unset=True)
             updated = False
-            if update_data.get("full_name") and not customer.full_name:
-                customer.full_name = update_data["full_name"]
+            if customer_in.full_name and not customer.full_name:
+                customer.full_name = customer_in.full_name
                 updated = True
-            if update_data.get("email") and not customer.email:
-                customer.email = update_data["email"]
-                updated = True
-
             if updated:
                 db.add(customer)
                 db.commit()
                 db.refresh(customer)
-            return customer
+            return customer, False
 
-        # Create new customer profile
         new_customer_schema = CustomerCreate(**customer_in.model_dump())
-
-        # Gọi BaseService.create, sau đó fetch lại bằng BaseService.get_by_id đã được enhanced
         new_customer = self.create(db, obj_in=new_customer_schema)
+        return (
+            self.get_by_id(db, id=new_customer.id),
+            True,
+        )
 
-        return self.get_by_id(db, id=new_customer.id)  # SỬ DỤNG PHƯƠNG THỨC KẾ THỪA
+    # --- HÀM ĐÃ ĐƯỢC DI CHUYỂN VÀO TRONG CLASS ---
+
+    def get_or_create_for_user(
+        self, db: Session, *, user: User, profile_in: CustomerUpdate
+    ) -> Customer:
+        # Lấy hồ sơ hiện tại của người dùng (nếu có)
+        customer_profile = self.get_by_user_id(db, user_id=user.id)
+        profile_data = profile_in.model_dump(exclude_unset=True)
+
+        if profile_in.phone_number:
+            # Tìm xem có hồ sơ nào khác dùng SĐT này không
+            existing_phone_profile = self.get_by_phone_number(
+                db, phone_number=profile_in.phone_number
+            )
+
+            if existing_phone_profile:
+                # Nếu SĐT đã tồn tại
+                if (
+                    customer_profile
+                    and existing_phone_profile.id != customer_profile.id
+                ):
+                    # Người dùng đã có hồ sơ và đang cố đổi sang SĐT của người khác -> Lỗi
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Số điện thoại đã tồn tại.",
+                    )
+
+                if not customer_profile and existing_phone_profile.user_id:
+                    # Người dùng chưa có hồ sơ và SĐT này đã được gán cho 1 user khác -> Lỗi
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Số điện thoại đã được liên kết với một tài khoản khác.",
+                    )
+
+                if not customer_profile and not existing_phone_profile.user_id:
+                    # **KỊCH BẢN GÁN SĐT TỒN TẠI**
+                    # Người dùng chưa có hồ sơ và SĐT này là của khách vãng lai
+                    # -> Gán hồ sơ khách vãng lai này cho user hiện tại và cập nhật
+                    existing_phone_profile.user_id = user.id
+                    return self.update(
+                        db, db_obj=existing_phone_profile, obj_in=profile_in
+                    )
+
+        # Nếu các điều kiện trên không xảy ra, đi theo luồng cũ
+        if customer_profile:
+            # Cập nhật hồ sơ hiện có
+            return self.update(db, db_obj=customer_profile, obj_in=profile_in)
+        else:
+            # Tạo mới hồ sơ
+            if not profile_in.phone_number:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Số điện thoại là bắt buộc khi tạo hồ sơ.",
+                )
+
+            profile_data["user_id"] = user.id
+            create_schema = CustomerCreate(**profile_data)
+            return self.create(db, obj_in=create_schema)
 
 
 customers_service = CustomerService()

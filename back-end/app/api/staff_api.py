@@ -1,26 +1,23 @@
 # app/api/staff_api.py
-"""Các endpoint phục vụ quản lý nhân viên spa."""
-from __future__ import annotations
-import datetime
 import uuid
 from typing import List
+from fastapi import APIRouter, Depends, status
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
-
 from app.core.dependencies import (
     get_current_admin_user,
-    get_current_user,
     get_db_session,
+    get_current_user,
 )
 from app.models.users_model import User
+
+# SỬA LỖI: Bỏ import StaffScheduleCollection và các import không dùng đến
 from app.schemas.staff_schema import (
     StaffOffboardingResult,
-    StaffProfileCreate,
     StaffProfilePublic,
     StaffProfileUpdate,
     StaffProfileWithServices,
-    StaffScheduleCollection,
+    StaffScheduleCreate,  # Đảm bảo có import này
     StaffSchedulePublic,
     StaffScheduleUpdate,
     StaffServiceAssignment,
@@ -33,51 +30,21 @@ from app.services.staff_service import staff_service
 router = APIRouter()
 
 
-# --- Helper Dependency ---
-def _parse_week_start(week_start: str | None) -> datetime.date | None:
-    if week_start is None:
-        return None
-    try:
-        return datetime.datetime.fromisoformat(week_start).date()
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail="Giá trị week_start phải ở định dạng ISO (YYYY-MM-DD)",
-        )
-
-
-# =================================================================
-# STAFF PROFILE ENDPOINTS (Admin only)
-# =================================================================
-
-
-@router.post(
-    "/",
-    response_model=StaffProfilePublic,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(get_current_admin_user)],
-)
-def create_staff(
-    *, session: Session = Depends(get_db_session), body: StaffProfileCreate
-):
-    return staff_service.create_staff_profile(db=session, data=body)
-
-
 @router.get(
     "/",
     response_model=List[StaffProfilePublic],
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Get all staff profiles",
 )
-def list_staff(
-    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
-):
-    return staff_service.list_staff_profiles(db=session, skip=skip, limit=limit)
+def get_all_staff(session: Session = Depends(get_db_session)):
+    return staff_service.list_staff_profiles(db=session)
 
 
 @router.get(
     "/{staff_id}",
     response_model=StaffProfileWithServices,
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Get staff profile details by profile ID",
 )
 def get_staff_detail(staff_id: uuid.UUID, session: Session = Depends(get_db_session)):
     return staff_service.get_staff_profile_detail(db=session, staff_id=staff_id)
@@ -87,6 +54,7 @@ def get_staff_detail(staff_id: uuid.UUID, session: Session = Depends(get_db_sess
     "/{staff_id}",
     response_model=StaffProfilePublic,
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Update a staff profile",
 )
 def update_staff(
     staff_id: uuid.UUID,
@@ -100,34 +68,32 @@ def update_staff(
     "/{staff_id}/services",
     response_model=StaffProfileWithServices,
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Assign services to a staff member",
 )
 def assign_services(
     staff_id: uuid.UUID,
-    assignment: StaffServiceAssignment,
+    body: StaffServiceAssignment,
     session: Session = Depends(get_db_session),
 ):
     return staff_service.assign_services_to_staff(
-        db=session, staff_id=staff_id, assignment=assignment
+        db=session, staff_id=staff_id, assignment=body
     )
-
-
-# =================================================================
-# STAFF SCHEDULE ENDPOINTS (Admin only for setup, Staff can view own)
-# =================================================================
 
 
 @router.put(
     "/{staff_id}/schedules",
     response_model=List[StaffSchedulePublic],
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Set weekly recurring schedules for a staff member",
 )
-def set_weekly_schedule(
+def set_staff_schedules(
     staff_id: uuid.UUID,
-    payload: StaffScheduleCollection,
+    # SỬA LỖI: Nhận trực tiếp một List thay vì một object bọc ngoài
+    payload: List[StaffScheduleCreate],
     session: Session = Depends(get_db_session),
 ):
     return staff_service.set_weekly_schedules(
-        db=session, staff_id=staff_id, payload=payload.schedules
+        db=session, staff_id=staff_id, payload=payload
     )
 
 
@@ -135,31 +101,31 @@ def set_weekly_schedule(
     "/schedules/{schedule_id}",
     response_model=StaffSchedulePublic,
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Update a specific staff schedule entry",
 )
-def update_schedule(
+def update_staff_schedule(
     schedule_id: uuid.UUID,
-    payload: StaffScheduleUpdate,
+    body: StaffScheduleUpdate,
     session: Session = Depends(get_db_session),
 ):
     return staff_service.update_staff_schedule(
-        db=session, schedule_id=schedule_id, payload=payload
+        db=session, schedule_id=schedule_id, payload=body
     )
 
 
-# =================================================================
-# TIME OFF ENDPOINTS
-# =================================================================
-
-
-@router.post("/time-off", response_model=StaffTimeOffPublic, status_code=201)
-def request_time_off(
-    *,
+@router.post(
+    "/time-off",
+    response_model=StaffTimeOffPublic,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a time-off request (for self or by admin)",
+)
+def create_time_off_request(
+    body: StaffTimeOffCreate,
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db_session),
-    requester: User = Depends(get_current_user),
-    data: StaffTimeOffCreate,
 ):
     return staff_service.create_time_off_request(
-        db=session, requester=requester, data=data
+        db=session, requester=current_user, data=body
     )
 
 
@@ -167,32 +133,29 @@ def request_time_off(
     "/time-off/{request_id}",
     response_model=StaffTimeOffPublic,
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Approve or reject a time-off request",
 )
-def approve_time_off(
+def update_time_off_status(
     request_id: uuid.UUID,
-    data: StaffTimeOffUpdateStatus,
+    body: StaffTimeOffUpdateStatus,
+    approver: User = Depends(get_current_admin_user),
     session: Session = Depends(get_db_session),
-    admin_user: User = Depends(get_current_admin_user),
 ):
     return staff_service.update_time_off_status(
-        db=session, request_id=request_id, approver=admin_user, data=data
+        db=session, request_id=request_id, approver=approver, data=body
     )
-
-
-# =================================================================
-# OFFBOARDING ENDPOINT (Admin only)
-# =================================================================
 
 
 @router.post(
     "/{staff_id}/offboard",
     response_model=StaffOffboardingResult,
     dependencies=[Depends(get_current_admin_user)],
+    summary="[Admin] Offboard a staff member",
 )
 def offboard_staff(
     staff_id: uuid.UUID,
-    session: Session = Depends(get_db_session),
     admin_user: User = Depends(get_current_admin_user),
+    session: Session = Depends(get_db_session),
 ):
     return staff_service.offboard_staff(
         db=session, staff_id=staff_id, admin_user=admin_user

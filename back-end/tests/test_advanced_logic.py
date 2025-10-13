@@ -6,7 +6,9 @@ from sqlmodel import Session, select
 
 from app.models.users_model import User, Role
 from app.models.services_model import Service
-from app.schemas.users_schema import AdminCreateUserRequest
+
+# SỬA LỖI: Import schema mới
+from app.schemas.users_schema import AdminCreateStaffRequest
 from app.services import users_service
 from app.models.catalog_model import Category
 
@@ -19,8 +21,8 @@ def test_create_user_by_admin_rollback_on_failure(
     db_session: Session, admin_authenticated_client: TestClient
 ):
     """
-    Kiểm tra rollback: Khi tạo user với role_id không tồn tại,
-    user cũng không được tạo ra trong CSDL.
+    Kiểm tra rollback: Khi tạo tài khoản nhân viên với role_id không tồn tại,
+    cả User và StaffProfile đều không được tạo ra trong CSDL.
     """
     # 1. Đếm số lượng user trước khi thực hiện
     initial_user_count = len(db_session.exec(select(User)).all())
@@ -30,12 +32,14 @@ def test_create_user_by_admin_rollback_on_failure(
     user_data = {
         "email": f"test_rollback_{uuid.uuid4()}@example.com",
         "full_name": "Rollback User",
+        "phone_number": "0901234567",  # Thêm phone_number theo schema mới
         "role_id": non_existent_role_id,
     }
 
     # 3. Gọi API, mong đợi lỗi 404 vì không tìm thấy role
+    # SỬA LỖI: Endpoint vẫn là /users/ theo users_api.py
     response = admin_authenticated_client.post("/users/", json=user_data)
-    assert response.status_code == 404  # Service get_role_by_id sẽ báo lỗi 404
+    assert response.status_code == 404
     assert "không được tìm thấy" in response.json()["detail"]
 
     # 4. Quan trọng nhất: Kiểm tra lại CSDL để đảm bảo không có user nào được tạo
@@ -57,8 +61,8 @@ def test_create_user_by_admin_rollback_on_failure(
 def test_update_service_change_price_and_categories(
     admin_authenticated_client: TestClient,
     db_session: Session,
-    basic_service_fixture: Service,  # Giả sử bạn có fixture này từ test_services_api.py
-    service_category_fixture: Category,  # Giả sử bạn có fixture này
+    basic_service_fixture: Service,
+    service_category_fixture: Category,
 ):
     """
     Kiểm tra cập nhật đồng thời nhiều thuộc tính của Service,
@@ -78,7 +82,6 @@ def test_update_service_change_price_and_categories(
     update_data = {
         "price": 999999.0,
         "description": "Mô tả đã được cập nhật hoàn toàn",
-        # Cập nhật danh sách category: bỏ category cũ, thêm category mới
         "category_ids": [str(new_category.id)],
     }
 
@@ -100,7 +103,6 @@ def test_update_service_change_price_and_categories(
     db_session.expire_all()
     updated_service = db_session.get(Service, basic_service_fixture.id)
     assert updated_service.price == 999999.0
-    # SQLModel sẽ tự động cập nhật bảng liên kết
     assert len(updated_service.categories) == 1
     assert updated_service.categories[0].id == new_category.id
 

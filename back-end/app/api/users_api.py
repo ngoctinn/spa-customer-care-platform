@@ -4,7 +4,6 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
-# Import các thành phần cần thiết
 from app.core.dependencies import (
     get_current_admin_user,
     get_current_user,
@@ -12,7 +11,7 @@ from app.core.dependencies import (
 )
 from app.models.users_model import User
 from app.schemas.users_schema import (
-    AdminCreateUserRequest,
+    AdminCreateStaffRequest,  # THAY ĐỔI
     UpdatePassword,
     UserPublicWithRolesAndPermissions,
     UserPublic,
@@ -44,7 +43,7 @@ def update_user_me(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Cập nhật thông tin cá nhân của người dùng.
+    Cập nhật thông tin cá nhân của người dùng. (Hiện tại không có trường nào để cập nhật trực tiếp trên User)
     """
     user = users_service.update_user(
         db_session=session, db_user=current_user, user_in=user_in
@@ -87,16 +86,15 @@ def update_password_me(
     dependencies=[Depends(get_current_admin_user)],
     status_code=status.HTTP_201_CREATED,
 )
-async def create_user_by_admin(
+async def create_staff_account_endpoint(  # Đổi tên hàm cho rõ
     *,
     session: Session = Depends(get_db_session),
-    user_in: AdminCreateUserRequest,
+    user_in: AdminCreateStaffRequest,  # Sử dụng schema mới
 ):
     """
-    [Admin] Tạo một tài khoản người dùng mới (ví dụ: nhân viên) và gửi email kích hoạt.
+    [Admin] Tạo một tài khoản nhân viên mới (User và StaffProfile) và gửi email kích hoạt.
     """
-    new_user = users_service.create_user_by_admin(db_session=session, user_in=user_in)
-    # Gửi email chào mừng và yêu cầu đặt mật khẩu
+    new_user = users_service.create_staff_account(db_session=session, user_in=user_in)
     await auth_service.send_welcome_and_set_password_email(new_user)
     return new_user
 
