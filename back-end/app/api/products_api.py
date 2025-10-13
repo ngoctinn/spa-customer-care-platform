@@ -61,7 +61,7 @@ async def update_product(
     product_in: ProductUpdate,
 ):
     """Cập nhật sản phẩm theo ID."""
-    db_product = products_service.get_by_id(db=session, product_id=product_id)
+    db_product = products_service.get_by_id(db=session, id=product_id)
     return await products_service.update(
         db=session,
         db_obj=db_product,
@@ -73,6 +73,6 @@ async def update_product(
 def delete_product(product_id: uuid.UUID, session: Session = Depends(get_db_session)):
     """Xóa mềm một sản phẩm."""
 
-    db_product = products_service.get_by_id(db=session, product_id=product_id)
+    db_product = products_service.get_by_id(db=session, id=product_id)
     products_service.delete(db=session, db_product=db_product)
     return

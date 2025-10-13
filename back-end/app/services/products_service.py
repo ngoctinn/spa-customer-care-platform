@@ -95,8 +95,6 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
         db_product = self.model(**product_data)
         db_product.categories = categories
         db.add(db_product)
-        db.commit()
-        db.refresh(db_product)
 
         await sync_images_for_entity(
             db,
@@ -105,7 +103,16 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             existing_image_ids=product_in.existing_image_ids,
             primary_image_id=product_in.primary_image_id,
         )
-        db.commit()
+
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Lỗi khi lưu sản phẩm: {e}",
+            )
+
         db.refresh(db_product)
         return self.get_by_id(db, id=db_product.id)
 
@@ -116,9 +123,12 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
         db_obj: Product,
         obj_in: ProductUpdate,
     ) -> Product:
+        # Tương tự như create, chúng ta sẽ thực hiện tất cả các thay đổi
+        # và chỉ commit một lần ở cuối.
         product_data = obj_in.model_dump(exclude_unset=True)
 
         if "name" in product_data and product_data["name"] != db_obj.name:
+            # ... (logic kiểm tra tên tồn tại giữ nguyên)
             existing = db.exec(
                 select(Product).where(
                     Product.name == product_data["name"],
@@ -137,8 +147,18 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
                 db, product_data.pop("category_ids")
             )
 
-        super().update(db, db_obj=db_obj, obj_in=ProductUpdate(**product_data))
+        # 1. Cập nhật các trường cơ bản
+        # Gọi super().update nhưng không commit ngay
+        obj_data_for_base = {
+            k: v
+            for k, v in product_data.items()
+            if k not in ["existing_image_ids", "primary_image_id"]
+        }
+        for field, value in obj_data_for_base.items():
+            setattr(db_obj, field, value)
+        db.add(db_obj)
 
+        # 2. Đồng bộ hình ảnh
         await sync_images_for_entity(
             db,
             entity=db_obj,
@@ -146,7 +166,17 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             existing_image_ids=obj_in.existing_image_ids,
             primary_image_id=obj_in.primary_image_id,
         )
-        db.commit()
+
+        # 3. Commit một lần duy nhất
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Lỗi khi cập nhật sản phẩm: {e}",
+            )
+
         db.refresh(db_obj)
         return self.get_by_id(db, id=db_obj.id)
 

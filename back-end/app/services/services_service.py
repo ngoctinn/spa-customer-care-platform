@@ -45,6 +45,8 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         *,
         service_in: ServiceCreate,
     ) -> Service:
+        # --- BẮT ĐẦU LOGIC GIAO TÁC ---
+        # 1. Kiểm tra dữ liệu đầu vào (validations)
         if not service_in.category_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -57,7 +59,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             if category.category_type != CategoryTypeEnum.service:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Danh mục {cat_id} không hợp lệ cho dịch vụ.",
+                    detail=f"Danh mục ID {cat_id} không hợp lệ cho dịch vụ.",
                 )
             categories.append(category)
 
@@ -72,19 +74,15 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
                 detail=f"Dịch vụ '{service_in.name}' đã tồn tại.",
             )
 
+        # 2. Chuẩn bị các đối tượng để thêm vào DB
         service_data = service_in.model_dump(
-            exclude={
-                "category_ids",
-                "existing_image_ids",
-                "primary_image_id",
-            }
+            exclude={"category_ids", "existing_image_ids", "primary_image_id"}
         )
         db_service = self.model(**service_data)
         db_service.categories = categories
         db.add(db_service)
-        db.commit()
-        db.refresh(db_service)
 
+        # 3. Đồng bộ hình ảnh (chỉ thêm vào session, chưa commit)
         await sync_images_for_entity(
             db,
             entity=db_service,
@@ -92,8 +90,20 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             existing_image_ids=service_in.existing_image_ids,
             primary_image_id=service_in.primary_image_id,
         )
-        db.commit()
+
+        # 4. Commit một lần duy nhất để đảm bảo tính nguyên tử
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Lỗi khi lưu dịch vụ: {e}",
+            )
+
         db.refresh(db_service)
+        # --- KẾT THÚC LOGIC GIAO TÁC ---
+
         return self.get_by_id(db, id=db_service.id)
 
     # Ghi đè phương thức update
@@ -104,8 +114,10 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         db_obj: Service,
         obj_in: ServiceUpdate,
     ) -> Service:
+        # --- BẮT ĐẦU LOGIC GIAO TÁC ---
         service_data = obj_in.model_dump(exclude_unset=True)
 
+        # 1. Cập nhật categories nếu có
         if "category_ids" in service_data and service_data["category_ids"] is not None:
             new_categories = []
             for cat_id in service_data.pop("category_ids"):
@@ -113,13 +125,22 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
                 if category.category_type != CategoryTypeEnum.service:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Danh mục {cat_id} không hợp lệ cho dịch vụ.",
+                        detail=f"Danh mục ID {cat_id} không hợp lệ cho dịch vụ.",
                     )
                 new_categories.append(category)
             db_obj.categories = new_categories
 
-        super().update(db, db_obj=db_obj, obj_in=ServiceUpdate(**service_data))
+        # 2. Cập nhật các trường thông tin cơ bản của service
+        update_data_for_base = {
+            k: v
+            for k, v in service_data.items()
+            if k not in ["existing_image_ids", "primary_image_id"]
+        }
+        for key, value in update_data_for_base.items():
+            setattr(db_obj, key, value)
+        db.add(db_obj)
 
+        # 3. Đồng bộ hình ảnh
         await sync_images_for_entity(
             db,
             entity=db_obj,
@@ -127,8 +148,20 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             existing_image_ids=obj_in.existing_image_ids,
             primary_image_id=obj_in.primary_image_id,
         )
-        db.commit()
+
+        # 4. Commit một lần duy nhất
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Lỗi khi cập nhật dịch vụ: {e}",
+            )
+
         db.refresh(db_obj)
+        # --- KẾT THÚC LOGIC GIAO TÁC ---
+
         return self.get_by_id(db, id=db_obj.id)
 
 

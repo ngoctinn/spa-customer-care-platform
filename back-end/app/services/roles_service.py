@@ -5,7 +5,6 @@ from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from app.models.users_model import Role, Permission
 from app.schemas.roles_schema import PermissionCreate, RoleCreate, RoleUpdate
-from app.utils.common import get_object_or_404
 
 
 # =================================================================
@@ -42,10 +41,18 @@ def get_role_by_name(db_session: Session, *, name: str) -> Optional[Role]:
     return db_session.exec(select(Role).where(Role.name == name)).first()
 
 
-def get_role_by_id(db_session: Session, *, role_id: uuid.UUID) -> Optional[Role]:
-    """Tìm một vai trò bằng ID."""
-    # Thay db.get(Role, role_id) bằng hàm tiện ích để có thông báo lỗi 404 nhất quán
-    return get_object_or_404(db_session, model=Role, obj_id=role_id)
+def get_role_by_id(db_session: Session, *, role_id: uuid.UUID) -> Role:
+    """
+    Tìm một vai trò bằng ID.
+    Nếu không tìm thấy, raise HTTP 404.
+    """
+    role = db_session.get(Role, role_id)
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role với ID {role_id} không được tìm thấy.",
+        )
+    return role
 
 
 def create_role(db_session: Session, *, role_in: "RoleCreate") -> Role:

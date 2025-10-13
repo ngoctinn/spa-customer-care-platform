@@ -81,18 +81,17 @@ class TreatmentPlanService(
                 detail="Danh mục không hợp lệ cho liệu trình.",
             )
 
-    # --- REPLACING: create_treatment_plan -> create ---
     async def create(
         self, db: Session, *, obj_in: TreatmentPlanCreate
     ) -> TreatmentPlan:
+        # --- BẮT ĐẦU LOGIC GIAO TÁC ---
+        # 1. Validations
         category = catalog_service.get_category_by_id(db, obj_in.category_id)
         self._ensure_treatment_plan_category(category)
 
-        # ... (logic kiểm tra tên tồn tại)
         existing_plan = db.exec(
             select(TreatmentPlan).where(
-                TreatmentPlan.name == obj_in.name,
-                TreatmentPlan.is_deleted == False,
+                TreatmentPlan.name == obj_in.name, TreatmentPlan.is_deleted == False
             )
         ).first()
         if existing_plan:
@@ -101,27 +100,28 @@ class TreatmentPlanService(
                 detail=f"Liệu trình '{obj_in.name}' đã tồn tại.",
             )
 
-        # Validate all services exist
         for step_in in obj_in.steps:
             services_service.get_by_id(db, id=step_in.service_id)
 
-        # 1. Create the main object
+        # 2. Chuẩn bị các đối tượng để thêm vào DB
         plan_data = obj_in.model_dump(
             exclude={"steps", "existing_image_ids", "primary_image_id"}
         )
         db_plan = TreatmentPlan(**plan_data)
         db.add(db_plan)
-        db.commit()
+
+        # Thêm các steps vào session, nhưng chưa commit.
+        # Phải flush để db_plan có ID cho các steps.
+        db.flush()
         db.refresh(db_plan)
 
-        # 2. Create nested steps
         for step_in in obj_in.steps:
             db_step = TreatmentPlanStep(
                 **step_in.model_dump(), treatment_plan_id=db_plan.id
             )
             db.add(db_step)
 
-        # 3. Sync images
+        # 3. Đồng bộ hình ảnh
         await sync_images_for_entity(
             db,
             entity=db_plan,
@@ -130,8 +130,19 @@ class TreatmentPlanService(
             primary_image_id=obj_in.primary_image_id,
         )
 
-        db.commit()
-        # SỬ DỤNG PHƯƠNG THỨC KẾ THỪA
+        # 4. Commit một lần duy nhất
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Lỗi khi lưu liệu trình: {e}",
+            )
+
+        db.refresh(db_plan)
+        # --- KẾT THÚC LOGIC GIAO TÁC ---
+
         return self.get_by_id(db, id=db_plan.id)
 
     # --- REPLACING: update_treatment_plan -> update ---
@@ -142,11 +153,11 @@ class TreatmentPlanService(
         db_obj: TreatmentPlan,
         obj_in: TreatmentPlanUpdate,
     ) -> TreatmentPlan:
+        # --- BẮT ĐẦU LOGIC GIAO TÁC ---
         plan_data = obj_in.model_dump(exclude_unset=True)
-        plan_data.pop("existing_image_ids", None)
-        plan_data.pop("primary_image_id", None)
 
-        if "name" in plan_data:
+        # 1. Validations
+        if "name" in plan_data and plan_data["name"] != db_obj.name:
             existing_plan = db.exec(
                 select(TreatmentPlan).where(
                     TreatmentPlan.name == plan_data["name"],
@@ -164,14 +175,17 @@ class TreatmentPlanService(
             category = catalog_service.get_category_by_id(db, plan_data["category_id"])
             self._ensure_treatment_plan_category(category)
 
-        # Update base fields
-        for key, value in plan_data.items():
+        # 2. Cập nhật các trường cơ bản
+        update_data_for_base = {
+            k: v
+            for k, v in plan_data.items()
+            if k not in ["existing_image_ids", "primary_image_id"]
+        }
+        for key, value in update_data_for_base.items():
             setattr(db_obj, key, value)
-
         db.add(db_obj)
-        db.flush()
 
-        # Sync images
+        # 3. Đồng bộ hình ảnh
         await sync_images_for_entity(
             db,
             entity=db_obj,
@@ -180,11 +194,20 @@ class TreatmentPlanService(
             primary_image_id=obj_in.primary_image_id,
         )
 
-        db.commit()
-        # SỬ DỤNG PHƯƠNG THỨC KẾ THỪA
-        return self.get_by_id(db, id=db_obj.id)
+        # 4. Commit một lần duy nhất
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Lỗi khi cập nhật liệu trình: {e}",
+            )
 
-    # [LOẠI BỎ: get_all_treatment_plans, get_treatment_plan_by_id, delete_treatment_plan]
+        db.refresh(db_obj)
+        # --- KẾT THÚC LOGIC GIAO TÁC ---
+
+        return self.get_by_id(db, id=db_obj.id)
 
 
 # NEW: Instantiate the class-based service
