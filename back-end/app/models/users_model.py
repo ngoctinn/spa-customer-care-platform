@@ -6,6 +6,7 @@ from datetime import datetime
 from app.models.base_model import BaseUUIDModel
 from app.models.schedules_model import DefaultSchedule
 from app.models.customers_model import Customer
+from app.models.staff_model import StaffProfile, StaffTimeOff
 
 
 class UserRole(SQLModel, table=True):
@@ -48,6 +49,17 @@ class User(BaseUUIDModel, table=True):
     )
     customer_profile: Optional["Customer"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+
+    # Mối quan hệ một-một với StaffProfile
+    staff_profile: Optional["StaffProfile"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
+    )
+
+    # Mối quan hệ với đơn nghỉ phép (với tư cách người duyệt)
+    approved_time_off_requests: List["StaffTimeOff"] = Relationship(
+        back_populates="approver"
     )
 
     @property
