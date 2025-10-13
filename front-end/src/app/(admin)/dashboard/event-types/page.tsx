@@ -1,3 +1,6 @@
+// src/app/(admin)/dashboard/event-types/page.tsx
+"use client";
+
 import { CopyEventButton } from "@/components/common/CopyEventButton";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,37 +15,16 @@ import { formatEventDescription } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { CalendarPlus, CalendarRange } from "lucide-react";
 import Link from "next/link";
+import { useEvents } from "@/features/event-types/hooks/useEvents";
+import { FullPageLoader } from "@/components/ui/spinner";
+import { Event } from "@/features/event-types/types";
 
-export const revalidate = 0;
+export default function EventsPage() {
+  const { data: events = [], isLoading } = useEvents();
 
-export default async function EventsPage() {
-  const userId = "user_mock_id_123"; // ID người dùng giả
-  const events = [
-    {
-      id: "evt_1",
-      name: "Tư vấn 30 phút",
-      description: "Cuộc họp nhanh để trao đổi về dự án.",
-      durationInMinutes: 30,
-      isActive: true,
-      clerkUserId: userId,
-    },
-    {
-      id: "evt_2",
-      name: "Họp chiến lược 1 giờ",
-      description: null,
-      durationInMinutes: 60,
-      isActive: true,
-      clerkUserId: userId,
-    },
-    {
-      id: "evt_3",
-      name: "Sự kiện đã hủy",
-      description: "Sự kiện này không còn hoạt động.",
-      durationInMinutes: 45,
-      isActive: false,
-      clerkUserId: userId,
-    },
-  ];
+  if (isLoading) {
+    return <FullPageLoader text="Đang tải danh sách sự kiện..." />;
+  }
 
   return (
     <>
@@ -63,13 +45,14 @@ export default async function EventsPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-4">
-          <CalendarRange className="size-16 mx-auto" />
-          You do not have any events yet. Create your first event to get
-          started!
+        <div className="flex flex-col items-center gap-4 mt-16">
+          <CalendarRange className="size-16 mx-auto text-muted-foreground" />
+          <p className="text-muted-foreground">
+            Bạn chưa có sự kiện nào. Hãy tạo sự kiện đầu tiên!
+          </p>
           <Button size="lg" className="text-lg" asChild>
             <Link href="/dashboard/event-types/new">
-              <CalendarPlus className="mr-4 size-6" /> New Event
+              <CalendarPlus className="mr-4 size-6" /> Tạo Sự kiện mới
             </Link>
           </Button>
         </div>
@@ -78,15 +61,6 @@ export default async function EventsPage() {
   );
 }
 
-type EventCardProps = {
-  id: string;
-  isActive: boolean;
-  name: string;
-  description: string | null;
-  durationInMinutes: number;
-  clerkUserId: string;
-};
-
 function EventCard({
   id,
   isActive,
@@ -94,7 +68,7 @@ function EventCard({
   description,
   durationInMinutes,
   clerkUserId,
-}: EventCardProps) {
+}: Event) {
   return (
     <Card className={cn("flex flex-col", !isActive && "border-secondary/50")}>
       <CardHeader className={cn(!isActive && "opacity-50")}>
@@ -117,7 +91,7 @@ function EventCard({
           />
         )}
         <Button asChild>
-          <Link href={`/events/${id}/edit`}>Edit</Link>
+          <Link href={`/dashboard/event-types/${id}/edit`}>Edit</Link>
         </Button>
       </CardFooter>
     </Card>

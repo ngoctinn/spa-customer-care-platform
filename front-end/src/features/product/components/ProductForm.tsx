@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormContext } from "react-hook-form";
 import { ProductFormValues } from "../schemas";
-import { CategorySelector } from "@/components/common/CategorySelector";
+import { CategorySelector } from "@/features/category/components/CategorySelector";
 import { ImageSelectionInput } from "@/features/media/components/ImageSelectionInput";
 
 export default function ProductFormFields() {

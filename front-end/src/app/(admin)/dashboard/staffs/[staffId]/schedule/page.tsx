@@ -5,7 +5,7 @@ import { use } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FullPageLoader } from "@/components/ui/spinner";
 import { useStaffById } from "@/features/staff/hooks/useStaff"; // Sẽ tạo hook này
-import { WorkScheduleForm } from "@/features/schedule/components/WorkScheduleForm"; // Sẽ tạo component này
+import { WorkScheduleForm } from "@/features/work-schedules/components/WorkScheduleForm"; // Sẽ tạo component này
 
 interface SchedulePageProps {
   params: Promise<{ staffId: string }>;

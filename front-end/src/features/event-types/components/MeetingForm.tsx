@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { meetingFormSchema } from "@/features/scheduling/schemas/meeting.schema";
+import { meetingFormSchema } from "@/features/event-types/schemas/meeting.schema";
 import {
   Select,
   SelectContent,

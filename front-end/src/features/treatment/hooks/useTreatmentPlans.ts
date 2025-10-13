@@ -7,7 +7,7 @@ import {
   deleteTreatmentPlan,
 } from "@/features/treatment/apis/treatment.api";
 import { TreatmentPlan } from "@/features/treatment/types";
-import { useCrudMutations } from "@/hooks/useCrudMutations"; // Import hook CRUD chung
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations"; // Import hook CRUD chung
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 
 const queryKey = ["treatmentPlans"];

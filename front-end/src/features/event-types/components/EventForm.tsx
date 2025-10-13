@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   eventFormSchema,
   EventFormValues,
-} from "@/features/scheduling/schemas/event.schema";
+} from "@/features/event-types/schemas/event.schema";
 import {
   Form,
   FormControl,
@@ -32,24 +32,17 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEventMutations } from "../hooks/useEvents";
+import { Event } from "../types";
 
-export function EventForm({
-  event,
-}: {
-  event?: {
-    id: string;
-    name: string;
-    description?: string;
-    durationInMinutes: number;
-    isActive: boolean;
-  };
-}) {
-  const [isDeletePending, startDeleteTransition] = useTransition();
+export function EventForm({ event }: { event?: Event }) {
+  const router = useRouter();
+  const { createMutation, updateMutation, deleteMutation } =
+    useEventMutations();
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
-    // Giá trị mặc định `isActive: true` được cung cấp ở đây là hoàn toàn chính xác
     defaultValues: event ?? {
       name: "",
       description: "",
@@ -58,12 +51,38 @@ export function EventForm({
     },
   });
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   async function onSubmit(values: EventFormValues) {
-    console.log("Form Submitted:", values);
-    alert(
-      "Form đã được gửi đi (chế độ front-end)! Vui lòng kiểm tra console log."
-    );
+    if (event) {
+      // Chế độ chỉnh sửa
+      updateMutation.mutate(
+        { id: event.id, data: values },
+        {
+          onSuccess: () => {
+            router.push("/dashboard/event-types");
+          },
+        }
+      );
+    } else {
+      // Chế độ tạo mới
+      createMutation.mutate(values, {
+        onSuccess: () => {
+          router.push("/dashboard/event-types");
+        },
+      });
+    }
   }
+
+  const handleDelete = () => {
+    if (event) {
+      deleteMutation.mutate(event.id, {
+        onSuccess: () => {
+          router.push("/dashboard/event-types");
+        },
+      });
+    }
+  };
 
   return (
     <Form {...form}>
@@ -149,7 +168,8 @@ export function EventForm({
                 <Button
                   variant="ghost"
                   className="text-destructive hover:bg-destructive/10"
-                  disabled={isDeletePending || form.formState.isSubmitting}
+                  disabled={isSubmitting || deleteMutation.isPending}
+                  type="button"
                 >
                   Xóa
                 </Button>
@@ -165,22 +185,17 @@ export function EventForm({
                   <AlertDialogCancel>Hủy</AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={isDeletePending || form.formState.isSubmitting}
-                    onClick={() => {
-                      startDeleteTransition(() => {
-                        console.log("Yêu cầu xóa event ID:", event.id);
-                        alert("Đã yêu cầu xóa (chế độ front-end)!");
-                      });
-                    }}
+                    disabled={isSubmitting || deleteMutation.isPending}
+                    onClick={handleDelete}
                   >
-                    Xóa
+                    {deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           )}
           <Button
-            disabled={isDeletePending || form.formState.isSubmitting}
+            disabled={isSubmitting || deleteMutation.isPending}
             type="button"
             asChild
             variant="outline"
@@ -188,10 +203,10 @@ export function EventForm({
             <Link href="/dashboard/event-types">Hủy</Link>
           </Button>
           <Button
-            disabled={isDeletePending || form.formState.isSubmitting}
+            disabled={isSubmitting || deleteMutation.isPending}
             type="submit"
           >
-            Lưu
+            {isSubmitting ? "Đang lưu..." : "Lưu"}
           </Button>
         </div>
       </form>

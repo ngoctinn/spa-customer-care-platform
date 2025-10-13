@@ -4,12 +4,15 @@ import {
   FlexibleSchedule,
   TimeEntry,
   WorkSchedule,
-} from "@/features/schedule/types";
+  ScheduleOverride,
+  TimeOffRequest,
+} from "@/features/work-schedules/types";
 import { buildQueryString } from "@/lib/queryString";
 import {
   DefaultScheduleUpdate,
   DefaultSchedulePublic,
-} from "@/features/schedule/types";
+} from "@/features/work-schedules/types";
+import { TimeOffRequestFormValues } from "@/features/work-schedules/schemas/time-off.schema";
 
 /**
  * Lấy lịch làm việc của một nhân viên
@@ -141,4 +144,69 @@ export async function getMySchedules(
 ): Promise<FlexibleSchedule[]> {
   const query = buildQueryString({ start_date: startDate, end_date: endDate });
   return apiClient<FlexibleSchedule[]>(`/api/schedules/my-schedules${query}`);
+}
+
+/**
+ * Admin tạo một bản ghi ghi đè lịch làm việc cho nhân viên.
+ * @param staffId ID của nhân viên.
+ * @param overrideData Dữ liệu ghi đè.
+ */
+export async function createScheduleOverride(
+  staffId: string,
+  overrideData: Omit<ScheduleOverride, "id" | "user_id">
+): Promise<ScheduleOverride> {
+  return apiClient<ScheduleOverride>(`/staff/${staffId}/schedule-overrides`, {
+    method: "POST",
+    body: JSON.stringify(overrideData),
+  });
+}
+
+/**
+ * Nhân viên gửi yêu cầu xin nghỉ phép.
+ * @param requestData Dữ liệu từ form xin nghỉ.
+ */
+export async function requestTimeOff(
+  requestData: TimeOffRequestFormValues
+): Promise<TimeOffRequest> {
+  return apiClient<TimeOffRequest>("/time-off", {
+    method: "POST",
+    body: JSON.stringify(requestData),
+  });
+}
+
+/**
+ * Admin lấy danh sách các yêu cầu nghỉ phép.
+ * @param status Lọc theo trạng thái (ví dụ: "PENDING").
+ */
+export async function getTimeOffRequests(
+  status?: "PENDING" | "APPROVED" | "REJECTED"
+): Promise<TimeOffRequest[]> {
+  const query = buildQueryString({ status });
+  return apiClient<TimeOffRequest[]>(`/time-off${query}`);
+}
+
+/**
+ * Admin duyệt một yêu cầu nghỉ phép.
+ * @param requestId ID của yêu cầu.
+ */
+export async function approveTimeOffRequest(
+  requestId: string
+): Promise<TimeOffRequest> {
+  return apiClient<TimeOffRequest>(`/time-off/${requestId}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: "APPROVED" }),
+  });
+}
+
+/**
+ * Admin từ chối một yêu cầu nghỉ phép.
+ * @param requestId ID của yêu cầu.
+ */
+export async function rejectTimeOffRequest(
+  requestId: string
+): Promise<TimeOffRequest> {
+  return apiClient<TimeOffRequest>(`/time-off/${requestId}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: "REJECTED" }),
+  });
 }

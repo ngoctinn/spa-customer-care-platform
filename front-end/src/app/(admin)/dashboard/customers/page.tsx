@@ -5,16 +5,12 @@ import { z } from "zod";
 import Link from "next/link"; // Import Link
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
-import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
+import {
+  useCustomerManagement,
+  CustomerFormValues,
+} from "@/features/customer/hooks/useCustomerManagement";
 import { FullCustomerProfile } from "@/features/customer/types";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
-
-const customerFormSchema = z.object({
-  full_name: z.string().min(3, "Tên phải có ít nhất 3 ký tự."),
-  phone: z.string().optional(),
-  notes: z.string().optional(),
-});
-type CustomerFormValues = z.infer<typeof customerFormSchema>;
 
 // Update columns to include a link
 const columns: ColumnDef<FullCustomerProfile>[] = [

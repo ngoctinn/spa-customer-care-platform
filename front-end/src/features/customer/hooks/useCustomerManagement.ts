@@ -13,9 +13,7 @@ import {
 
 const customerFormSchema = z.object({
   full_name: nameSchema,
-  email: emailSchema,
   phone: phoneSchema.optional().or(z.literal("")),
-  password: passwordSchema.optional(),
   notes: z.string().optional(),
 });
 export type CustomerFormValues = z.infer<typeof customerFormSchema>;
@@ -46,9 +44,7 @@ export function useCustomerManagement() {
     handleOpenAddForm();
     form.reset({
       full_name: "",
-      email: "",
       phone: "",
-      password: "",
       notes: "",
     });
   }, [form, handleOpenAddForm]);
@@ -58,10 +54,8 @@ export function useCustomerManagement() {
       handleOpenEditForm(customer);
       form.reset({
         full_name: customer.full_name,
-        email: customer.email,
         phone: customer.phone || "",
         notes: customer.customer_profile.notes || "",
-        password: "", // Không hiển thị password cũ
       });
     },
     [form, handleOpenEditForm]
@@ -69,8 +63,7 @@ export function useCustomerManagement() {
 
   const handleFormSubmit = (data: CustomerFormValues) => {
     if (editingItem) {
-      const { password, ...updateData } = data;
-      updateMutation.mutate({ id: editingItem.id, data: updateData });
+      updateMutation.mutate({ id: editingItem.id, data: data });
     } else {
       addMutation.mutate(data);
     }

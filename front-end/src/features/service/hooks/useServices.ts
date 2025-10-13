@@ -7,7 +7,7 @@ import {
   getServiceById, // Import hàm API cần thiết
 } from "@/features/service/api/service.api";
 import { Service } from "@/features/service/types";
-import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 import { ServiceFormValues } from "@/features/service/schemas";
 
 const queryKey = ["services"];

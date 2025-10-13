@@ -18,6 +18,8 @@ import {
   Warehouse,
   ClipboardSignature,
   Truck,
+  UserPlus,
+  CalendarOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -83,6 +85,11 @@ const navGroups = [
         href: "/dashboard/schedules",
         label: "Lịch làm việc",
         icon: CalendarClock,
+      },
+      {
+        href: "/dashboard/time-off-requests",
+        label: "Duyệt nghỉ phép",
+        icon: CalendarOff,
       },
     ],
   },

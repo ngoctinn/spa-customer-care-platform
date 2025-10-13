@@ -9,7 +9,7 @@ import {
   addCustomer, // ++ IMPORT HÀM MỚI ++
 } from "@/features/customer/api/customer.api";
 import { FullCustomerProfile } from "@/features/customer/types";
-import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 import { CustomerFormValues } from "./useCustomerManagement";
 
 const queryKey = ["customers"];

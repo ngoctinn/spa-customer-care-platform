@@ -6,10 +6,13 @@ import {
   updateAppointment,
   deleteAppointment,
   getAppointmentById,
+  getUpcomingAppointmentsByTechnician,
+  getSuggestedTechniciansForAppointment,
 } from "@/features/appointment/apis/appointment.api";
 import { Appointment } from "@/features/appointment/types";
 import { toast } from "sonner";
 import { AppointmentFormValues } from "@/features/appointment/schemas";
+import { FullStaffProfile } from "@/features/staff/types";
 
 const queryKey = ["appointments"];
 
@@ -82,5 +85,29 @@ export const useDeleteAppointment = () => {
     onError: (error) => {
       toast.error("Hủy lịch hẹn thất bại", { description: error.message });
     },
+  });
+};
+
+/**
+ * Hook để lấy danh sách lịch hẹn sắp tới của một nhân viên.
+ * @param technicianId ID của nhân viên.
+ */
+export const useUpcomingAppointmentsByTechnician = (technicianId?: string) => {
+  return useQuery<Appointment[]>({
+    queryKey: ["appointments", "upcoming", technicianId],
+    queryFn: () => getUpcomingAppointmentsByTechnician(technicianId!),
+    enabled: !!technicianId,
+  });
+};
+
+/**
+ * Hook để lấy danh sách nhân viên thay thế được gợi ý.
+ * @param appointmentId ID của lịch hẹn.
+ */
+export const useSuggestedTechnicians = (appointmentId?: string) => {
+  return useQuery<FullStaffProfile[]>({
+    queryKey: ["suggestedTechnicians", appointmentId],
+    queryFn: () => getSuggestedTechniciansForAppointment(appointmentId!),
+    enabled: !!appointmentId,
   });
 };

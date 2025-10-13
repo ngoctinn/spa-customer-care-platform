@@ -35,6 +35,7 @@ import SupplierForm from "@/features/inventory/components/suppliers/SupplierForm
 import { useSupplierManagement } from "@/features/inventory/hooks/useSupplierManagement";
 import { SupplierFormValues } from "@/features/inventory/schemas/supplier.schema";
 import { useWarehouseSlips } from "@/features/inventory/hooks/useWarehouseSlips";
+import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 
 // --- Sub-components ---
 const SupplierInfoCard = ({
@@ -137,8 +138,12 @@ export default function SupplierDetailPage() {
     handleFormSubmit,
     isSubmitting,
     isFormOpen,
+    itemToDelete,
     handleOpenEditForm,
     handleCloseForm,
+    handleOpenDeleteDialog,
+    handleCloseDeleteDialog,
+    handleConfirmDelete,
   } = useSupplierManagement();
   const { data: slips } = useWarehouseSlips();
 
@@ -208,7 +213,10 @@ export default function SupplierDetailPage() {
         title={supplier.name}
         description="Thông tin chi tiết và lịch sử nhập hàng từ nhà cung cấp."
         actionButtons={
-          <Button variant="destructive">
+          <Button
+            variant="destructive"
+            onClick={() => handleOpenDeleteDialog(supplier)}
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Xóa
           </Button>
@@ -226,6 +234,16 @@ export default function SupplierDetailPage() {
       >
         <SupplierForm />
       </FormDialog>
+
+      <ConfirmationModal
+        isOpen={!!itemToDelete}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title={`Xác nhận xóa "${itemToDelete?.name}"`}
+        description="Bạn có chắc chắn muốn xóa nhà cung cấp này không? Hành động này không thể hoàn tác."
+        isDestructive
+        confirmText="Xóa"
+      />
     </>
   );
 }

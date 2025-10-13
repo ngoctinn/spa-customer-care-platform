@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
     <div className="flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto bg-success/80 rounded-full p-3">
+          <div className="mx-auto bg-success/10 rounded-full p-3">
             <CheckCircle2 className="h-10 w-10 text-success" />
           </div>
           <CardTitle className="mt-4">Xác thực thành công!</CardTitle>

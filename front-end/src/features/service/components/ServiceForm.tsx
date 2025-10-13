@@ -1,6 +1,6 @@
 "use client";
 
-import { CategorySelector } from "@/components/common/CategorySelector";
+import { CategorySelector } from "@/features/category/components/CategorySelector";
 import PriceInput from "@/components/common/PriceInput";
 import { Button } from "@/components/ui/button";
 import {
