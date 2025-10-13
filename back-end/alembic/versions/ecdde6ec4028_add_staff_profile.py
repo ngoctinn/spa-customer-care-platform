@@ -1,8 +1,8 @@
-"""init
+"""add-staff-profile
 
-Revision ID: 0d3374933ea8
+Revision ID: ecdde6ec4028
 Revises:
-Create Date: 2025-10-07 19:03:43.797964
+Create Date: 2025-10-13 12:52:30.634354
 
 """
 
@@ -10,10 +10,12 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+
 import sqlmodel
 
+
 # revision identifiers, used by Alembic.
-revision: str = "0d3374933ea8"
+revision: str = "ecdde6ec4028"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -45,22 +47,6 @@ def upgrade() -> None:
         op.f("ix_category_is_deleted"), "category", ["is_deleted"], unique=False
     )
     op.create_index(op.f("ix_category_name"), "category", ["name"], unique=False)
-    op.create_table(
-        "image",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False),
-        sa.Column("url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("alt_text", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_image_id"), "image", ["id"], unique=False)
-    op.create_index(op.f("ix_image_is_deleted"), "image", ["is_deleted"], unique=False)
     op.create_table(
         "permission",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -108,20 +94,19 @@ def upgrade() -> None:
         ),
         sa.Column("is_deleted", sa.Boolean(), nullable=False),
         sa.Column("email", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("phone", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-        sa.Column("full_name", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column(
+            "full_name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True
+        ),
         sa.Column(
             "hashed_password", sqlmodel.sql.sqltypes.AutoString(), nullable=False
         ),
         sa.Column("is_active", sa.Boolean(), nullable=False),
-        sa.Column("is_superuser", sa.Boolean(), nullable=False),
         sa.Column("is_email_verified", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_user_email"), "user", ["email"], unique=True)
     op.create_index(op.f("ix_user_id"), "user", ["id"], unique=False)
     op.create_index(op.f("ix_user_is_deleted"), "user", ["is_deleted"], unique=False)
-    op.create_index(op.f("ix_user_phone"), "user", ["phone"], unique=True)
     op.create_table(
         "default_schedule",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -157,6 +142,148 @@ def upgrade() -> None:
         "default_schedule",
         ["user_id"],
         unique=False,
+    )
+    op.create_table(
+        "image",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("alt_text", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("uploaded_by_user_id", sa.Uuid(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["uploaded_by_user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_image_id"), "image", ["id"], unique=False)
+    op.create_index(op.f("ix_image_is_deleted"), "image", ["is_deleted"], unique=False)
+    op.create_index(
+        op.f("ix_image_uploaded_by_user_id"),
+        "image",
+        ["uploaded_by_user_id"],
+        unique=False,
+    )
+    op.create_table(
+        "role_permission",
+        sa.Column("role_id", sa.Uuid(), nullable=False),
+        sa.Column("permission_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["permission_id"],
+            ["permission.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["role_id"],
+            ["role.id"],
+        ),
+        sa.PrimaryKeyConstraint("role_id", "permission_id"),
+    )
+    op.create_table(
+        "staff_profile",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("user_id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "phone_number", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False
+        ),
+        sa.Column(
+            "position", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False
+        ),
+        sa.Column("hire_date", sa.Date(), nullable=False),
+        sa.Column(
+            "employment_status",
+            sa.Enum(
+                "PROBATION", "ACTIVE", "SUSPENDED", "RESIGNED", name="employmentstatus"
+            ),
+            nullable=False,
+        ),
+        sa.Column("skills_summary", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("notes", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_staff_profile_id"), "staff_profile", ["id"], unique=False)
+    op.create_index(
+        op.f("ix_staff_profile_is_deleted"),
+        "staff_profile",
+        ["is_deleted"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_staff_profile_phone_number"),
+        "staff_profile",
+        ["phone_number"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_staff_profile_user_id"), "staff_profile", ["user_id"], unique=True
+    )
+    op.create_table(
+        "user_role",
+        sa.Column("user_id", sa.Uuid(), nullable=False),
+        sa.Column("role_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["role_id"],
+            ["role.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("user_id", "role_id"),
+    )
+    op.create_table(
+        "customers",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column(
+            "full_name", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True
+        ),
+        sa.Column("phone_number", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("email", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("user_id", sa.Uuid(), nullable=True),
+        sa.Column("date_of_birth", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("gender", sqlmodel.sql.sqltypes.AutoString(length=10), nullable=True),
+        sa.Column("address", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("avatar_id", sa.Uuid(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["avatar_id"],
+            ["image.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_customers_email"), "customers", ["email"], unique=True)
+    op.create_index(op.f("ix_customers_id"), "customers", ["id"], unique=False)
+    op.create_index(
+        op.f("ix_customers_is_deleted"), "customers", ["is_deleted"], unique=False
+    )
+    op.create_index(
+        op.f("ix_customers_phone_number"), "customers", ["phone_number"], unique=True
     )
     op.create_table(
         "product",
@@ -196,20 +323,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_product_name"), "product", ["name"], unique=True)
     op.create_table(
-        "role_permission",
-        sa.Column("role_id", sa.Uuid(), nullable=False),
-        sa.Column("permission_id", sa.Uuid(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["permission_id"],
-            ["permission.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["role_id"],
-            ["role.id"],
-        ),
-        sa.PrimaryKeyConstraint("role_id", "permission_id"),
-    )
-    op.create_table(
         "service",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column(
@@ -244,6 +357,94 @@ def upgrade() -> None:
         op.f("ix_service_is_deleted"), "service", ["is_deleted"], unique=False
     )
     op.create_index(op.f("ix_service_name"), "service", ["name"], unique=True)
+    op.create_table(
+        "staff_schedule",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("staff_id", sa.Uuid(), nullable=False),
+        sa.Column("day_of_week", sa.Integer(), nullable=True),
+        sa.Column("specific_date", sa.Date(), nullable=True),
+        sa.Column("start_time", sa.Time(), nullable=False),
+        sa.Column("end_time", sa.Time(), nullable=False),
+        sa.Column("is_active", sa.Boolean(), nullable=False),
+        sa.Column("is_recurring", sa.Boolean(), nullable=False),
+        sa.Column(
+            "schedule_type",
+            sa.Enum("WORKING", "TIME_OFF", "OVERRIDE", name="scheduletype"),
+            nullable=False,
+        ),
+        sa.Column("note", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["staff_id"],
+            ["staff_profile.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "staff_id", "day_of_week", "schedule_type", name="uq_staff_weekly_schedule"
+        ),
+    )
+    op.create_index(
+        op.f("ix_staff_schedule_id"), "staff_schedule", ["id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_staff_schedule_is_deleted"),
+        "staff_schedule",
+        ["is_deleted"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_staff_schedule_staff_id"), "staff_schedule", ["staff_id"], unique=False
+    )
+    op.create_table(
+        "staff_time_off",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
+        ),
+        sa.Column("is_deleted", sa.Boolean(), nullable=False),
+        sa.Column("staff_id", sa.Uuid(), nullable=False),
+        sa.Column("start_date", sa.Date(), nullable=False),
+        sa.Column("end_date", sa.Date(), nullable=False),
+        sa.Column("reason", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column(
+            "status",
+            sa.Enum("PENDING", "APPROVED", "REJECTED", name="stafftimeoffstatus"),
+            nullable=False,
+        ),
+        sa.Column("approver_id", sa.Uuid(), nullable=True),
+        sa.Column("approved_at", sa.DateTime(), nullable=True),
+        sa.Column("decision_note", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["approver_id"],
+            ["user.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["staff_id"],
+            ["staff_profile.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        op.f("ix_staff_time_off_id"), "staff_time_off", ["id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_staff_time_off_is_deleted"),
+        "staff_time_off",
+        ["is_deleted"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_staff_time_off_staff_id"), "staff_time_off", ["staff_id"], unique=False
+    )
     op.create_table(
         "treatment_plan",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -281,20 +482,6 @@ def upgrade() -> None:
     )
     op.create_index(
         op.f("ix_treatment_plan_name"), "treatment_plan", ["name"], unique=True
-    )
-    op.create_table(
-        "user_role",
-        sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column("role_id", sa.Uuid(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["role_id"],
-            ["role.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["user.id"],
-        ),
-        sa.PrimaryKeyConstraint("user_id", "role_id"),
     )
     op.create_table(
         "product_category_link",
@@ -351,6 +538,20 @@ def upgrade() -> None:
             ["service.id"],
         ),
         sa.PrimaryKeyConstraint("service_id", "image_id"),
+    )
+    op.create_table(
+        "staff_service_link",
+        sa.Column("staff_id", sa.Uuid(), nullable=False),
+        sa.Column("service_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["service_id"],
+            ["service.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["staff_id"],
+            ["staff_profile.id"],
+        ),
+        sa.PrimaryKeyConstraint("staff_id", "service_id"),
     )
     op.create_table(
         "treatment_plan_image_link",
@@ -411,29 +612,51 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_treatment_plan_step_id"), table_name="treatment_plan_step")
     op.drop_table("treatment_plan_step")
     op.drop_table("treatment_plan_image_link")
+    op.drop_table("staff_service_link")
     op.drop_table("service_image_link")
     op.drop_table("service_category_link")
     op.drop_table("product_image_link")
     op.drop_table("product_category_link")
-    op.drop_table("user_role")
     op.drop_index(op.f("ix_treatment_plan_name"), table_name="treatment_plan")
     op.drop_index(op.f("ix_treatment_plan_is_deleted"), table_name="treatment_plan")
     op.drop_index(op.f("ix_treatment_plan_id"), table_name="treatment_plan")
     op.drop_table("treatment_plan")
+    op.drop_index(op.f("ix_staff_time_off_staff_id"), table_name="staff_time_off")
+    op.drop_index(op.f("ix_staff_time_off_is_deleted"), table_name="staff_time_off")
+    op.drop_index(op.f("ix_staff_time_off_id"), table_name="staff_time_off")
+    op.drop_table("staff_time_off")
+    op.drop_index(op.f("ix_staff_schedule_staff_id"), table_name="staff_schedule")
+    op.drop_index(op.f("ix_staff_schedule_is_deleted"), table_name="staff_schedule")
+    op.drop_index(op.f("ix_staff_schedule_id"), table_name="staff_schedule")
+    op.drop_table("staff_schedule")
     op.drop_index(op.f("ix_service_name"), table_name="service")
     op.drop_index(op.f("ix_service_is_deleted"), table_name="service")
     op.drop_index(op.f("ix_service_id"), table_name="service")
     op.drop_table("service")
-    op.drop_table("role_permission")
     op.drop_index(op.f("ix_product_name"), table_name="product")
     op.drop_index(op.f("ix_product_is_deleted"), table_name="product")
     op.drop_index(op.f("ix_product_id"), table_name="product")
     op.drop_table("product")
+    op.drop_index(op.f("ix_customers_phone_number"), table_name="customers")
+    op.drop_index(op.f("ix_customers_is_deleted"), table_name="customers")
+    op.drop_index(op.f("ix_customers_id"), table_name="customers")
+    op.drop_index(op.f("ix_customers_email"), table_name="customers")
+    op.drop_table("customers")
+    op.drop_table("user_role")
+    op.drop_index(op.f("ix_staff_profile_user_id"), table_name="staff_profile")
+    op.drop_index(op.f("ix_staff_profile_phone_number"), table_name="staff_profile")
+    op.drop_index(op.f("ix_staff_profile_is_deleted"), table_name="staff_profile")
+    op.drop_index(op.f("ix_staff_profile_id"), table_name="staff_profile")
+    op.drop_table("staff_profile")
+    op.drop_table("role_permission")
+    op.drop_index(op.f("ix_image_uploaded_by_user_id"), table_name="image")
+    op.drop_index(op.f("ix_image_is_deleted"), table_name="image")
+    op.drop_index(op.f("ix_image_id"), table_name="image")
+    op.drop_table("image")
     op.drop_index(op.f("ix_default_schedule_user_id"), table_name="default_schedule")
     op.drop_index(op.f("ix_default_schedule_is_deleted"), table_name="default_schedule")
     op.drop_index(op.f("ix_default_schedule_id"), table_name="default_schedule")
     op.drop_table("default_schedule")
-    op.drop_index(op.f("ix_user_phone"), table_name="user")
     op.drop_index(op.f("ix_user_is_deleted"), table_name="user")
     op.drop_index(op.f("ix_user_id"), table_name="user")
     op.drop_index(op.f("ix_user_email"), table_name="user")
@@ -446,9 +669,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_permission_is_deleted"), table_name="permission")
     op.drop_index(op.f("ix_permission_id"), table_name="permission")
     op.drop_table("permission")
-    op.drop_index(op.f("ix_image_is_deleted"), table_name="image")
-    op.drop_index(op.f("ix_image_id"), table_name="image")
-    op.drop_table("image")
     op.drop_index(op.f("ix_category_name"), table_name="category")
     op.drop_index(op.f("ix_category_is_deleted"), table_name="category")
     op.drop_index(op.f("ix_category_id"), table_name="category")

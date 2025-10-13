@@ -29,6 +29,7 @@ from app.models.association_tables import (
 )
 from app.models.customers_model import Customer
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
+from app.models.staff_model import StaffProfile, StaffSchedule, StaffServiceLink
 
 
 # this is the Alembic Config object, which provides
