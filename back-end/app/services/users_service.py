@@ -7,10 +7,9 @@ from sqlmodel import Session, select
 
 from app.core.security import get_password_hash
 from app.models.users_model import User
-from app.models.customers_model import Customer
-from app.services.customers_service import customers_service
+from app.models.staff_model import StaffProfile
 from app.schemas.users_schema import (
-    AdminCreateUserRequest,
+    AdminCreateStaffRequest,  # THAY ĐỔI
     UserCreate,
     UserUpdateByAdmin,
     UserUpdateMe,
@@ -51,19 +50,23 @@ def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> User:
 
 def create_online_user(db_session: Session, *, user_in: UserCreate) -> User:
     """
-    Xử lý luồng đăng ký online (cả Email và Google).
+    Xử lý luồng đăng ký online. CHỈ TẠO USER, KHÔNG TẠO CUSTOMER.
     """
     if get_user_by_email(db_session, email=user_in.email):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email đã được sử dụng.")
 
     hashed_password = get_password_hash(user_in.password)
-    user_data = user_in.model_dump(exclude={"password"})
+    # LOẠI BỎ full_name khỏi việc tạo User
+    user_data = user_in.model_dump(exclude={"password", "full_name"})
 
     db_user = User(**user_data, hashed_password=hashed_password)
 
     db_session.add(db_user)
     db_session.commit()
     db_session.refresh(db_user)
+
+    # Sẽ tạo Customer profile ở một bước riêng (PUT /customers/me/profile)
+
     return db_user
 
 
@@ -87,11 +90,8 @@ def assign_role_to_user(
     db_session: Session, *, user_id: uuid.UUID, role_id: uuid.UUID
 ) -> User:
     """Gán một vai trò cho một người dùng."""
-    # SỬ DỤNG HÀM MỚI: Tự động xử lý 404
     user = get_user_by_id(db_session, user_id=user_id)
-    role = roles_service.get_role_by_id(
-        db_session, role_id=role_id
-    )  # roles_service cũng sẽ được refactor
+    role = roles_service.get_role_by_id(db_session, role_id=role_id)
 
     if role in user.roles:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Người dùng đã có vai trò này")
@@ -135,15 +135,13 @@ def get_all_users(db_session: Session, skip: int = 0, limit: int = 100) -> List[
     return users
 
 
-# hàm tạo user bởi admin
-def create_user_by_admin(
-    db_session: Session, *, user_in: AdminCreateUserRequest
+# THAY ĐỔI: Đổi tên và logic hàm
+def create_staff_account(
+    db_session: Session, *, user_in: AdminCreateStaffRequest
 ) -> User:
     """
-    [Admin] Tạo người dùng mới (nhân viên), tự động tạo mật khẩu tạm và gán vai trò.
-    Đảm bảo toàn bộ quá trình là một giao tác nguyên tử.
+    [Admin] Tạo tài khoản nhân viên mới, bao gồm User và StaffProfile trong một giao tác.
     """
-    # 1. Validations (Thực hiện kiểm tra trước khi ghi vào DB)
     if get_user_by_email(db_session, email=user_in.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -152,43 +150,51 @@ def create_user_by_admin(
 
     role = None
     if user_in.role_id:
-        # get_object_or_404 sẽ tự raise lỗi nếu không tìm thấy
         role = roles_service.get_role_by_id(db_session, role_id=user_in.role_id)
     else:
-        role = roles_service.get_role_by_name(db_session, name="nhân viên")
+        role = roles_service.get_role_by_name(
+            db_session, name="staff"
+        )  # Mặc định là role 'staff'
 
-    # --- BẮT ĐẦU GIAO TÁC ---
     try:
-        # 2. Chuẩn bị dữ liệu và các đối tượng
+        # 1. Tạo User
         temp_password = f"temp_password_{uuid.uuid4()}"
         hashed_password = get_password_hash(temp_password)
-        user_data: Dict[str, Any] = user_in.model_dump(exclude={"role_id"})
+        user_data = user_in.model_dump(exclude={"role_id", "full_name", "phone_number"})
         db_user = User(
             **user_data, hashed_password=hashed_password, is_email_verified=True
         )
 
-        # Nếu vai trò "nhân viên" chưa có, tạo nó trong cùng giao tác
+        # 2. Gán Role
         if not role:
             role_to_create = RoleCreate(
-                name="nhân viên", description="Vai trò cho nhân viên"
+                name="staff", description="Vai trò cho nhân viên"
             )
-            # Không commit ở đây
             role = roles_service.create_role(db_session, role_in=role_to_create)
 
         db_user.roles.append(role)
         db_session.add(db_user)
 
-        # 3. Commit một lần duy nhất
+        # 3. Tạo StaffProfile và liên kết
+        # Flush để db_user có ID
+        db_session.flush()
+
+        staff_profile = StaffProfile(
+            user_id=db_user.id,
+            full_name=user_in.full_name,
+            phone_number=user_in.phone_number,
+        )
+        db_session.add(staff_profile)
+
+        # 4. Commit một lần duy nhất
         db_session.commit()
 
     except Exception as e:
-        # Nếu có bất kỳ lỗi nào xảy ra, rollback toàn bộ thay đổi
         db_session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Không thể tạo người dùng do lỗi hệ thống: {e}",
+            detail=f"Không thể tạo tài khoản nhân viên do lỗi hệ thống: {e}",
         )
-    # --- KẾT THÚC GIAO TÁC ---
 
     db_session.refresh(db_user)
     return db_user

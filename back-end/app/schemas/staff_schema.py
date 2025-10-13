@@ -1,107 +1,69 @@
-# app/schemas/staff_schema.py
-from __future__ import annotations
+# back-end/app/schemas/staff_schema.py
 import datetime
 import uuid
-from typing import List, Optional, Annotated
+from typing import List, Optional
 
-from pydantic import (
-    model_validator,
-    field_validator,
-    StringConstraints,
-)
-from sqlmodel import SQLModel, Field
+from pydantic import Field
+from sqlmodel import SQLModel
 
-from app.models.staff_model import EmploymentStatus, ScheduleType, StaffTimeOffStatus
+from app.models.staff_model import EmploymentStatus, StaffTimeOffStatus
 from app.schemas.services_schema import ServicePublic
 
 
-PHONE_REGEX = r"^(0|\+84)(\s|\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\d)(\s|\.)?(\d{3})(\s|\.)?(\d{3})$"
-PhoneNumber = Annotated[str, StringConstraints(max_length=20, pattern=PHONE_REGEX)]
-
-# =================================================================
-# SCHEMAS FOR STAFF PROFILE
-# =================================================================
-
-
 class StaffProfileBase(SQLModel):
-
-    phone_number: PhoneNumber = Field(description="Số điện thoại liên hệ của nhân viên")
-
-    position: Optional[str] = Field(
-        default=None, description="Chức danh/Vị trí làm việc"
-    )
-    hire_date: Optional[datetime.date] = Field(
-        default=None, description="Ngày bắt đầu làm việc"
-    )
-    employment_status: EmploymentStatus = Field(
-        default=EmploymentStatus.ACTIVE, description="Trạng thái làm việc hiện tại"
-    )
-    notes: Optional[str] = Field(default=None, description="Ghi chú nội bộ")
+    # SỬA LỖI: Thêm full_name làm trường bắt buộc
+    full_name: str = Field(max_length=100)
+    user_id: uuid.UUID
+    phone_number: str = Field(max_length=20)
+    position: Optional[str] = None
+    hire_date: Optional[datetime.date] = None
+    employment_status: EmploymentStatus = EmploymentStatus.ACTIVE
+    notes: Optional[str] = None
 
 
 class StaffProfileCreate(StaffProfileBase):
-    user_id: uuid.UUID
+    pass
 
 
 class StaffProfileUpdate(SQLModel):
-
-    phone_number: Optional[PhoneNumber] = None
-
+    full_name: Optional[str] = Field(default=None, max_length=100)
+    phone_number: Optional[str] = Field(default=None, max_length=20)
     position: Optional[str] = None
     hire_date: Optional[datetime.date] = None
     employment_status: Optional[EmploymentStatus] = None
     notes: Optional[str] = None
 
 
-class StaffProfilePublic(StaffProfileBase):
+class StaffProfilePublic(SQLModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    user_full_name: str
+    full_name: str
+    phone_number: str
+    position: Optional[str] = None
+    hire_date: Optional[datetime.date] = None
+    employment_status: EmploymentStatus
+    notes: Optional[str] = None
     user_email: str
     user_is_active: bool
 
 
 class StaffProfileWithServices(StaffProfilePublic):
-    services: List[ServicePublic] = Field(default_factory=list)
+    services: List[ServicePublic] = []
 
 
 class StaffServiceAssignment(SQLModel):
-    service_ids: List[uuid.UUID] = Field(
-        description="Danh sách ID dịch vụ nhân viên có thể thực hiện"
-    )
-
-
-# ... (Phần còn lại của file giữ nguyên, không cần thay đổi) ...
-
-# =================================================================
-# SCHEMAS FOR STAFF SCHEDULE
-# =================================================================
+    service_ids: List[uuid.UUID] = []
 
 
 class StaffScheduleBase(SQLModel):
     day_of_week: Optional[int] = Field(
-        None, ge=1, le=7, description="1: T2 ... 7: CN (cho ca lặp lại)"
+        default=None, ge=1, le=7, description="1: Thứ Hai ... 7: Chủ Nhật"
     )
-    specific_date: Optional[datetime.date] = Field(
-        None, description="Ngày cụ thể cho ca đặc biệt"
-    )
+    specific_date: Optional[datetime.date] = Field(default=None)
     start_time: datetime.time
     end_time: datetime.time
     is_active: bool = True
-    schedule_type: ScheduleType = Field(default=ScheduleType.WORKING)
     note: Optional[str] = None
-
-    @model_validator(mode="after")
-    def validate_dates_and_times(self) -> "StaffScheduleBase":
-        if self.day_of_week is None and self.specific_date is None:
-            raise ValueError("Cần cung cấp day_of_week hoặc specific_date")
-        if self.day_of_week is not None and self.specific_date is not None:
-            raise ValueError(
-                "Chỉ được chọn một trong hai: day_of_week hoặc specific_date"
-            )
-        if self.start_time >= self.end_time:
-            raise ValueError("end_time phải lớn hơn start_time")
-        return self
 
 
 class StaffScheduleCreate(StaffScheduleBase):
@@ -109,17 +71,10 @@ class StaffScheduleCreate(StaffScheduleBase):
 
 
 class StaffScheduleUpdate(SQLModel):
-    day_of_week: Optional[int] = Field(None, ge=1, le=7)
-    specific_date: Optional[datetime.date] = None
     start_time: Optional[datetime.time] = None
     end_time: Optional[datetime.time] = None
     is_active: Optional[bool] = None
-    schedule_type: Optional[ScheduleType] = None
     note: Optional[str] = None
-
-    @model_validator(mode="after")
-    def validate_updates(self) -> "StaffScheduleUpdate":
-        return self
 
 
 class StaffSchedulePublic(StaffScheduleBase):
@@ -127,30 +82,16 @@ class StaffSchedulePublic(StaffScheduleBase):
     staff_id: uuid.UUID
 
 
-class StaffScheduleCollection(SQLModel):
-    schedules: List[StaffScheduleCreate]
-
-
-# =================================================================
-# SCHEMAS FOR STAFF TIME OFF
-# =================================================================
-
-
 class StaffTimeOffBase(SQLModel):
     start_date: datetime.date
     end_date: datetime.date
     reason: Optional[str] = None
 
-    @field_validator("end_date")
-    def validate_range(cls, v, values):
-        if "start_date" in values.data and v < values.data["start_date"]:
-            raise ValueError("end_date phải lớn hơn hoặc bằng start_date")
-        return v
-
 
 class StaffTimeOffCreate(StaffTimeOffBase):
     staff_id: Optional[uuid.UUID] = Field(
-        None, description="ID nhân viên (dùng khi admin tạo hộ)"
+        default=None,
+        description="ID của nhân viên xin nghỉ (admin có thể chỉ định)",
     )
 
 
@@ -164,21 +105,15 @@ class StaffTimeOffPublic(StaffTimeOffBase):
     staff_id: uuid.UUID
     status: StaffTimeOffStatus
     approver_id: Optional[uuid.UUID] = None
-    approved_at: Optional[datetime.datetime] = None
     decision_note: Optional[str] = None
 
 
-# =================================================================
-# SCHEMAS FOR OFFBOARDING
-# =================================================================
 class FutureAppointmentInfo(SQLModel):
     appointment_id: uuid.UUID
-    scheduled_start: datetime.datetime
-    scheduled_end: datetime.datetime
-    service_id: uuid.UUID
-    customer_id: uuid.UUID
+    customer_name: str
+    appointment_time: datetime.datetime
 
 
 class StaffOffboardingResult(SQLModel):
     staff_profile: StaffProfilePublic
-    future_appointments: List[FutureAppointmentInfo] = Field(default_factory=list)
+    future_appointments: List[FutureAppointmentInfo] = []

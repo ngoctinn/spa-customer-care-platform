@@ -49,12 +49,14 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         return StaffProfilePublic(
             id=staff.id,
             user_id=staff.user_id,
+            # THAY ĐỔI: Lấy full_name trực tiếp từ staff
+            full_name=staff.full_name,
             phone_number=staff.phone_number,
             position=staff.position,
             hire_date=staff.hire_date,
             employment_status=staff.employment_status,
             notes=staff.notes,
-            user_full_name=staff.user.full_name,
+            # THAY ĐỔI: Đổi tên field cho nhất quán
             user_email=staff.user.email,
             user_is_active=staff.user.is_active,
         )
@@ -98,21 +100,6 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         return db.exec(statement).first()
 
     # --- Staff Profile Logic ---
-
-    def create_staff_profile(
-        self, db: Session, data: StaffProfileCreate
-    ) -> StaffProfilePublic:
-        self._ensure_user_exists(db, data.user_id)
-
-        existing_profile = self._get_staff_by_user_id(db, data.user_id)
-        if existing_profile:
-            raise HTTPException(
-                status_code=400, detail="Người dùng này đã có hồ sơ nhân viên"
-            )
-
-        db_profile = self.create(db, obj_in=data)
-        db.refresh(db_profile, attribute_names=["user"])
-        return self._serialize_staff_profile(db_profile)
 
     def list_staff_profiles(
         self, db: Session, skip: int = 0, limit: int = 100
@@ -231,7 +218,6 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
 
         self.get_by_id(db, id=staff_id)
 
-        # << THAY ĐỔI: Sửa lỗi "multiple values for keyword argument" >>
         request_data = data.model_dump(exclude={"staff_id"})
         db_request = StaffTimeOff(**request_data, staff_id=staff_id)
 

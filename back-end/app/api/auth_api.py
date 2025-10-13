@@ -1,7 +1,6 @@
 # app/api/auth_api.py
 from datetime import timedelta
 from typing import Annotated
-import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
 from fastapi.responses import RedirectResponse
@@ -18,26 +17,17 @@ from app.schemas.users_schema import (
     UserPublic,
 )
 from app.services import users_service, auth_service
-from app.schemas.customers_schema import CustomerCreate
-from app.services.customers_service import customers_service
 from app.schemas.token_schema import Token
-
 
 router = APIRouter()
 
 
 @router.post("/token")
 def login_for_access_token(
-    response: Response,  # Thêm dòng này
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_db_session),
 ):
-    """
-    JWT token endpoint.
-
-    Hàm này xử lý việc đăng nhập và trả về token JWT nếu thành công.
-    Token sẽ được lưu trong httpOnly cookie.
-    """
     user = auth_service.authenticate(
         db_session=session, email=form_data.username, password=form_data.password
     )
@@ -63,12 +53,11 @@ def login_for_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
 
-    # Lưu token vào cookie
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
-        httponly=True,  # httpOnly flag để bảo vệ cookie khỏi truy cập bởi JavaScript
-        expires=access_token_expires.total_seconds(),  # Set thời gian hết hạn cho cookie
+        httponly=True,
+        expires=access_token_expires.total_seconds(),
     )
 
     return {"message": "Login successful"}
@@ -81,14 +70,17 @@ async def register_user(
     *, session: Session = Depends(get_db_session), user_in: UserCreate
 ):
     """
-    Khách hàng tự đăng ký tài khoản online chỉ bằng Email, Tên và Mật khẩu.
+    Khách hàng tự đăng ký tài khoản online chỉ bằng Email và Mật khẩu.
+    Luồng này CHỈ TẠO TÀI KHOẢN (User), KHÔNG tự động tạo Hồ sơ khách hàng (Customer).
     """
+    # SỬA LỖI: Xóa bỏ hoàn toàn logic liên quan đến full_name và tạo Customer
     user = users_service.create_online_user(db_session=session, user_in=user_in)
+
     await auth_service.send_verification_email(user)
     return user
 
 
-# --- Endpoint xác thực email (MỚI) ---
+# ... các endpoint khác giữ nguyên ...
 @router.get("/verify-email")
 def verify_email(token: str, session: Session = Depends(get_db_session)):
     user_id = auth_service.verify_email_token(token)
@@ -105,12 +97,8 @@ def verify_email(token: str, session: Session = Depends(get_db_session)):
     return {"message": "Xác thực email thành công!"}
 
 
-# --- Endpoint chuyển hướng đăng nhập Google (MỚI) ---
 @router.get("/login/google")
 async def login_google(request: Request):
-    """
-    Tạo URL và chuyển hướng người dùng đến trang xác thực của Google.
-    """
     redirect_uri = request.url_for("auth_google")
     return await auth_service.oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -119,21 +107,15 @@ async def login_google(request: Request):
 async def auth_google(
     request: Request, response: Response, session: Session = Depends(get_db_session)
 ):
-    """
-    Callback endpoint cho Google OAuth.
-    Điều phối việc đăng nhập/đăng ký qua Google, tạo token và chuyển hướng về frontend.
-    """
     try:
         user = await auth_service.handle_google_login_or_register(
             request=request, db_session=session
         )
 
         if not user:
-            # Chuyển hướng về trang đăng nhập của frontend với thông báo lỗi
             error_url = f"{settings.FRONTEND_URL}/auth/login?error=google_failed"
             return RedirectResponse(url=error_url)
 
-        # Tạo token và thiết lập cookie (như cũ)
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = security.create_access_token(
             data={"sub": str(user.id)}, expires_delta=access_token_expires
@@ -144,39 +126,25 @@ async def auth_google(
             value=f"Bearer {access_token}",
             httponly=True,
             expires=access_token_expires.total_seconds(),
-            samesite="lax",  # Thêm để tăng cường bảo mật
+            samesite="lax",
         )
 
-        # Chuyển hướng người dùng về trang chính sau khi đăng nhập thành công
-        # Bạn có thể thay đổi "/dashboard" thành trang bạn muốn
         success_url = f"http://localhost:3000/dashboard"
-        # Gắn response đã set cookie vào RedirectResponse
         return RedirectResponse(url=success_url, headers=response.headers)
 
     except HTTPException as e:
-        # Nếu có lỗi cụ thể từ service, chuyển hướng về trang đăng nhập với lỗi đó
         error_detail = e.detail.replace(" ", "_").lower()
         error_url = f"http://localhost:3000/auth/login?error={error_detail}"
         return RedirectResponse(url=error_url)
 
 
-# ==================================================================
-# --- Endpoint cho reset mật khẩu  ---
-# ==================================================================
 @router.post("/forgot-password")
 async def forgot_password(
     *, session: Session = Depends(get_db_session), body: ForgotPasswordRequest
 ):
-    """
-    Endpoint để yêu cầu reset mật khẩu.
-    """
     user = users_service.get_user_by_email(db_session=session, email=body.email)
-
-    # Kể cả khi không tìm thấy user, chúng ta vẫn trả về thông báo thành công
-    # để tránh việc kẻ tấn công có thể dùng API này để dò email tồn tại trong hệ thống.
     if user:
         await auth_service.send_password_reset_email(user)
-
     return {
         "message": "Nếu email của bạn tồn tại trong hệ thống, bạn sẽ nhận được một email hướng dẫn đặt lại mật khẩu."
     }
@@ -186,9 +154,6 @@ async def forgot_password(
 def reset_password(
     *, session: Session = Depends(get_db_session), body: ResetPasswordRequest
 ):
-    """
-    Endpoint để xác nhận và đặt lại mật khẩu mới.
-    """
     user_id = auth_service.verify_password_reset_token(body.token)
     if not user_id:
         raise HTTPException(
@@ -206,14 +171,10 @@ def reset_password(
     auth_service.reset_user_password(
         db_session=session, user=user, new_password=body.new_password
     )
-
     return {"message": "Mật khẩu đã được đặt lại thành công."}
 
 
 @router.post("/logout")
 def logout(response: Response):
-    """
-    Xóa access_token cookie để đăng xuất người dùng.
-    """
     response.delete_cookie(key="access_token")
     return {"message": "Đăng xuất thành công"}

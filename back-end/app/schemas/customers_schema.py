@@ -7,15 +7,12 @@ from pydantic import EmailStr, StringConstraints
 
 from app.schemas.users_schema import UserPublic
 
-# Regex cho SĐT Việt Nam
 PHONE_REGEX = r"^(0|\+84)(\s|\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\d)(\s|\.)?(\d{3})(\s|\.)?(\d{3})$"
-
 PhoneNumber = Annotated[str, StringConstraints(max_length=20, pattern=PHONE_REGEX)]
 
 
 class CustomerBase(SQLModel):
-    phone_number: PhoneNumber
-    email: EmailStr | None = Field(default=None)
+    phone_number: PhoneNumber = Field(default=None)
     full_name: str | None = Field(default=None, max_length=100)
     date_of_birth: str | None = None
     gender: str | None = Field(default=None, max_length=10)
@@ -27,16 +24,15 @@ class CustomerBase(SQLModel):
 class CustomerCreateAtStore(SQLModel):
     phone_number: PhoneNumber
     full_name: str | None = Field(default=None, max_length=100)
-    email: EmailStr | None = Field(default=None)  # Email là không bắt buộc
 
 
 class CustomerCreate(CustomerBase):
+    user_id: Optional[uuid.UUID] = None
     pass
 
 
 class CustomerUpdate(SQLModel):
     phone_number: Optional[PhoneNumber] = Field(default=None)
-    email: Optional[EmailStr] = Field(default=None)
     full_name: Optional[str] = Field(default=None, max_length=100)
     date_of_birth: Optional[str] = None
     gender: Optional[str] = Field(default=None, max_length=10)
@@ -47,4 +43,4 @@ class CustomerUpdate(SQLModel):
 
 class CustomerPublic(CustomerBase):
     id: uuid.UUID
-    user: Optional[UserPublic] = None  # Hiển thị thông tin tài khoản online nếu có
+    user: Optional[UserPublic] = None

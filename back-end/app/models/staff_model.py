@@ -41,6 +41,7 @@ class StaffProfile(BaseUUIDModel, table=True):
 
     __tablename__ = "staff_profile"
 
+    full_name: str = Field(max_length=100)
     user_id: uuid.UUID = Field(foreign_key="user.id", unique=True, index=True)
     phone_number: str = Field(max_length=20, unique=True, index=True)
     position: Optional[str] = Field(

@@ -1,7 +1,7 @@
 # back-end/app/api/customers_api.py
 import uuid
 from typing import List
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Response
 from sqlmodel import Session
 
 from app.core.dependencies import (
@@ -23,30 +23,17 @@ from app.models.customers_model import Customer
 router = APIRouter()
 
 
-# Endpoint cho người dùng tự cập nhật hồ sơ của mình
 @router.put(
     "/me/profile",
     response_model=CustomerPublic,
-    summary="Cập nhật hồ sơ khách hàng của tôi",
+    summary="Tạo hoặc Cập nhật hồ sơ khách hàng của tôi",
 )
-def update_my_customer_profile(
+def create_or_update_my_customer_profile(
     *,
     session: Session = Depends(get_db_session),
     customer_in: CustomerUpdate,
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Người dùng đã đăng nhập tự cập nhật thông tin hồ sơ khách hàng của mình.
-    Bao gồm cả việc thay đổi ảnh đại diện.
-    """
-    customer_profile = current_user.customer_profile
-    if not customer_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Không tìm thấy hồ sơ khách hàng cho người dùng này.",
-        )
-
-    # Logic kiểm tra quyền sở hữu ảnh đại diện
     if customer_in.avatar_id:
         image = images_service.get_image_by_id(
             db=session, image_id=customer_in.avatar_id
@@ -57,27 +44,32 @@ def update_my_customer_profile(
                 detail="Không có quyền sử dụng hình ảnh này làm ảnh đại diện.",
             )
 
-    return customers_service.update(
-        db=session, db_obj=customer_profile, obj_in=customer_in
+    customer_profile = customers_service.get_or_create_for_user(
+        db=session, user=current_user, profile_in=customer_in
     )
+    return customer_profile
 
 
 @router.post(
     "",
     response_model=CustomerPublic,
-    status_code=status.HTTP_201_CREATED,
+    # status_code sẽ được set động bên dưới
     dependencies=[Depends(get_current_admin_user)],
 )
 def create_customer(
-    *, session: Session = Depends(get_db_session), customer_in: CustomerCreateAtStore
+    *,
+    session: Session = Depends(get_db_session),
+    customer_in: CustomerCreateAtStore,
+    response: Response,
 ):
-    """[Nhân viên] Tạo một hồ sơ khách hàng mới (khách vãng lai)."""
-    return customers_service.find_or_create_offline_customer(
+    customer, created = customers_service.find_or_create_offline_customer(
         db=session, customer_in=customer_in
     )
-
-
-# Thêm các endpoint khác cho get_all, get_by_id, update, delete...
+    if created:
+        response.status_code = status.HTTP_201_CREATED
+    else:
+        response.status_code = status.HTTP_200_OK
+    return customer
 
 
 @router.get(
@@ -88,15 +80,17 @@ def create_customer(
 def get_all_customers(
     session: Session = Depends(get_db_session),
 ):
-    """[Nhân viên] Lấy danh sách tất cả khách hàng."""
     return customers_service.get_all(db=session)
 
 
-@router.get("/{customer_id}", response_model=CustomerPublic)
+@router.get(
+    "/{customer_id}",
+    response_model=CustomerPublic,
+    dependencies=[Depends(get_current_admin_user)],  # THÊM DEPENDENCY PHÂN QUYỀN
+)
 def get_customer_by_id(
     customer_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):
-    """[Nhân viên] Lấy thông tin chi tiết một khách hàng bằng ID."""
     return customers_service.get_by_id(db=session, id=customer_id)
 
 
@@ -110,7 +104,6 @@ def update_customer(
     customer_in: CustomerUpdate,
     session: Session = Depends(get_db_session),
 ):
-    """[Nhân viên] Cập nhật thông tin một khách hàng."""
     customer = customers_service.get_by_id(db=session, id=customer_id)
     return customers_service.update(db=session, db_obj=customer, obj_in=customer_in)
 
@@ -121,7 +114,6 @@ def update_customer(
     dependencies=[Depends(get_current_admin_user)],
 )
 def delete_customer(customer_id: uuid.UUID, session: Session = Depends(get_db_session)):
-    """[Nhân viên] Xóa mềm một khách hàng."""
     customer_to_delete = customers_service.get_by_id(db=session, id=customer_id)
     customers_service.delete(db=session, db_obj=customer_to_delete)
     return None
