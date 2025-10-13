@@ -1,3 +1,5 @@
+import { Appointment } from "@/features/appointment/types";
+
 // Kiểu dữ liệu cho một ngày trong lịch mặc định
 export interface DefaultScheduleBase {
   day_of_week: number; // 1-7 (T2-CN)
@@ -82,4 +84,32 @@ export interface TimeEntry {
   notes?: string;
   created_at: Date;
   updated_at: Date;
+}
+
+/**
+ * @description Ghi đè lịch làm việc cho một ngày cụ thể.
+ * Ưu tiên cao hơn lịch làm việc cố định (DefaultSchedule).
+ */
+export interface ScheduleOverride {
+  id: string;
+  user_id: string;
+  date: string; // YYYY-MM-DD
+  start_time: string | null; // "HH:mm" hoặc null nếu là ngày nghỉ
+  end_time: string | null; // "HH:mm" hoặc null nếu là ngày nghỉ
+  type: "WORK" | "DAY_OFF"; // Loại ghi đè: là ca làm việc hay ngày nghỉ
+}
+
+/**
+ * @description Yêu cầu xin nghỉ phép của nhân viên.
+ */
+export interface TimeOffRequest {
+  id: string;
+  user_id: string;
+  start_time: Date;
+  end_time: Date;
+  reason: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  created_at: Date;
+  // Thông tin về xung đột lịch hẹn (do backend cung cấp)
+  conflicting_appointments?: Appointment[];
 }

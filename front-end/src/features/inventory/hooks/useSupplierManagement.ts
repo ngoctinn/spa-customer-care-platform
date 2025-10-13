@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 import { Supplier } from "../types";
 import {
   SupplierFormValues,

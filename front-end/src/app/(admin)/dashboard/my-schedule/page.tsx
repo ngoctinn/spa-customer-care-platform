@@ -8,7 +8,7 @@ import {
   checkIn,
   checkOut,
   getMySchedules, // Import hàm mới
-} from "@/features/schedule/api/schedule.api";
+} from "@/features/work-schedules/api/schedule.api";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
   Card,
@@ -33,7 +33,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FlexibleSchedule } from "@/features/schedule/types";
+import { FlexibleSchedule } from "@/features/work-schedules/types";
 import { format, isWithinInterval, subMinutes } from "date-fns";
 
 const scheduleSubmissionSchema = z

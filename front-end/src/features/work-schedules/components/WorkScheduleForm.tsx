@@ -9,7 +9,7 @@ import { z } from "zod";
 import {
   useWorkSchedule,
   useUpdateWorkSchedule,
-} from "@/features/schedule/hooks/useWorkSchedule";
+} from "@/features/work-schedules/hooks/useWorkSchedule";
 import { FullPageLoader } from "@/components/ui/spinner";
 import {
   Card,
@@ -65,8 +65,8 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
       schedules: Array.from({ length: 7 }, (_, i) => ({
         day_of_week: i + 1,
         is_active: false,
-        start_time: "09:00",
-        end_time: "17:00",
+        start_time: null,
+        end_time: null,
       })),
     },
   });

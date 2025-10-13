@@ -8,7 +8,7 @@ import {
 } from "@/features/product/api/product.api";
 import { Product } from "@/features/product/types";
 import { ProductFormValues } from "@/features/product/schemas";
-import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 
 const queryKey = ["products"];
 

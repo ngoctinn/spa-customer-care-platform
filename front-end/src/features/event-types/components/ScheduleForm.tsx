@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { DAYS_OF_WEEK_IN_ORDER } from "@/data/constants";
-import { scheduleFormSchema } from "@/features/scheduling/schemas/schedule.schema";
+import { scheduleFormSchema } from "@/features/event-types/schemas/schedule.schema";
 import { timeToInt } from "@/lib/utils";
 import {
   Select,

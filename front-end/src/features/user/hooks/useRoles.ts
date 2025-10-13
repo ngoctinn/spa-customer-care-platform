@@ -9,7 +9,7 @@ import {
   updateRolePermissions,
 } from "@/features/user/apis/role.api";
 import { Role, PermissionGroup } from "@/features/user/types";
-import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 import { RoleFormValues } from "@/features/user/schemas";
 import { toast } from "sonner";
 

@@ -1,5 +1,5 @@
 // src/app/(admin)/dashboard/my-availability/page.tsx
-import { ScheduleForm } from "@/features/scheduling/components/ScheduleForm";
+import { ScheduleForm } from "@/features/event-types/components/ScheduleForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Định nghĩa kiểu dữ liệu cho một 'availability' để đảm bảo an toàn kiểu

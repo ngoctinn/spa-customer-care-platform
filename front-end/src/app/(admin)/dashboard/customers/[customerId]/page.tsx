@@ -43,6 +43,7 @@ import { FormDialog } from "@/components/common/FormDialog";
 import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 import { CustomerFormValues } from "@/features/customer/hooks/useCustomerManagement";
+import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 
 // --- Components for the Detail Page ---
 
@@ -296,9 +297,13 @@ export default function CustomerDetailPage() {
     form,
     isFormOpen,
     isSubmitting,
+    itemToDelete,
     handleFormSubmit,
     handleOpenEditForm,
     handleCloseForm,
+    handleOpenDeleteDialog,
+    handleCloseDeleteDialog,
+    handleConfirmDelete,
   } = useCustomerManagement();
 
   const handleEditClick = () => {
@@ -357,7 +362,10 @@ export default function CustomerDetailPage() {
         title={customer.full_name}
         description={`Chi tiết khách hàng, ID: ${customer.id}`}
         actionButtons={
-          <Button variant="destructive">
+          <Button
+            variant="destructive"
+            onClick={() => handleOpenDeleteDialog(customer)}
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Vô hiệu hóa
           </Button>
@@ -375,6 +383,16 @@ export default function CustomerDetailPage() {
       >
         <CustomerFormFields />
       </FormDialog>
+
+      <ConfirmationModal
+        isOpen={!!itemToDelete}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title={`Xác nhận vô hiệu hóa "${itemToDelete?.full_name}"`}
+        description="Bạn có chắc chắn muốn vô hiệu hóa khách hàng này không? Hành động này có thể được hoàn tác."
+        isDestructive
+        confirmText="Vô hiệu hóa"
+      />
     </>
   );
 }

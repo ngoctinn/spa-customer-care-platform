@@ -13,7 +13,7 @@ import {
   approveSchedule,
   rejectSchedule,
   getTimeEntries,
-} from "@/features/schedule/api/schedule.api";
+} from "@/features/work-schedules/api/schedule.api";
 import { useStaff } from "@/features/staff/hooks/useStaff";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FullPageLoader } from "@/components/ui/spinner";
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X, Clock, LogIn, LogOut } from "lucide-react";
-import { FlexibleSchedule, TimeEntry } from "@/features/schedule/types";
+import { FlexibleSchedule, TimeEntry } from "@/features/work-schedules/types";
 import { Badge } from "@/components/ui/badge";
 
 const statusColors = {

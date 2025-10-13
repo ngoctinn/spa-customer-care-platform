@@ -9,7 +9,7 @@ import {
   getTechniciansByService,
 } from "@/features/staff/api/staff.api";
 import { FullStaffProfile } from "@/features/staff/types";
-import { useCrudMutations } from "@/hooks/useCrudMutations";
+import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 import { UserPublic } from "@/features/user/types";
 import { StaffFormValues } from "@/features/staff/schemas";
 

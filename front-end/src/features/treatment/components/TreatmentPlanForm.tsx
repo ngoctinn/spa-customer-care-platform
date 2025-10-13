@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CategorySelector } from "@/components/common/CategorySelector";
+import { CategorySelector } from "@/features/category/components/CategorySelector";
 
 export default function TreatmentPlanFormFields() {
   const form = useFormContext<TreatmentPlanFormValues>();

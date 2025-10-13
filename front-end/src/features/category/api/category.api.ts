@@ -24,3 +24,31 @@ export async function addCategory(
     body: JSON.stringify(categoryData),
   });
 }
+
+/**
+ * Cập nhật một danh mục
+ * @param id ID của danh mục
+ * @param categoryData Dữ liệu cập nhật
+ */
+export async function updateCategory({
+  id,
+  data,
+}: {
+  id: string;
+  data: CategoryFormValues;
+}): Promise<Category> {
+  return apiClient<Category>(`catalog/categories/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Xóa một danh mục
+ * @param id ID của danh mục
+ */
+export async function deleteCategory(id: string): Promise<void> {
+  return apiClient<void>(`catalog/categories/${id}`, {
+    method: "DELETE",
+  });
+}

@@ -3,6 +3,8 @@ import { BookingState } from "@/features/booking/schemas";
 import { Appointment } from "@/features/appointment/types";
 import apiClient from "@/lib/apiClient";
 import { AppointmentFormValues } from "@/features/appointment/schemas";
+import { FullStaffProfile } from "@/features/staff/types";
+import { buildQueryString } from "@/lib/queryString";
 
 /**
  * Gửi thông tin đặt lịch hẹn mới lên server
@@ -87,4 +89,31 @@ export async function deleteAppointment(id: string): Promise<void> {
   return apiClient<void>(`/appointments/${id}`, {
     method: "DELETE",
   });
+}
+
+/**
+ * Lấy tất cả các lịch hẹn "sắp tới" (upcoming) của một nhân viên.
+ * @param technicianId ID của nhân viên.
+ */
+export async function getUpcomingAppointmentsByTechnician(
+  technicianId: string
+): Promise<Appointment[]> {
+  const query = buildQueryString({
+    technician_id: technicianId,
+    status: "upcoming",
+  });
+  return apiClient<Appointment[]>(`/appointments${query}`);
+}
+
+/**
+ * Lấy danh sách các nhân viên được gợi ý để thay thế cho một lịch hẹn cụ thể.
+ * Backend sẽ xử lý logic tìm kiếm dựa trên kỹ năng và lịch trống.
+ * @param appointmentId ID của lịch hẹn cần tìm người thay thế.
+ */
+export async function getSuggestedTechniciansForAppointment(
+  appointmentId: string
+): Promise<FullStaffProfile[]> {
+  return apiClient<FullStaffProfile[]>(
+    `/appointments/${appointmentId}/suggest-technicians`
+  );
 }

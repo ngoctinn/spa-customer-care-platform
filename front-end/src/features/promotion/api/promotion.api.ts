@@ -1,19 +1,52 @@
 // src/features/promotion/api/promotion.api.ts
 import { Promotion } from "@/features/promotion/types";
-import apiClient, { ApiError } from "@/lib/apiClient";
+import { PromotionFormValues } from "@/features/promotion/schemas";
+import apiClient from "@/lib/apiClient";
 
 /**
  * Lấy danh sách tất cả khuyến mãi
  */
 export async function getPromotions(): Promise<Promotion[]> {
-  try {
-    return await apiClient<Promotion[]>("/promotions");
-  } catch (error) {
-    if (error instanceof ApiError && (error.status === 404 || error.status === 204)) {
-      // Backend chưa hỗ trợ endpoint, trả về danh sách rỗng để UI xử lý gracefully
-      return [];
-    }
+  return apiClient<Promotion[]>("/promotions");
+}
 
-    throw error;
-  }
+/**
+ * Thêm một khuyến mãi mới
+ * @param promotionData Dữ liệu khuyến mãi từ form
+ */
+export async function addPromotion(
+  promotionData: PromotionFormValues
+): Promise<Promotion> {
+  return apiClient<Promotion>("/promotions", {
+    method: "POST",
+    body: JSON.stringify(promotionData),
+  });
+}
+
+/**
+ * Cập nhật một khuyến mãi
+ * @param id ID của khuyến mãi
+ * @param data Dữ liệu cập nhật
+ */
+export async function updatePromotion({
+  id,
+  data,
+}: {
+  id: string;
+  data: Partial<PromotionFormValues>;
+}): Promise<Promotion> {
+  return apiClient<Promotion>(`/promotions/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Xóa một khuyến mãi
+ * @param id ID của khuyến mãi
+ */
+export async function deletePromotion(id: string): Promise<void> {
+  return apiClient<void>(`/promotions/${id}`, {
+    method: "DELETE",
+  });
 }

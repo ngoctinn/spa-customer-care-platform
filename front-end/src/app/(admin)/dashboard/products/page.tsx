@@ -1,5 +1,3 @@
-// src/app/(admin)/dashboard/products/page.tsx (Refactored Version)
-
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
 
