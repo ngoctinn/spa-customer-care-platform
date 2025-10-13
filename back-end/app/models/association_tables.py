@@ -50,18 +50,3 @@ class TreatmentPlanImageLink(SQLModel, table=True):
         foreign_key="treatment_plan.id", primary_key=True
     )
     image_id: uuid.UUID = Field(foreign_key="image.id", primary_key=True)
-
-
-class StaffServiceLink(SQLModel, table=True):
-    """Bảng liên kết nhiều-nhiều giữa nhân viên và dịch vụ."""
-
-    __tablename__ = "staff_service_link"
-
-    staff_id: uuid.UUID = Field(
-        foreign_key="staff_profile.id",
-        primary_key=True,
-    )
-    service_id: uuid.UUID = Field(
-        foreign_key="service.id",
-        primary_key=True,
-    )

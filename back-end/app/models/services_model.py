@@ -5,16 +5,11 @@ from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
 # Import bảng liên kết mới
-from app.models.association_tables import (
-    ServiceCategoryLink,
-    ServiceImageLink,
-    StaffServiceLink,
-)
+from app.models.association_tables import ServiceCategoryLink, ServiceImageLink
 
 if TYPE_CHECKING:
     from app.models.catalog_model import Category, Image
     from app.models.treatment_plans_model import TreatmentPlanStep
-    from app.models.staff_model import StaffProfile
 
 
 class Service(BaseUUIDModel, table=True):
@@ -54,9 +49,6 @@ class Service(BaseUUIDModel, table=True):
             "lazy": "selectin",
             "foreign_keys": "Service.primary_image_id",
         }
-    )
-    staff_members: List["StaffProfile"] = Relationship(
-        back_populates="services", link_model=StaffServiceLink
     )
 
     @property
