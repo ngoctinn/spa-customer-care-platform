@@ -192,3 +192,48 @@ def basic_service_fixture(
     db_session.commit()
     db_session.refresh(db_service)
     return db_service
+
+
+from app.models.staff_model import StaffProfile
+from app.schemas.staff_schema import StaffProfileCreate
+
+
+@pytest.fixture(scope="function")
+def staff_user(db_session: Session) -> User:
+    """Fixture tạo một user để gán làm nhân viên."""
+    user_data = User(
+        email="staffuser@example.com",
+        full_name="Staff User",
+        hashed_password=get_password_hash("password123"),
+        is_active=True,
+        is_email_verified=True,
+    )
+    db_session.add(user_data)
+    db_session.commit()
+    db_session.refresh(user_data)
+    return user_data
+
+
+@pytest.fixture(scope="function")
+def staff_profile(db_session: Session, staff_user: User) -> StaffProfile:
+    """Fixture tạo một hồ sơ nhân viên hoàn chỉnh."""
+    profile_data = StaffProfileCreate(
+        user_id=staff_user.id,
+        phone_number="0987654321",
+        position="Chuyên viên trị liệu",
+    )
+    db_profile = StaffProfile.model_validate(profile_data)
+    db_session.add(db_profile)
+    db_session.commit()
+    db_session.refresh(db_profile)
+    return db_profile
+
+
+@pytest.fixture(scope="function")
+def staff_authenticated_client(client: TestClient, staff_user: User) -> TestClient:
+    """
+    Fixture tạo ra một client đã đăng nhập với tư cách `staff_user`.
+    """
+    login_data = {"username": staff_user.email, "password": "password123"}
+    client.post("/auth/token", data=login_data)
+    return client
