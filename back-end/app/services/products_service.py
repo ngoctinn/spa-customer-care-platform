@@ -14,14 +14,6 @@ from app.services.images_service import sync_images_for_entity
 from .base_service import BaseService
 
 
-def _with_product_relationships(statement):
-    return statement.options(
-        selectinload(Product.categories),
-        selectinload(Product.images),
-        selectinload(Product.primary_image),
-    )
-
-
 def _ensure_product_category(category: Category) -> None:
     if category.category_type != CategoryTypeEnum.product:
         raise HTTPException(
@@ -50,42 +42,30 @@ def _get_valid_product_categories(
     return categories
 
 
-def _filter_soft_deleted_relationships(product: Product) -> Product:
-    product.categories = [cat for cat in product.categories if not cat.is_deleted]
-    product.images = [img for img in product.images if not img.is_deleted]
-    valid_image_ids = {img.id for img in product.images}
-    if product.primary_image_id not in valid_image_ids:
-        product.primary_image_id = None
-    return product
-
-
 class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
     def __init__(self):
         super().__init__(Product)
 
-    def get_all(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Product]:
-        query = _with_product_relationships(
-            select(self.model)
-            .where(self.model.is_deleted == False)
-            .offset(skip)
-            .limit(limit)
-        )
-        products = db.exec(query).unique().all()
-        return [_filter_soft_deleted_relationships(p) for p in products]
+    def _get_load_options(self):
+        return [
+            selectinload(Product.categories),
+            selectinload(Product.images),
+            selectinload(Product.primary_image),
+        ]
 
-    def get_by_id(self, db: Session, *, id: uuid.UUID) -> Product:
-        query = _with_product_relationships(
-            select(self.model).where(
-                self.model.id == id, self.model.is_deleted == False
-            )
-        )
-        product = db.exec(query).unique().first()
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Không tìm thấy sản phẩm {id}.",
-            )
-        return _filter_soft_deleted_relationships(product)
+    def _filter_relationships(self, product: Product) -> Product:
+        """Lọc các mối quan hệ soft-deleted."""
+        # Lọc danh mục
+        product.categories = [cat for cat in product.categories if not cat.is_deleted]
+        # Lọc hình ảnh
+        product.images = [img for img in product.images if not img.is_deleted]
+
+        # Dọn dẹp primary_image_id nếu ảnh chính đã bị xóa mềm
+        valid_image_ids = {img.id for img in product.images}
+        if product.primary_image_id and product.primary_image_id not in valid_image_ids:
+            product.primary_image_id = None
+
+        return product
 
     async def create(
         self,

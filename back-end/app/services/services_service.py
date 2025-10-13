@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
 from app.models.catalog_model import Category
@@ -19,44 +19,25 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
     def __init__(self):
         super().__init__(Service)
 
-    def _with_service_relationships(self, statement):
-        return statement.options(
+    def _get_load_options(self) -> List[Load]:
+        """Tải các mối quan hệ cần thiết cho Service."""
+        return [
             selectinload(Service.categories),
             selectinload(Service.images),
             selectinload(Service.primary_image),
-        )
+        ]
 
-    def _filter_soft_deleted_relationships(self, service: Service) -> Service:
+    def _filter_relationships(self, service: Service) -> Service:
+        """Lọc các mối quan hệ soft-deleted."""
         service.categories = [cat for cat in service.categories if not cat.is_deleted]
         service.images = [img for img in service.images if not img.is_deleted]
+
+        # Dọn dẹp primary_image_id nếu ảnh chính đã bị xóa mềm
         valid_image_ids = {img.id for img in service.images}
-        if service.primary_image_id not in valid_image_ids:
+        if service.primary_image_id and service.primary_image_id not in valid_image_ids:
             service.primary_image_id = None
+
         return service
-
-    def get_all(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Service]:
-        statement = self._with_service_relationships(
-            select(self.model)
-            .where(self.model.is_deleted == False)
-            .offset(skip)
-            .limit(limit)
-        )
-        services = db.exec(statement).unique().all()
-        return [self._filter_soft_deleted_relationships(s) for s in services]
-
-    def get_by_id(self, db: Session, *, id: uuid.UUID) -> Service:
-        statement = self._with_service_relationships(
-            select(self.model).where(
-                self.model.id == id, self.model.is_deleted == False
-            )
-        )
-        service = db.exec(statement).unique().first()
-        if not service:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Không tìm thấy dịch vụ {id}.",
-            )
-        return self._filter_soft_deleted_relationships(service)
 
     async def create(
         self,

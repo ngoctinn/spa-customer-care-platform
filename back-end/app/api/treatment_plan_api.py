@@ -11,7 +11,7 @@ from app.schemas.treatment_plans_schema import (
     TreatmentPlanPublicWithDetails,
     TreatmentPlanUpdate,
 )
-from app.services import treatment_plans_service
+from app.services.treatment_plans_service import treatment_plans_service
 
 
 router = APIRouter()
