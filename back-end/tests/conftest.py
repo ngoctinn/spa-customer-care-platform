@@ -1,9 +1,11 @@
 # back-end/tests/conftest.py
 import os
+import uuid
 from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
+
 
 # --- Phần thiết lập môi trường (giữ nguyên) ---
 os.environ["ENV_FILE"] = ".env.test"
@@ -13,7 +15,11 @@ from app.core.config import settings
 from app.core.dependencies import get_db_session
 from app.core.security import get_password_hash
 from app.models.users_model import User, Role
+from app.models.customers_model import Customer
+from app.models.catalog_model import Category
+from app.models.services_model import Service
 from app.schemas.roles_schema import RoleCreate
+from app.schemas.catalog_schema import CategoryTypeEnum
 from app.services import roles_service
 
 # --- Phần cấu hình database test (giữ nguyên) ---
@@ -149,3 +155,40 @@ def customer_profile_for_test_user(db_session: Session, test_user: User) -> Cust
     db_session.commit()
     db_session.refresh(customer_profile)
     return customer_profile
+
+
+# =================================================================
+# FIXTURES DÙNG CHUNG CHO SERVICE VÀ CATALOG (ĐÃ DI CHUYỂN VÀO ĐÂY)
+# =================================================================
+
+
+@pytest.fixture(scope="function")
+def service_category_fixture(db_session: Session) -> Category:
+    """Fixture tạo Category loại 'service'."""
+    category_data = Category(
+        name=f"Dịch vụ Test {uuid.uuid4()}",
+        description="Category cho test service",
+        category_type=CategoryTypeEnum.service.value,
+    )
+    db_session.add(category_data)
+    db_session.commit()
+    db_session.refresh(category_data)
+    return category_data
+
+
+@pytest.fixture(scope="function")
+def basic_service_fixture(
+    db_session: Session, service_category_fixture: Category
+) -> Service:
+    """Fixture tạo một Service cơ bản đã liên kết Category."""
+    db_service = Service(
+        name=f"Dịch vụ Test {uuid.uuid4()}",
+        description="Mô tả test",
+        price=100000.0,
+        duration_minutes=60,
+    )
+    db_service.categories.append(service_category_fixture)
+    db_session.add(db_service)
+    db_session.commit()
+    db_session.refresh(db_service)
+    return db_service

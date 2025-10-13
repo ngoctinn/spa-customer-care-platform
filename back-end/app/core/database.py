@@ -10,6 +10,14 @@ from app.models.catalog_model import Category, Image
 from app.models.products_model import Product
 from app.models.services_model import Service
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
+from app.models.customers_model import Customer
+from app.models.association_tables import (
+    ServiceCategoryLink,
+    ProductCategoryLink,
+    ProductImageLink,
+    ServiceImageLink,
+    TreatmentPlanImageLink,
+)
 
 
 engine = create_engine(

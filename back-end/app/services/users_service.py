@@ -17,7 +17,6 @@ from app.schemas.users_schema import (
 )
 from app.services import roles_service
 from app.schemas.roles_schema import RoleCreate
-from app.utils.common import get_object_or_404
 
 # =================================================================
 # CÁC HÀM TRUY VẤN (QUERIES)
@@ -31,11 +30,18 @@ def get_user_by_email(db_session: Session, *, email: str) -> Optional[User]:
     return db_session.exec(select(User).where(User.email == email)).first()
 
 
-def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> Optional[User]:
-    """Tìm người dùng bằng ID."""
-    # Bạn có thể giữ nguyên câu lệnh select hoặc chuyển sang dùng hàm tiện ích
-    # để đảm bảo tính nhất quán
-    return get_object_or_404(db_session, model=User, obj_id=user_id)
+def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> User:
+    """
+    Tìm người dùng bằng ID.
+    Nếu không tìm thấy hoặc đã bị xóa mềm, raise HTTP 404.
+    """
+    user = db_session.get(User, user_id)
+    if not user or user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User với ID {user_id} không được tìm thấy.",
+        )
+    return user
 
 
 # =================================================================
@@ -81,13 +87,11 @@ def assign_role_to_user(
     db_session: Session, *, user_id: uuid.UUID, role_id: uuid.UUID
 ) -> User:
     """Gán một vai trò cho một người dùng."""
+    # SỬ DỤNG HÀM MỚI: Tự động xử lý 404
     user = get_user_by_id(db_session, user_id=user_id)
-    if not user:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Người dùng không tồn tại")
-
-    role = roles_service.get_role_by_id(db_session, role_id=role_id)
-    if not role:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Vai trò không tồn tại")
+    role = roles_service.get_role_by_id(
+        db_session, role_id=role_id
+    )  # roles_service cũng sẽ được refactor
 
     if role in user.roles:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Người dùng đã có vai trò này")
@@ -104,12 +108,7 @@ def remove_role_from_user(
 ) -> User:
     """Xóa một vai trò khỏi người dùng."""
     user = get_user_by_id(db_session, user_id=user_id)
-    if not user:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Người dùng không tồn tại")
-
     role = roles_service.get_role_by_id(db_session, role_id=role_id)
-    if not role:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Vai trò không tồn tại")
 
     if role not in user.roles:
         raise HTTPException(
@@ -142,44 +141,56 @@ def create_user_by_admin(
 ) -> User:
     """
     [Admin] Tạo người dùng mới (nhân viên), tự động tạo mật khẩu tạm và gán vai trò.
+    Đảm bảo toàn bộ quá trình là một giao tác nguyên tử.
     """
-    existing_user = get_user_by_email(db_session, email=user_in.email)
-    if existing_user:
+    # 1. Validations (Thực hiện kiểm tra trước khi ghi vào DB)
+    if get_user_by_email(db_session, email=user_in.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email đã tồn tại.",
         )
 
-    # Tự động tạo một mật khẩu ngẫu nhiên, phức tạp
-    temp_password = f"temp_password_{uuid.uuid4()}"
-    hashed_password = get_password_hash(temp_password)
-
-    user_data: Dict[str, Any] = user_in.model_dump(exclude={"role_id"})
-    # Mặc định tài khoản được tạo bởi admin là đã xác thực email
-    db_user = User(**user_data, hashed_password=hashed_password, is_email_verified=True)
-
-    # Gán vai trò
-    role_name = "nhân viên"  # Tên vai trò mặc định
+    role = None
     if user_in.role_id:
+        # get_object_or_404 sẽ tự raise lỗi nếu không tìm thấy
         role = roles_service.get_role_by_id(db_session, role_id=user_in.role_id)
-        if not role:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND,
-                f"Vai trò với ID {user_in.role_id} không tồn tại.",
-            )
     else:
-        role = roles_service.get_role_by_name(db_session, name=role_name)
+        role = roles_service.get_role_by_name(db_session, name="nhân viên")
+
+    # --- BẮT ĐẦU GIAO TÁC ---
+    try:
+        # 2. Chuẩn bị dữ liệu và các đối tượng
+        temp_password = f"temp_password_{uuid.uuid4()}"
+        hashed_password = get_password_hash(temp_password)
+        user_data: Dict[str, Any] = user_in.model_dump(exclude={"role_id"})
+        db_user = User(
+            **user_data, hashed_password=hashed_password, is_email_verified=True
+        )
+
+        # Nếu vai trò "nhân viên" chưa có, tạo nó trong cùng giao tác
         if not role:
             role_to_create = RoleCreate(
-                name=role_name, description="Vai trò cho nhân viên"
+                name="nhân viên", description="Vai trò cho nhân viên"
             )
+            # Không commit ở đây
             role = roles_service.create_role(db_session, role_in=role_to_create)
 
-    db_user.roles.append(role)
-    db_session.add(db_user)
-    db_session.commit()
-    db_session.refresh(db_user)
+        db_user.roles.append(role)
+        db_session.add(db_user)
 
+        # 3. Commit một lần duy nhất
+        db_session.commit()
+
+    except Exception as e:
+        # Nếu có bất kỳ lỗi nào xảy ra, rollback toàn bộ thay đổi
+        db_session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Không thể tạo người dùng do lỗi hệ thống: {e}",
+        )
+    # --- KẾT THÚC GIAO TÁC ---
+
+    db_session.refresh(db_user)
     return db_user
 
 
@@ -200,11 +211,9 @@ def update_user_by_admin(
 
 
 def delete_user_by_id(db_session: Session, *, user_to_delete: User) -> User:
-    """
-    Xóa mềm một người dùng.
-    """
+    """Xóa mềm một người dùng."""
     user_to_delete.is_deleted = True
-    user_to_delete.is_active = False  # Vô hiệu hóa người dùng khi xóa
+    user_to_delete.is_active = False
     db_session.add(user_to_delete)
     db_session.commit()
     db_session.refresh(user_to_delete)

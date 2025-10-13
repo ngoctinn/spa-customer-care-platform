@@ -6,7 +6,6 @@ from sqlmodel import Session, select
 
 from app.models.catalog_model import Category
 from app.schemas.catalog_schema import CategoryCreate, CategoryUpdate, CategoryTypeEnum
-from app.utils.common import get_object_or_404
 
 
 def create_category(db: Session, category_in: CategoryCreate) -> Category:
@@ -45,8 +44,17 @@ def get_all_categories_by_type(
 
 
 def get_category_by_id(db: Session, category_id: uuid.UUID) -> Category:
-    """Lấy danh mục bằng ID, đảm bảo nó tồn tại và chưa bị xóa."""
-    return get_object_or_404(db, model=Category, obj_id=category_id)
+    """
+    Lấy danh mục bằng ID, đảm bảo nó tồn tại và chưa bị xóa.
+    Nếu không tìm thấy hoặc đã bị xóa mềm, raise HTTP 404.
+    """
+    category = db.get(Category, category_id)
+    if not category or category.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Category với ID {category_id} không được tìm thấy.",
+        )
+    return category
 
 
 def update_category(

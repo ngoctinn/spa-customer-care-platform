@@ -18,7 +18,6 @@ from app.schemas.customers_schema import (
 from app.models.users_model import User
 from app.services.customers_service import customers_service
 from app.services import images_service
-from app.utils.common import get_object_or_404
 from app.models.customers_model import Customer
 
 router = APIRouter()
@@ -98,7 +97,7 @@ def get_customer_by_id(
     customer_id: uuid.UUID, session: Session = Depends(get_db_session)
 ):
     """[Nhân viên] Lấy thông tin chi tiết một khách hàng bằng ID."""
-    return get_object_or_404(session, model=Customer, obj_id=customer_id)
+    return customers_service.get_by_id(db=session, id=customer_id)
 
 
 @router.put(
@@ -112,7 +111,7 @@ def update_customer(
     session: Session = Depends(get_db_session),
 ):
     """[Nhân viên] Cập nhật thông tin một khách hàng."""
-    customer = get_object_or_404(session, model=Customer, obj_id=customer_id)
+    customer = customers_service.get_by_id(db=session, id=customer_id)
     return customers_service.update(db=session, db_obj=customer, obj_in=customer_in)
 
 
@@ -123,7 +122,6 @@ def update_customer(
 )
 def delete_customer(customer_id: uuid.UUID, session: Session = Depends(get_db_session)):
     """[Nhân viên] Xóa mềm một khách hàng."""
-    # <<< SỬA: Dùng hàm tiện ích và gọi đúng phương thức `delete`
-    customer_to_delete = get_object_or_404(session, model=Customer, obj_id=customer_id)
+    customer_to_delete = customers_service.get_by_id(db=session, id=customer_id)
     customers_service.delete(db=session, db_obj=customer_to_delete)
     return None

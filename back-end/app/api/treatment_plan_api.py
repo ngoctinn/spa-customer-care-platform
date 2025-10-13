@@ -11,7 +11,7 @@ from app.schemas.treatment_plans_schema import (
     TreatmentPlanPublicWithDetails,
     TreatmentPlanUpdate,
 )
-from app.services import treatment_plans_service
+from app.services.treatment_plans_service import treatment_plans_service
 
 
 router = APIRouter()
@@ -51,9 +51,7 @@ def get_treatment_plan_by_id(
 ):
     """Lấy chi tiết một liệu trình theo ID."""
 
-    return treatment_plans_service.get_treatment_plan_by_id(
-        db=session, treatment_plan_id=treatment_plan_id
-    )
+    return treatment_plans_service.get_by_id(db=session, id=treatment_plan_id)
 
 
 @router.put("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
@@ -65,8 +63,8 @@ async def update_treatment_plan(
 ):
     """Cập nhật thông tin một liệu trình."""
 
-    db_treatment_plan = treatment_plans_service.get_treatment_plan_by_id(
-        db=session, treatment_plan_id=treatment_plan_id
+    db_treatment_plan = treatment_plans_service.get_by_id(
+        db=session, id=treatment_plan_id
     )
     return await treatment_plans_service.update_treatment_plan(
         db=session,
@@ -81,8 +79,8 @@ def delete_treatment_plan(
 ):
     """Xóa mềm một liệu trình."""
 
-    db_treatment_plan = treatment_plans_service.get_treatment_plan_by_id(
-        db=session, treatment_plan_id=treatment_plan_id
+    db_treatment_plan = treatment_plans_service.get_by_id(
+        db=session, id=treatment_plan_id
     )
     treatment_plans_service.delete_treatment_plan(
         db=session, db_treatment_plan=db_treatment_plan
