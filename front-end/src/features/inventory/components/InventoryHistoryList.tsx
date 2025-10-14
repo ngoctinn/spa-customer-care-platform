@@ -14,6 +14,8 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
+import { useStaff } from "@/features/staff/hooks/useStaff";
 
 interface InventoryHistoryListProps {
   productId: string;
@@ -22,7 +24,13 @@ interface InventoryHistoryListProps {
 export default function InventoryHistoryList({
   productId,
 }: InventoryHistoryListProps) {
-  const { data: history = [], isLoading } = useInventoryHistory(productId);
+  const { data: history = [], isLoading: isLoadingHistory } =
+    useInventoryHistory(productId);
+  const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
+  const staffNameMap = useMemo(() => {
+    return new Map(staffList.map((staff) => [staff.user.id, staff.full_name]));
+  }, [staffList]);
+  const isLoading = isLoadingHistory || isLoadingStaff;
 
   return (
     <Card>
@@ -55,7 +63,9 @@ export default function InventoryHistoryList({
                   <TableCell>
                     {new Date(tx.created_at).toLocaleString("vi-VN")}
                   </TableCell>
-                  <TableCell>{tx.created_by.full_name}</TableCell>
+                  <TableCell>
+                    {staffNameMap.get(tx.created_by.id) || tx.created_by.email}
+                  </TableCell>
                   <TableCell className="text-center">
                     <Badge
                       className={cn(

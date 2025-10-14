@@ -23,10 +23,7 @@ import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 import { useStaffById } from "@/features/staff/hooks/useStaff";
 import { useStaffManagement } from "@/features/staff/hooks/useStaffManagement";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  updateStaffServices,
-  updateStaffStatus,
-} from "@/features/staff/api/staff.api";
+import { updateStaffServices } from "@/features/staff/api/staff.api"; // -- SỬA: Bỏ import updateStaffStatus --
 import {
   staffServicesSchema,
   StaffServicesFormValues,
@@ -37,6 +34,7 @@ import { toast } from "sonner";
 import StaffServicesForm from "@/features/staff/components/StaffServicesForm";
 import StaffForm from "@/features/staff/components/StaffForm";
 import { FullStaffProfile } from "@/features/staff/types";
+import { Role } from "@/features/user/types"; // ++ THÊM IMPORT ++
 
 // Card thông tin cá nhân
 const StaffInfoCard = ({
@@ -56,16 +54,16 @@ const StaffInfoCard = ({
     <CardContent className="space-y-4">
       <div className="flex items-center">
         <Mail className="mr-4 h-5 w-5 text-muted-foreground" />
-        <span>{staff.email}</span>
+        <span>{staff.user.email}</span>
       </div>
       <div className="flex items-center">
         <Phone className="mr-4 h-5 w-5 text-muted-foreground" />
-        <span>{staff.phone || "Chưa cập nhật"}</span>
+        <span>{staff.phone_number || "Chưa cập nhật"}</span>
       </div>
       <div className="flex items-center">
         <Shield className="mr-4 h-5 w-5 text-muted-foreground" />
         <div className="flex flex-wrap gap-1">
-          {staff.roles?.map((role) => (
+          {staff.user.roles?.map((role: Role) => (
             <Badge key={role.id}>{role.name}</Badge>
           ))}
         </div>
@@ -112,10 +110,19 @@ const StaffServicesCard = ({
       </Button>
     </CardHeader>
     <CardContent>
-      {/* Logic hiển thị danh sách dịch vụ hiện tại */}
-      <p className="text-sm text-muted-foreground">
-        Các dịch vụ nhân viên này có thể thực hiện.
-      </p>
+      {staff.services && staff.services.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {staff.services.map((service) => (
+            <Badge key={service.id} variant="secondary">
+              {service.name}
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Nhân viên này chưa được gán dịch vụ nào.
+        </p>
+      )}
     </CardContent>
   </Card>
 );
@@ -127,7 +134,6 @@ export default function StaffDetailPage() {
   const staffId = params.staffId as string;
   const queryClient = useQueryClient();
 
-  // Hooks để lấy dữ liệu và quản lý state form/dialog
   const { data: staff, isLoading, isError } = useStaffById(staffId);
   const {
     form: profileForm,
@@ -139,11 +145,11 @@ export default function StaffDetailPage() {
     handleFormSubmit,
     handleOpenDeleteDialog,
     handleCloseDeleteDialog,
+    handleConfirmDelete,
   } = useStaffManagement();
 
   const [isServicesFormOpen, setIsServicesFormOpen] = React.useState(false);
 
-  // Form và mutation cho việc cập nhật dịch vụ
   const servicesForm = useForm<StaffServicesFormValues>({
     resolver: zodResolver(staffServicesSchema),
   });
@@ -162,36 +168,11 @@ export default function StaffDetailPage() {
     }
   );
 
-  // Mutation cho việc thay đổi trạng thái
-  const { mutate: changeStatus, isPending: isChangingStatus } = useMutation({
-    mutationFn: (statusData: {
-      employment_status: string;
-      is_active: boolean;
-    }) => updateStaffStatus(staffId, statusData),
-    onSuccess: (_, variables) => {
-      // ++ CẬP NHẬT LOGIC onSuccess ++
-      toast.success("Đã vô hiệu hóa tài khoản nhân viên.");
-      queryClient.invalidateQueries({ queryKey: ["staff", staffId] });
-      queryClient.invalidateQueries({ queryKey: ["staffList"] });
-      handleCloseDeleteDialog();
-
-      // Tự động chuyển hướng đến trang phân công lại lịch hẹn
-      router.push(`/dashboard/staffs/${staffId}/reassign`);
-    },
-    onError: (err) =>
-      toast.error("Cập nhật thất bại", { description: err.message }),
-  });
-
   // Mở form sửa dịch vụ và điền dữ liệu
   const handleOpenServicesForm = () => {
-    const currentServiceIds = staff?.staff_profile.service_ids || [];
+    const currentServiceIds = staff?.services?.map((s) => s.id) || [];
     servicesForm.reset({ service_ids: currentServiceIds });
     setIsServicesFormOpen(true);
-  };
-
-  // Xác nhận vô hiệu hóa
-  const handleConfirmDeactivate = () => {
-    changeStatus({ employment_status: "Đã nghỉ việc", is_active: false });
   };
 
   if (isLoading) {
@@ -206,11 +187,9 @@ export default function StaffDetailPage() {
     );
   }
 
-  // -- Render Layout --
   const mainContent = (
     <>
       <StaffServicesCard staff={staff} onEdit={handleOpenServicesForm} />
-      {/* Audit Log Card */}
       <Card>
         <CardHeader>
           <CardTitle>Lịch sử thay đổi (Sắp ra mắt)</CardTitle>
@@ -227,7 +206,7 @@ export default function StaffDetailPage() {
   const sideContent = (
     <>
       <StaffInfoCard staff={staff} onEdit={() => handleOpenEditForm(staff)} />
-      <StaffActionsCard staffId={staff.id} />
+      <StaffActionsCard staffId={staff.user.id} />
     </>
   );
 
@@ -236,7 +215,7 @@ export default function StaffDetailPage() {
       <AdminDetailPageLayout
         title={staff.full_name}
         description={`Chi tiết nhân viên | Trạng thái: ${
-          staff.is_active ? "Đang làm việc" : "Đã nghỉ"
+          staff.user.is_active ? "Đang làm việc" : "Đã nghỉ"
         }`}
         actionButtons={
           <Button
@@ -251,7 +230,6 @@ export default function StaffDetailPage() {
         sideContent={sideContent}
       />
 
-      {/* Dialog chỉnh sửa thông tin cá nhân */}
       <FormDialog
         isOpen={isFormOpen}
         onClose={handleCloseForm}
@@ -263,7 +241,6 @@ export default function StaffDetailPage() {
         <StaffForm />
       </FormDialog>
 
-      {/* Dialog chỉnh sửa dịch vụ/kỹ năng */}
       <FormDialog
         isOpen={isServicesFormOpen}
         onClose={() => setIsServicesFormOpen(false)}
@@ -275,13 +252,12 @@ export default function StaffDetailPage() {
         <StaffServicesForm />
       </FormDialog>
 
-      {/* Dialog xác nhận vô hiệu hóa */}
       <ConfirmationModal
         isOpen={!!itemToDelete}
         onClose={handleCloseDeleteDialog}
-        onConfirm={handleConfirmDeactivate}
-        title={`Xác nhận vô hiệu hóa "${itemToDelete?.full_name}"`}
-        description="Hành động này sẽ cập nhật trạng thái làm việc của nhân viên thành 'Đã nghỉ việc' và vô hiệu hóa tài khoản đăng nhập. Bạn có chắc chắn?"
+        onConfirm={handleConfirmDelete}
+        title={`Xác nhận cho nghỉ việc "${itemToDelete?.full_name}"`}
+        description="Hành động này sẽ cập nhật trạng thái và vô hiệu hóa tài khoản. Bạn sẽ được chuyển đến trang phân công lại lịch hẹn (nếu có)."
         isDestructive
         confirmText="Xác nhận"
       />

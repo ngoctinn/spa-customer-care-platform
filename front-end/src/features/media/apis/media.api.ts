@@ -1,10 +1,8 @@
-// src/features/media/api/media.api.ts
 import apiClient from "@/lib/apiClient";
 import { MediaImage } from "@/features/media/types";
 
 /**
- * Lấy danh sách tất cả ảnh từ thư viện media.
- * Giả sử endpoint là /media/images
+ * Lấy danh sách ảnh từ thư viện media theo phạm vi.
  */
 export async function getMediaImages(
   scope: "catalog" | "personal" = "personal"
@@ -13,7 +11,7 @@ export async function getMediaImages(
 }
 
 /**
- *  Xóa một ảnh khỏi thư viện media. ++
+ * Xóa một ảnh khỏi thư viện media.
  * @param imageId ID của ảnh cần xóa.
  */
 export async function deleteMediaImage(imageId: string): Promise<void> {

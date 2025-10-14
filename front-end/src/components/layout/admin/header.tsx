@@ -15,11 +15,13 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { LogOut, Menu, Moon, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
-import { AdminSidebar } from "./sidebar"; // Import sidebar cho mobile
+import { AdminSidebar } from "./sidebar";
+import { useCurrentStaffProfile } from "@/features/staff/hooks/useCurrentStaffProfile";
 
 export function AdminHeader() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { staffProfile } = useCurrentStaffProfile();
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6 sticky top-0 z-40">
@@ -51,9 +53,14 @@ export function AdminHeader() {
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="icon" className="rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.avatar_url} alt={user?.full_name} />
+              <AvatarImage
+                src={staffProfile?.avatar_url ?? ""}
+                alt={staffProfile?.full_name ?? "User"}
+              />
               <AvatarFallback>
-                {user?.full_name?.charAt(0).toUpperCase()}
+                {staffProfile?.full_name?.charAt(0).toUpperCase() ||
+                  user?.email.charAt(0).toUpperCase() ||
+                  "U"}
               </AvatarFallback>
             </Avatar>
             <span className="sr-only">Toggle user menu</span>

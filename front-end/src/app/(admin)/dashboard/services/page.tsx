@@ -15,6 +15,7 @@ import { getPrimaryImageUrl } from "@/lib/image-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useCategories } from "@/features/category/hooks/useCategories";
+import { Category } from "@/features/category/types";
 
 // --- Định nghĩa cột ngay tại đây (không cần file riêng) ---
 // (Lưu ý: Không còn cột Actions)
@@ -58,7 +59,7 @@ const serviceColumns: ColumnDef<Service>[] = [
     header: "Danh mục",
     cell: ({ row }) => (
       <div className="flex flex-wrap gap-1">
-        {row.original.categories.map((cat) => (
+        {row.original.categories?.map((cat: Category) => (
           <Badge key={cat.id} variant="secondary">
             {cat.name}
           </Badge>

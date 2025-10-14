@@ -23,20 +23,18 @@ export default function ActionRequiredList() {
     if (!currentUserProfile) return actions;
 
     const customerAppointments = appointments.filter(
-      (a) => a.customer_id === currentUserProfile.customer_profile.id
+      (a) => a.customer_id === currentUserProfile.id
     );
     const customerTreatments = treatments.filter(
-      (t) => t.customer_id === currentUserProfile.customer_profile.id
+      (t) => t.customer_id === currentUserProfile.id
     );
 
     // Lọc các dịch vụ lẻ đã mua còn lượt
-    (currentUserProfile.customer_profile.purchased_services || []).forEach(
-      (ps) => {
-        if (ps.quantity > 0) {
-          actions.push({ type: "service", data: ps });
-        }
+    (currentUserProfile.purchased_services || []).forEach((ps) => {
+      if (ps.quantity > 0) {
+        actions.push({ type: "service", data: ps });
       }
-    );
+    });
 
     // Lọc các liệu trình còn buổi và chưa có lịch hẹn sắp tới
     customerTreatments.forEach((pkg) => {

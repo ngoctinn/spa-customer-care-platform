@@ -16,6 +16,7 @@ export interface StaffProfile {
   employment_status: EmploymentStatus;
   notes?: string | null;
   full_name: string;
+  avatar_url?: string | null;
 
   user_email: User["email"] | null;
   user_is_active: User["is_active"] | null;

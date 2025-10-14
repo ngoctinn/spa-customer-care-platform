@@ -4,42 +4,42 @@ import {
   TimeEntry,
   ScheduleOverride,
   TimeOffRequest,
+  DefaultSchedulePublic,
+  DefaultScheduleUpdate,
 } from "@/features/work-schedules/types";
 import { buildQueryString } from "@/lib/queryString";
-import { DefaultSchedulePublic } from "@/features/work-schedules/types";
 import { TimeOffRequestFormValues } from "@/features/work-schedules/schemas/time-off.schema";
-import { AnyActionArg } from "react";
 /**
- * Lấy lịch làm việc của một nhân viên
- * @param staffId ID của nhân viên
+ * Lấy lịch làm việc mặc định của một nhân viên.
+ * @param staffId ID của nhân viên (user_id)
  */
 export async function getWorkSchedule(
   staffId: string
 ): Promise<DefaultSchedulePublic[]> {
-  // SỬA ĐỔI: Endpoint trỏ đến API quản lý lịch mặc định
   return apiClient<DefaultSchedulePublic[]>(
     `/admin/users/${staffId}/default-schedules`
   );
 }
 
 /**
- * Cập nhật lịch làm việc (hàng tuần hoặc ghi đè) của một nhân viên
- * @param staffId ID của Staff Profile
+ * Cập nhật lịch làm việc mặc định cho một nhân viên.
+ * @param staffId ID của nhân viên (user_id)
  * @param scheduleData Dữ liệu lịch làm việc mới
  */
 export async function updateWorkSchedule(
   staffId: string,
-  scheduleData: AnyActionArg
-): Promise<any> {
-  return apiClient(`/staff/${staffId}/schedules`, {
-    // <-- ENDPOINT MỚI
-    method: "PUT",
-    body: JSON.stringify(scheduleData),
-  });
+  scheduleData: DefaultScheduleUpdate
+): Promise<DefaultSchedulePublic[]> {
+  return apiClient<DefaultSchedulePublic[]>(
+    `/admin/users/${staffId}/default-schedules`,
+    {
+      method: "PUT",
+      body: JSON.stringify(scheduleData),
+    }
+  );
 }
 /**
  * Nhân viên đăng ký ca làm việc mới.
- * @param submissionData Dữ liệu ca làm việc, gồm start_time và end_time.
  */
 export async function submitFlexibleSchedule(
   submissionData: Pick<FlexibleSchedule, "start_time" | "end_time">

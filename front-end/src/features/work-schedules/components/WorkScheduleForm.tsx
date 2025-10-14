@@ -1,4 +1,3 @@
-// src/features/schedule/components/WorkScheduleForm.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -28,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { DefaultScheduleBase, DefaultScheduleUpdate } from "../types";
+import { DefaultScheduleUpdate } from "../types";
 
 // --- Schema mới cho form, khớp với backend ---
 const daySchema = z.object({
@@ -61,7 +60,6 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
-      // Khởi tạo với mảng 7 ngày trống
       schedules: Array.from({ length: 7 }, (_, i) => ({
         day_of_week: i + 1,
         is_active: false,
@@ -76,7 +74,6 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
     name: "schedules",
   });
 
-  // Khi có dữ liệu từ API, reset form với dữ liệu đó
   useEffect(() => {
     if (workSchedule) {
       form.reset({ schedules: workSchedule });
@@ -105,7 +102,6 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
           </CardHeader>
           <CardContent className="space-y-6">
             {fields.map((field, index) => {
-              // Theo dõi trạng thái `is_active` của ngày hiện tại
               const isActive = form.watch(`schedules.${index}.is_active`);
               return (
                 <div
@@ -139,7 +135,7 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
                             <Input
                               type="time"
                               {...field}
-                              value={field.value || ""} // Xử lý giá trị null
+                              value={field.value || ""}
                               disabled={!isActive}
                             />
                           </FormControl>
@@ -156,7 +152,7 @@ export function WorkScheduleForm({ staffId }: { staffId: string }) {
                             <Input
                               type="time"
                               {...field}
-                              value={field.value || ""} // Xử lý giá trị null
+                              value={field.value || ""}
                               disabled={!isActive}
                             />
                           </FormControl>

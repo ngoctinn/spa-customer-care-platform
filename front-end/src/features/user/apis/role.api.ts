@@ -1,24 +1,32 @@
+// src/features/user/apis/role.api.ts
 import apiClient from "@/lib/apiClient";
-import { Permission, PermissionGroup, Role } from "@/features/user/types";
+import { Permission, Role } from "@/features/user/types";
 import { RoleFormValues } from "@/features/user/schemas";
 
-//Lấy danh sách tất cả vai trò
+/**
+ * Lấy danh sách tất cả vai trò.
+ */
 export async function getRoles(): Promise<Role[]> {
   return apiClient<Role[]>("/admin/roles");
 }
 
-// Lấy chi tiết một vai trò bằng ID
+/**
+ * Lấy chi tiết một vai trò bằng ID.
+ */
 export async function getRoleById(roleId: string): Promise<Role> {
   return apiClient<Role>(`/admin/roles/${roleId}`);
 }
 
-//Lấy danh sách tất cả quyền hạn
+/**
+ * Lấy danh sách tất cả các quyền hạn.
+ */
 export async function getPermissions(): Promise<Permission[]> {
-  // API trả về một mảng phẳng, việc nhóm lại sẽ được xử lý ở client
   return apiClient<Permission[]>("/admin/permissions");
 }
 
-// Tạo vai trò mới
+/**
+ * Tạo vai trò mới.
+ */
 export async function addRole(roleData: RoleFormValues): Promise<Role> {
   return apiClient<Role>("/admin/roles", {
     method: "POST",
@@ -26,7 +34,9 @@ export async function addRole(roleData: RoleFormValues): Promise<Role> {
   });
 }
 
-// Cập nhật vai trò
+/**
+ * Cập nhật một vai trò.
+ */
 export async function updateRole({
   id,
   data,
@@ -40,7 +50,9 @@ export async function updateRole({
   });
 }
 
-// Xóa vai trò
+/**
+ * Xóa một vai trò.
+ */
 export async function deleteRole(id: string): Promise<void> {
   return apiClient<void>(`/admin/roles/${id}`, {
     method: "DELETE",
@@ -48,10 +60,7 @@ export async function deleteRole(id: string): Promise<void> {
 }
 
 /**
- * CẬP NHẬT: Gán một quyền cho một vai trò.
- * API này thêm một permission vào role, thay vì thay thế toàn bộ.
- * @param roleId ID của vai trò
- * @param permissionId ID của quyền cần gán
+ * Gán một quyền cho một vai trò.
  */
 export async function addPermissionToRole({
   roleId,
@@ -67,9 +76,7 @@ export async function addPermissionToRole({
 }
 
 /**
- * CẬP NHẬT: Xóa một quyền khỏi một vai trò.
- * @param roleId ID của vai trò
- * @param permissionId ID của quyền cần xóa
+ * Xóa một quyền khỏi một vai trò.
  */
 export async function removePermissionFromRole({
   roleId,
@@ -83,7 +90,9 @@ export async function removePermissionFromRole({
   });
 }
 
-// Các hàm gán/xóa vai trò cho người dùng (nếu cần)
+/**
+ * Gán một vai trò cho người dùng.
+ */
 export async function assignRoleToUser(
   userId: string,
   roleId: string
@@ -94,6 +103,9 @@ export async function assignRoleToUser(
   });
 }
 
+/**
+ * Xóa một vai trò khỏi người dùng.
+ */
 export async function removeRoleFromUser(
   userId: string,
   roleId: string

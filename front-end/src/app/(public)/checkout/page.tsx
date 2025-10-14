@@ -60,7 +60,7 @@ export default function CheckoutPage() {
     if (currentUserProfile) {
       form.reset({
         name: currentUserProfile.full_name,
-        phone: currentUserProfile.phone || "",
+        phone: currentUserProfile.phone_number || "",
         address: "",
         notes: "",
       });
@@ -169,7 +169,7 @@ export default function CheckoutPage() {
                   {currentUserProfile.email}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {currentUserProfile.phone}
+                  {currentUserProfile.phone_number}
                 </p>
               </CardContent>
             </Card>

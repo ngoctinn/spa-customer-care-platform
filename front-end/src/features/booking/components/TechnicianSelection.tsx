@@ -83,7 +83,10 @@ export default function TechnicianSelection({
                   className="sr-only" // Ẩn nút radio gốc
                 />
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={tech.avatar_url} alt={tech.full_name} />
+                  <AvatarImage
+                    src={tech.avatar_url || ""}
+                    alt={tech.full_name}
+                  />
                   <AvatarFallback>{tech.full_name[0]}</AvatarFallback>
                 </Avatar>
                 <span className="font-medium text-center">
