@@ -4,7 +4,12 @@ from typing import Optional
 import uuid
 from fastapi import HTTPException, Request, status
 from sqlmodel import Session
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+from itsdangerous import (
+    URLSafeTimedSerializer,
+    SignatureExpired,
+    BadTimeSignature,
+    BadSignature,
+)
 from authlib.integrations.starlette_client import OAuth
 
 from app.core.mailing import send_email
@@ -208,7 +213,7 @@ def verify_password_reset_token(token: str) -> Optional[str]:
             token, max_age=TokenExpiry.PASSWORD_RESET_TOKEN_MAX_AGE
         )
         return user_id
-    except (SignatureExpired, BadTimeSignature):
+    except (SignatureExpired, BadTimeSignature, BadSignature):
         return None
 
 

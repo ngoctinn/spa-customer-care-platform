@@ -127,5 +127,5 @@ def test_get_soft_deleted_object_returns_404(
     # 2. Thử lấy lại đối tượng đó
     response_get = admin_authenticated_client.get(f"/services/{service_id}")
     assert response_get.status_code == 404
-    # Changed assertion to check substring as the error message is truncated
-    assert "Không tìm thấy tài nguyên" in response_get.json()["detail"]
+    # Changed assertion to match actual error message from base service
+    assert "Không tìm thấy Service" in response_get.json()["detail"]
