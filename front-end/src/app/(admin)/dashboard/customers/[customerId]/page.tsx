@@ -70,7 +70,7 @@ const CustomerInfoCard = ({
       </div>
       <div className="flex items-center">
         <Phone className="mr-4 h-5 w-5 text-muted-foreground" />
-        <span>{customer.phone || "Chưa cập nhật"}</span>
+        <span>{customer.phone_number || "Chưa cập nhật"}</span>
       </div>
       <Separator />
       <div className="space-y-2">
@@ -79,7 +79,7 @@ const CustomerInfoCard = ({
           <div>
             <h4 className="font-semibold">Ghi chú nội bộ</h4>
             <p className="text-muted-foreground text-sm italic">
-              {customer.customer_profile.notes || "Không có ghi chú nào."}
+              {customer.note || "Không có ghi chú nào."}
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ const CustomerLoyaltyCard = ({
   customer: FullCustomerProfile;
 }) => {
   const currentTier = customer.loyalty_tier;
-  const currentPoints = customer.customer_profile.loyalty_points || 0;
+  const currentPoints = customer.loyalty_points || 0;
   const nextTierPoints = (currentTier?.point_goal || 0) * 2 || 5000;
   const progress = Math.min((currentPoints / nextTierPoints) * 100, 100);
 

@@ -1,4 +1,3 @@
-// src/features/service/schemas.ts
 import { z } from "zod";
 import {
   nameSchema,
@@ -12,12 +11,10 @@ const serviceConsumableSchema = z.object({
   quantityUsed: z.number().min(0.01, "Số lượng phải lớn hơn 0."),
 });
 
-const imageUnionSchema = z.union([imageSchema, z.instanceof(File)]);
-
 export const serviceFormSchema = z.object({
   name: nameSchema,
   description: descriptionSchema,
-  categories: z.array(z.string()).optional(),
+  category_ids: z.array(z.string()).optional(),
   price: priceSchema,
   duration_minutes: z.number().int().min(5, "Thời lượng phải ít nhất 5 phút."),
   consumables: z.array(serviceConsumableSchema).optional(),

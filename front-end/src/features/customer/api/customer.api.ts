@@ -1,38 +1,40 @@
+// src/features/customer/api/customer.api.ts
 import { FullCustomerProfile } from "@/features/customer/types";
 import apiClient from "@/lib/apiClient";
 import { CustomerFormValues } from "../hooks/useCustomerManagement";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /**
  * Lấy danh sách tất cả khách hàng
  */
 export async function getCustomers(): Promise<FullCustomerProfile[]> {
-  const response = await fetch(`${API_URL}/customers`); // Giả sử endpoint là /customers
-  if (!response.ok) {
-    throw new Error("Không thể tải danh sách khách hàng");
-  }
-  return response.json();
+  return apiClient<FullCustomerProfile[]>("/customers");
 }
 
 /**
- * Lấy thông tin chi tiết một khách hàng bằng ID (cho admin)
+ * Lấy thông tin chi tiết một khách hàng bằng ID
  * @param customerId ID của khách hàng
  */
 export async function getCustomerById(
   customerId: string
 ): Promise<FullCustomerProfile> {
-  return apiClient<FullCustomerProfile>(`/admin/customers/${customerId}`);
+  return apiClient<FullCustomerProfile>(`/customers/${customerId}`);
+}
+
+/**
+ * Lấy thông tin profile của khách hàng đang đăng nhập
+ */
+export async function getCustomerProfile(): Promise<FullCustomerProfile> {
+  return apiClient<FullCustomerProfile>("/customers/me/profile");
 }
 
 /**
  * Cập nhật thông tin profile của khách hàng đang đăng nhập
- * @param data Dữ liệu cần cập nhật (full_name, phone)
+ * @param data Dữ liệu cần cập nhật
  */
 export async function updateCustomerProfile(
-  data: Partial<{ full_name: string; phone: string }>
+  data: Partial<{ full_name: string; phone_number: string; email: string }>
 ): Promise<FullCustomerProfile> {
-  return apiClient<FullCustomerProfile>("/users/me", {
+  return apiClient<FullCustomerProfile>("/customers/me/profile", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -45,10 +47,10 @@ export async function updateCustomerProfile(
  */
 export async function updateCustomerById(
   customerId: string,
-  data: Partial<{ full_name: string; phone: string; notes: string }>
+  data: Partial<{ full_name: string; phone_number: string; note: string }>
 ): Promise<FullCustomerProfile> {
-  return apiClient<FullCustomerProfile>(`/admin/customers/${customerId}`, {
-    // Endpoint cho admin
+  // Endpoint và payload đã được cập nhật
+  return apiClient<FullCustomerProfile>(`/customers/${customerId}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -61,7 +63,7 @@ export async function updateCustomerById(
 export async function addCustomer(
   customerData: CustomerFormValues
 ): Promise<FullCustomerProfile> {
-  return apiClient<FullCustomerProfile>("/admin/customers", {
+  return apiClient<FullCustomerProfile>("/customers", {
     method: "POST",
     body: JSON.stringify(customerData),
   });
@@ -72,7 +74,7 @@ export async function addCustomer(
  * @param customerId ID của khách hàng cần vô hiệu hóa
  */
 export async function deactivateCustomer(customerId: string): Promise<void> {
-  return apiClient<void>(`/admin/customers/${customerId}`, {
+  return apiClient<void>(`/customers/${customerId}`, {
     method: "DELETE",
   });
 }

@@ -14,7 +14,7 @@ export interface TreatmentPlan {
   id: string;
   name: string;
   description: string;
-  category: Category;
+  categories: Category[];
   steps: TreatmentPlanStep[];
   price: number;
   total_sessions: number;

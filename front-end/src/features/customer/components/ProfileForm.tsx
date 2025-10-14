@@ -16,10 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { useUpdateCustomerProfile } from "@/features/customer/hooks/useCustomerProfile";
+import { phoneSchema } from "@/lib/schemas";
 
 const profileSchema = z.object({
   full_name: z.string().min(3, "Họ tên phải có ít nhất 3 ký tự."),
-  phone: z.string().optional(),
+  phone_number: phoneSchema.optional().or(z.literal("")),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -35,7 +36,7 @@ export default function ProfileForm({ customer }: ProfileFormProps) {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: customer.full_name || "",
-      phone: customer.phone || "",
+      phone_number: customer.phone_number || "",
     },
   });
 
@@ -62,17 +63,17 @@ export default function ProfileForm({ customer }: ProfileFormProps) {
         <FormItem>
           <FormLabel>Email</FormLabel>
           <FormControl>
-            <Input value={customer.email} disabled readOnly />
+            <Input value={customer.email || ""} disabled readOnly />
           </FormControl>
         </FormItem>
         <FormField
           control={form.control}
-          name="phone"
+          name="phone_number"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Số điện thoại</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

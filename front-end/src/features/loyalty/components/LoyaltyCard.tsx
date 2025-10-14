@@ -18,7 +18,7 @@ interface LoyaltyCardProps {
 
 export default function LoyaltyCard({ customer }: LoyaltyCardProps) {
   const currentTier = customer.loyalty_tier;
-  const currentPoints = customer.customer_profile.loyalty_points || 0;
+  const currentPoints = customer.loyalty_points || 0;
 
   // Giả sử API trả về mảng các cấp bậc đã sắp xếp theo điểm
   // Hoặc chúng ta cần lấy `loyaltySettings` để tìm cấp bậc tiếp theo

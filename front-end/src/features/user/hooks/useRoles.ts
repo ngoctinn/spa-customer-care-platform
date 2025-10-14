@@ -6,9 +6,11 @@ import {
   addRole,
   updateRole,
   deleteRole,
-  updateRolePermissions,
+  addPermissionToRole,
+  removePermissionFromRole,
+  getRoleById,
 } from "@/features/user/apis/role.api";
-import { Role, PermissionGroup } from "@/features/user/types";
+import { Role, Permission, PermissionGroup } from "@/features/user/types";
 import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
 import { RoleFormValues } from "@/features/user/schemas";
 import { toast } from "sonner";
@@ -22,11 +24,32 @@ export const useRoles = () => {
   });
 };
 
-// Hook để lấy tất cả permissions
+// Lấy chi tiết một vai trò
+export const useRoleById = (roleId: string) => {
+  return useQuery<Role>({
+    queryKey: [...queryKey, roleId],
+    queryFn: () => getRoleById(roleId),
+    enabled: !!roleId,
+  });
+};
+
+// Hook để lấy tất cả permissions và nhóm chúng lại
 export const usePermissions = () => {
   return useQuery<PermissionGroup>({
     queryKey: ["permissions"],
-    queryFn: getPermissions,
+    queryFn: async () => {
+      const permissions = await getPermissions();
+      // Nhóm các quyền theo logic của bạn (ví dụ: theo tiền tố tên)
+      const grouped: PermissionGroup = {};
+      permissions.forEach((permission) => {
+        const groupName = permission.name.split("_")[0] || "other";
+        if (!grouped[groupName]) {
+          grouped[groupName] = [];
+        }
+        grouped[groupName].push(permission);
+      });
+      return grouped;
+    },
   });
 };
 
@@ -45,17 +68,44 @@ export const useRoleMutations = () => {
   );
 };
 
-// Hook riêng cho việc cập nhật permissions
+// cập nhật permissions
 export const useUpdateRolePermissions = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateRolePermissions,
-    onSuccess: (updatedRole) => {
-      toast.success(`Đã cập nhật quyền cho vai trò "${updatedRole.name}".`);
+    mutationFn: async (vars: {
+      roleId: string;
+      newPermissionIds: string[];
+      currentPermissions: Permission[];
+    }) => {
+      const { roleId, newPermissionIds, currentPermissions } = vars;
+      const currentPermissionIds = new Set(currentPermissions.map((p) => p.id));
+      const newPermissionIdsSet = new Set(newPermissionIds);
+
+      // Tìm permissions để thêm
+      const toAdd = newPermissionIds.filter(
+        (id) => !currentPermissionIds.has(id)
+      );
+      // Tìm permissions để xóa
+      const toRemove = [...currentPermissionIds].filter(
+        (id) => !newPermissionIdsSet.has(id)
+      );
+
+      // Thực thi các API call song song
+      const addPromises = toAdd.map((permissionId) =>
+        addPermissionToRole({ roleId, permissionId })
+      );
+      const removePromises = toRemove.map((permissionId) =>
+        removePermissionFromRole({ roleId, permissionId })
+      );
+
+      await Promise.all([...addPromises, ...removePromises]);
+    },
+    onSuccess: (_, vars) => {
+      toast.success(`Đã cập nhật quyền cho vai trò.`);
       queryClient.invalidateQueries({ queryKey: queryKey });
       queryClient.invalidateQueries({
-        queryKey: [...queryKey, updatedRole.id],
-      }); // Invalidate chi tiết role
+        queryKey: [...queryKey, vars.roleId],
+      });
     },
     onError: (error) => {
       toast.error("Cập nhật quyền thất bại", { description: error.message });

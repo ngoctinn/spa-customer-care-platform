@@ -1,22 +1,20 @@
-// Tạo file mới: src/features/customer/hooks/useCustomerProfile.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import apiClient from "@/lib/apiClient";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
-import { updateCustomerProfile } from "@/features/customer/api/customer.api";
+import {
+  updateCustomerProfile,
+  getCustomerProfile, // Import hàm mới
+} from "@/features/customer/api/customer.api";
 import { toast } from "sonner";
 
 const queryKey = ["customerProfile", "me"];
 
-const getCustomerProfile = (): Promise<FullCustomerProfile> => {
-  return apiClient("/customers/me"); // Giả sử có endpoint này
-};
-
 export const useCustomerProfile = () => {
+  const { user } = useAuth(); // Lấy user từ AuthContext
   return useQuery<FullCustomerProfile>({
-    queryKey: ["customerProfile", "me"],
+    queryKey: queryKey,
     queryFn: getCustomerProfile,
-    enabled: !!useAuth().user, // Chỉ chạy khi đã đăng nhập
+    enabled: !!user,
   });
 };
 

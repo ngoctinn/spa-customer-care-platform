@@ -1,19 +1,14 @@
-// src/features/schedule/api/schedule.api.ts
 import apiClient from "@/lib/apiClient";
 import {
   FlexibleSchedule,
   TimeEntry,
-  WorkSchedule,
   ScheduleOverride,
   TimeOffRequest,
 } from "@/features/work-schedules/types";
 import { buildQueryString } from "@/lib/queryString";
-import {
-  DefaultScheduleUpdate,
-  DefaultSchedulePublic,
-} from "@/features/work-schedules/types";
+import { DefaultSchedulePublic } from "@/features/work-schedules/types";
 import { TimeOffRequestFormValues } from "@/features/work-schedules/schemas/time-off.schema";
-
+import { AnyActionArg } from "react";
 /**
  * Lấy lịch làm việc của một nhân viên
  * @param staffId ID của nhân viên
@@ -28,24 +23,20 @@ export async function getWorkSchedule(
 }
 
 /**
- * Cập nhật lịch làm việc mặc định của một nhân viên
- * @param staffId ID của nhân viên
- * @param scheduleData Dữ liệu lịch làm việc mới (mảng 7 ngày)
+ * Cập nhật lịch làm việc (hàng tuần hoặc ghi đè) của một nhân viên
+ * @param staffId ID của Staff Profile
+ * @param scheduleData Dữ liệu lịch làm việc mới
  */
 export async function updateWorkSchedule(
   staffId: string,
-  schedules_data: DefaultScheduleUpdate
-): Promise<DefaultSchedulePublic[]> {
-  // SỬA ĐỔI: Endpoint và method
-  return apiClient<DefaultSchedulePublic[]>(
-    `/admin/users/${staffId}/default-schedules`,
-    {
-      method: "PUT",
-      body: JSON.stringify(schedules_data),
-    }
-  );
+  scheduleData: AnyActionArg
+): Promise<any> {
+  return apiClient(`/staff/${staffId}/schedules`, {
+    // <-- ENDPOINT MỚI
+    method: "PUT",
+    body: JSON.stringify(scheduleData),
+  });
 }
-
 /**
  * Nhân viên đăng ký ca làm việc mới.
  * @param submissionData Dữ liệu ca làm việc, gồm start_time và end_time.
@@ -163,12 +154,13 @@ export async function createScheduleOverride(
 
 /**
  * Nhân viên gửi yêu cầu xin nghỉ phép.
- * @param requestData Dữ liệu từ form xin nghỉ.
+ * Cần truyền staff_id từ client.
  */
 export async function requestTimeOff(
-  requestData: TimeOffRequestFormValues
+  requestData: TimeOffRequestFormValues & { staff_id: string }
 ): Promise<TimeOffRequest> {
-  return apiClient<TimeOffRequest>("/time-off", {
+  return apiClient<TimeOffRequest>("/staff/time-off", {
+    // <-- ENDPOINT MỚI
     method: "POST",
     body: JSON.stringify(requestData),
   });
@@ -186,27 +178,17 @@ export async function getTimeOffRequests(
 }
 
 /**
- * Admin duyệt một yêu cầu nghỉ phép.
+ * Admin duyệt hoặc từ chối một yêu cầu nghỉ phép.
  * @param requestId ID của yêu cầu.
+ * @param decision Dữ liệu quyết định (status, note).
  */
-export async function approveTimeOffRequest(
-  requestId: string
+export async function decideTimeOffRequest(
+  requestId: string,
+  decision: { status: "da_duyet" | "tu_choi"; decision_note?: string }
 ): Promise<TimeOffRequest> {
-  return apiClient<TimeOffRequest>(`/time-off/${requestId}`, {
+  return apiClient<TimeOffRequest>(`/staff/time-off/${requestId}`, {
+    // <-- ENDPOINT MỚI
     method: "PUT",
-    body: JSON.stringify({ status: "APPROVED" }),
-  });
-}
-
-/**
- * Admin từ chối một yêu cầu nghỉ phép.
- * @param requestId ID của yêu cầu.
- */
-export async function rejectTimeOffRequest(
-  requestId: string
-): Promise<TimeOffRequest> {
-  return apiClient<TimeOffRequest>(`/time-off/${requestId}`, {
-    method: "PUT",
-    body: JSON.stringify({ status: "REJECTED" }),
+    body: JSON.stringify(decision),
   });
 }

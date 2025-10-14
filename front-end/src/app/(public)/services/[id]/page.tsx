@@ -26,10 +26,10 @@ const OwnershipChecker = ({ serviceId }: { serviceId: string }) => {
   const { data: customer, isLoading: isLoadingProfile } = useCustomerProfile();
 
   const purchasedService = useMemo(() => {
-    if (!user || !customer?.customer_profile?.purchased_services) {
+    if (!user || !customer?.purchased_services) {
       return null;
     }
-    return customer.customer_profile.purchased_services.find(
+    return customer.purchased_services.find(
       (ps) => ps.service_id === serviceId && ps.quantity > 0
     );
   }, [user, customer, serviceId]);

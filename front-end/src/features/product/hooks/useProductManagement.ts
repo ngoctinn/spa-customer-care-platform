@@ -43,7 +43,7 @@ export function useProductManagement() {
       isRetail: true,
       isConsumable: false,
       baseUnit: "cái",
-      categories: [],
+      category_ids: [],
       images: [],
     },
   });
@@ -63,7 +63,7 @@ export function useProductManagement() {
       handleOpenEditForm(product);
       form.reset({
         ...product,
-        categories: product.categories.map((c) => c.id),
+        category_ids: product.categories.map((c) => c.id),
         price: product.price || 0,
         description: product.description || "",
       });

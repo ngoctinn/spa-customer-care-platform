@@ -69,7 +69,7 @@ export default function AppointmentForm() {
               <SelectContent>
                 {customers.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id}>
-                    {customer.full_name} ({customer.phone})
+                    {customer.full_name} ({customer.phone_number})
                   </SelectItem>
                 ))}
               </SelectContent>

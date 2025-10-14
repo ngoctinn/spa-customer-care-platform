@@ -32,7 +32,7 @@ export default function CustomerFormFields() {
       />
       <FormField
         control={control}
-        name="phone"
+        name="phone_number"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Số điện thoại</FormLabel>
@@ -45,7 +45,7 @@ export default function CustomerFormFields() {
       />
       <FormField
         control={control}
-        name="notes"
+        name="note"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Ghi chú nội bộ</FormLabel>

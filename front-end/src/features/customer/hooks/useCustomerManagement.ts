@@ -4,17 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCustomers, useCustomerMutations } from "./useCustomers";
 import { FullCustomerProfile } from "../types";
 import { z } from "zod";
-import {
-  emailSchema,
-  nameSchema,
-  passwordSchema,
-  phoneSchema,
-} from "@/lib/schemas";
+import { nameSchema, phoneSchema } from "@/lib/schemas";
 
 const customerFormSchema = z.object({
   full_name: nameSchema,
-  phone: phoneSchema.optional().or(z.literal("")),
-  notes: z.string().optional(),
+  phone_number: phoneSchema.optional().or(z.literal("")),
+  note: z.string().optional(),
 });
 export type CustomerFormValues = z.infer<typeof customerFormSchema>;
 
@@ -44,8 +39,8 @@ export function useCustomerManagement() {
     handleOpenAddForm();
     form.reset({
       full_name: "",
-      phone: "",
-      notes: "",
+      phone_number: "",
+      note: "",
     });
   }, [form, handleOpenAddForm]);
 
@@ -54,8 +49,8 @@ export function useCustomerManagement() {
       handleOpenEditForm(customer);
       form.reset({
         full_name: customer.full_name,
-        phone: customer.phone || "",
-        notes: customer.customer_profile.notes || "",
+        phone_number: customer.phone_number || "",
+        note: customer.note || "",
       });
     },
     [form, handleOpenEditForm]

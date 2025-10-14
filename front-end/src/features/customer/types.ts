@@ -18,23 +18,33 @@ export interface CustomerPreferences {
   favorite_technician_ids?: string[];
 }
 
+// Cập nhật cấu trúc Customer
 export interface Customer {
   id: string;
-  user_id: string;
-  total_appointments: number;
-  last_visit: Date | null;
-  notes?: string;
+  phone_number: string | null; // <-- Đổi tên từ phone
+  email: string | null;
+  full_name: string;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  address?: string | null;
+  note?: string | null; // <-- Đổi tên từ notes
+  avatar_id?: string | null;
+  user?: User; // <-- Thông tin user lồng vào
+
+  // Các trường sau có thể thuộc về một đối tượng con, tùy thuộc vào API cuối cùng
+  total_appointments?: number;
+  last_visit?: Date | null;
   purchased_services?: PurchasedService[];
   preferences?: CustomerPreferences;
   notification_settings?: NotificationSettings;
   loyalty_points?: number;
-  joined_date: Date;
-  is_deleted: boolean;
-  created_at: Date;
-  updated_at: Date;
+  joined_date?: Date;
+  is_deleted?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-export type FullCustomerProfile = Omit<User, "roles"> & {
-  customer_profile: Customer;
+// Đơn giản hóa FullCustomerProfile để khớp với cấu trúc mới
+export type FullCustomerProfile = Customer & {
   loyalty_tier?: LoyaltyTier;
 };

@@ -54,7 +54,7 @@ export default function ProductFormFields() {
         )}
       />
       <CategorySelector
-        name="categories"
+        name="category_ids"
         label="Danh mục"
         categoryType="product"
       />

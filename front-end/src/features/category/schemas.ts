@@ -4,6 +4,7 @@ import { z } from "zod";
 
 export const categoryFormSchema = z.object({
   name: nameSchema,
+  description: z.string().optional(),
   category_type: z.enum(["service", "product", "treatment"]),
 });
 

@@ -1,13 +1,21 @@
 import apiClient from "@/lib/apiClient";
-import { PermissionGroup, Role } from "@/features/user/types";
+import { Permission, PermissionGroup, Role } from "@/features/user/types";
 import { RoleFormValues } from "@/features/user/schemas";
 
+//Lấy danh sách tất cả vai trò
 export async function getRoles(): Promise<Role[]> {
   return apiClient<Role[]>("/admin/roles");
 }
-// Lấy danh sách tất cả quyền hạn đã được nhóm lại
-export async function getPermissions(): Promise<PermissionGroup> {
-  return apiClient<PermissionGroup>("/admin/permissions");
+
+// Lấy chi tiết một vai trò bằng ID
+export async function getRoleById(roleId: string): Promise<Role> {
+  return apiClient<Role>(`/admin/roles/${roleId}`);
+}
+
+//Lấy danh sách tất cả quyền hạn
+export async function getPermissions(): Promise<Permission[]> {
+  // API trả về một mảng phẳng, việc nhóm lại sẽ được xử lý ở client
+  return apiClient<Permission[]>("/admin/permissions");
 }
 
 // Tạo vai trò mới
@@ -39,16 +47,58 @@ export async function deleteRole(id: string): Promise<void> {
   });
 }
 
-// Cập nhật quyền cho vai trò
-export async function updateRolePermissions({
+/**
+ * CẬP NHẬT: Gán một quyền cho một vai trò.
+ * API này thêm một permission vào role, thay vì thay thế toàn bộ.
+ * @param roleId ID của vai trò
+ * @param permissionId ID của quyền cần gán
+ */
+export async function addPermissionToRole({
   roleId,
-  permissionIds,
+  permissionId,
 }: {
   roleId: string;
-  permissionIds: string[];
+  permissionId: string;
 }): Promise<Role> {
   return apiClient<Role>(`/admin/roles/${roleId}/permissions`, {
-    method: "PUT",
-    body: JSON.stringify({ permissionIds }),
+    method: "POST",
+    body: JSON.stringify({ permission_id: permissionId }),
+  });
+}
+
+/**
+ * CẬP NHẬT: Xóa một quyền khỏi một vai trò.
+ * @param roleId ID của vai trò
+ * @param permissionId ID của quyền cần xóa
+ */
+export async function removePermissionFromRole({
+  roleId,
+  permissionId,
+}: {
+  roleId: string;
+  permissionId: string;
+}): Promise<Role> {
+  return apiClient<Role>(`/admin/roles/${roleId}/permissions/${permissionId}`, {
+    method: "DELETE",
+  });
+}
+
+// Các hàm gán/xóa vai trò cho người dùng (nếu cần)
+export async function assignRoleToUser(
+  userId: string,
+  roleId: string
+): Promise<any> {
+  return apiClient(`/admin/users/${userId}/roles`, {
+    method: "POST",
+    body: JSON.stringify({ role_id: roleId }),
+  });
+}
+
+export async function removeRoleFromUser(
+  userId: string,
+  roleId: string
+): Promise<any> {
+  return apiClient(`/admin/users/${userId}/roles/${roleId}`, {
+    method: "DELETE",
   });
 }

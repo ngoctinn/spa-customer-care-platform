@@ -11,10 +11,16 @@ import { ProductFormValues } from "@/features/product/schemas";
 export async function addProduct(
   productData: ProductFormValues
 ): Promise<Product> {
-  // Logic upload đã được loại bỏ
+  const payload = {
+    ...productData,
+    existing_image_ids: productData.images?.map((img) => img.id) || [],
+    primary_image_id: productData.images?.[0]?.id || null,
+  };
+  delete (payload as any).images; // Xóa trường 'images' không cần thiết
+
   return apiClient<Product>("/products", {
     method: "POST",
-    body: JSON.stringify(productData),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -30,10 +36,18 @@ export async function updateProduct({
   productId: string;
   productData: Partial<ProductFormValues>;
 }): Promise<Product> {
-  // Logic upload đã được loại bỏ
+  const payload = {
+    ...productData,
+    existing_image_ids: productData.images?.map((img) => img.id),
+    primary_image_id: productData.images?.[0]?.id,
+  };
+  if (productData.images) {
+    delete (payload as any).images;
+  }
+
   return apiClient<Product>(`/products/${productId}`, {
     method: "PUT",
-    body: JSON.stringify(productData),
+    body: JSON.stringify(payload),
   });
 }
 

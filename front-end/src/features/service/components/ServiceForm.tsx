@@ -66,7 +66,7 @@ export default function ServiceForm() {
         )}
       />
       <CategorySelector
-        name="categories"
+        name="category_ids"
         label="Danh mục"
         categoryType="service"
       />

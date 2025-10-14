@@ -3,51 +3,43 @@
 import apiClient from "@/lib/apiClient";
 import { FullStaffProfile } from "@/features/staff/types";
 import {
-  StaffFormValues,
-  StaffOnboardingFormValues,
+  StaffFormValues, // Sẽ cập nhật schema này sau
   StaffServicesFormValues,
-  StaffStatusFormValues,
 } from "@/features/staff/schemas";
-import { UserPublic } from "@/features/user/types";
 
 /**
- * Gửi toàn bộ thông tin onboarding của nhân viên mới lên server.
- * @param data Dữ liệu từ wizard 4 bước.
- */
-export async function onboardStaff(
-  data: StaffOnboardingFormValues
-): Promise<UserPublic> {
-  // API Call duy nhất, backend sẽ xử lý trong một transaction
-  return apiClient<UserPublic>("/staff/onboard", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * Lấy danh sách tất cả nhân viên (thực chất là tất cả user)
+ * Lấy danh sách tất cả nhân viên.
  */
 export async function getStaffList(): Promise<FullStaffProfile[]> {
-  // Backend trả về danh sách User, ta cần ép kiểu cho phù hợp
-  return apiClient<FullStaffProfile[]>("/users/");
+  return apiClient<FullStaffProfile[]>("/staff/"); // <-- ENDPOINT MỚI
 }
 
 /**
- * Thêm một nhân viên mới
- * @param staffData Dữ liệu của nhân viên mới từ form
+ * Lấy thông tin chi tiết một nhân viên bằng ID.
+ * @param staffId ID của Staff Profile
+ */
+export async function getStaffById(staffId: string): Promise<FullStaffProfile> {
+  return apiClient<FullStaffProfile>(`/staff/${staffId}`); // <-- ENDPOINT MỚI
+}
+
+/**
+ * Thêm một hồ sơ nhân viên mới cho một User đã tồn tại.
+ * @param staffData Dữ liệu hồ sơ nhân viên.
  */
 export async function addStaff(
-  staffData: StaffFormValues
-): Promise<UserPublic> {
-  return apiClient<UserPublic>("/users/", {
+  staffData: StaffFormValues & { user_id: string }
+): Promise<FullStaffProfile> {
+  return apiClient<FullStaffProfile>("/staff/", {
+    // <-- ENDPOINT MỚI
     method: "POST",
     body: JSON.stringify(staffData),
   });
 }
+
 /**
- * Cập nhật thông tin nhân viên
- * @param staffId ID của nhân viên (chính là user_id)
- * @param staffData Dữ liệu cần cập nhật
+ * Cập nhật thông tin hồ sơ nhân viên.
+ * @param staffId ID của Staff Profile.
+ * @param staffData Dữ liệu cần cập nhật.
  */
 export async function updateStaff({
   staffId,
@@ -55,69 +47,54 @@ export async function updateStaff({
 }: {
   staffId: string;
   staffData: Partial<StaffFormValues>;
-}): Promise<UserPublic> {
-  return apiClient<UserPublic>(`/users/${staffId}`, {
+}): Promise<FullStaffProfile> {
+  return apiClient<FullStaffProfile>(`/staff/${staffId}`, {
+    // <-- ENDPOINT MỚI
     method: "PUT",
     body: JSON.stringify(staffData),
   });
 }
 
 /**
- * Xóa (vô hiệu hóa) một nhân viên
- * @param staffId ID của nhân viên (chính là user_id)
- */
-export async function deleteStaff(staffId: string): Promise<void> {
-  return apiClient<void>(`/users/${staffId}`, {
-    method: "DELETE",
-  });
-}
-
-/**
- * Lấy thông tin chi tiết một nhân viên bằng ID
- * @param staffId ID của nhân viên
- */
-export async function getStaffById(staffId: string): Promise<FullStaffProfile> {
-  return apiClient<FullStaffProfile>(`/users/${staffId}`);
-}
-
-/**
- * Lấy danh sách kỹ thuật viên có thể thực hiện một dịch vụ
- * @param serviceId ID của dịch vụ
- */
-export async function getTechniciansByService(
-  serviceId: string
-): Promise<FullStaffProfile[]> {
-  // CẬP NHẬT: Gọi đến endpoint mới của backend thay vì trả về mảng rỗng.
-  return apiClient<FullStaffProfile[]>(
-    `/staff/technicians-by-service/${serviceId}`
-  );
-}
-/**
- * Cập nhật các dịch vụ (kỹ năng) mà một nhân viên có thể thực hiện.
- * @param staffId ID của nhân viên.
+ * Cập nhật các dịch vụ mà một nhân viên có thể thực hiện.
+ * @param staffId ID của Staff Profile.
  * @param serviceData Dữ liệu chứa mảng các ID dịch vụ.
  */
 export async function updateStaffServices(
   staffId: string,
   serviceData: StaffServicesFormValues
-): Promise<void> {
-  return apiClient<void>(`/staff/${staffId}/services`, {
+): Promise<FullStaffProfile> {
+  // <-- ENDPOINT VÀ KIỂU TRẢ VỀ MỚI
+  return apiClient<FullStaffProfile>(`/staff/${staffId}/services`, {
     method: "PUT",
     body: JSON.stringify(serviceData),
   });
 }
 
 /**
- * Cập nhật trạng thái làm việc của nhân viên (ví dụ: cho nghỉ việc).
- * @param staffId ID của nhân viên.
- * @param statusData Dữ liệu trạng thái mới.
+ * Xử lý cho nhân viên nghỉ việc (offboard).
+ * @param staffId ID của Staff Profile.
  */
-export async function updateStaffStatus(
-  staffId: string,
-  statusData: StaffStatusFormValues
-): Promise<void> {
-  return apiClient<void>(`/staff/${staffId}/status`, {
-    method: "PUT",
-    body: JSON.stringify(statusData),
+export async function offboardStaff(staffId: string): Promise<void> {
+  // LƯU Ý: API yêu cầu thông tin về các cuộc hẹn trong tương lai.
+  // Logic này cần được xử lý ở tầng hook trước khi gọi API này.
+  // Ở đây chúng ta chỉ định nghĩa hàm gọi API.
+  return apiClient<void>(`/staff/${staffId}/offboard`, {
+    // <-- ENDPOINT MỚI
+    method: "POST",
+    // body sẽ được cung cấp bởi hook gọi hàm này
   });
 }
+
+/**
+ * Lấy danh sách kỹ thuật viên có thể thực hiện một dịch vụ.
+ * @param serviceId ID của dịch vụ.
+ */
+export async function getTechniciansByService(
+  serviceId: string
+): Promise<FullStaffProfile[]> {
+  // Giả định API hỗ trợ query param này
+  return apiClient<FullStaffProfile[]>(`/staff?service_id=${serviceId}`);
+}
+
+// XÓA các hàm không còn phù hợp: onboardStaff, deleteStaff (thay bằng offboard), updateStaffStatus
