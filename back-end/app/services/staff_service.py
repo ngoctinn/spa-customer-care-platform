@@ -10,6 +10,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
+from app.core.messages import StaffMessages
 from app.models.services_model import Service
 from app.models.staff_model import (
     EmploymentStatus,
@@ -85,7 +86,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         user = db.get(User, user_id)
         if not user:
             raise HTTPException(
-                status_code=404, detail="Tài khoản người dùng không tồn tại"
+                status_code=404, detail=StaffMessages.STAFF_USER_NOT_FOUND
             )
         return user
 
@@ -113,7 +114,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         profile = self._get_staff_by_user_id(db, user_id)
         if not profile:
             raise HTTPException(
-                status_code=404, detail="Không tìm thấy hồ sơ nhân viên"
+                status_code=404, detail=StaffMessages.STAFF_PROFILE_NOT_FOUND
             )
         return self._serialize_staff_profile(profile)
 
@@ -144,7 +145,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
             ).all()
             if len(services) != len(set(assignment.service_ids)):
                 raise HTTPException(
-                    status_code=404, detail="Một hoặc nhiều dịch vụ không tồn tại"
+                    status_code=404, detail=StaffMessages.STAFF_SERVICE_NOT_FOUND
                 )
             db_profile.services = services
 
@@ -174,7 +175,8 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         for schedule_data in payload:
             if schedule_data.day_of_week is None:
                 raise HTTPException(
-                    status_code=400, detail="Ca lặp lại hàng tuần phải có day_of_week"
+                    status_code=400,
+                    detail=StaffMessages.STAFF_SCHEDULE_RECURRING_REQUIRE_DAY,
                 )
 
             new_schedule = StaffSchedule(
@@ -191,7 +193,9 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
     ) -> StaffSchedulePublic:
         db_schedule = db.get(StaffSchedule, schedule_id)
         if not db_schedule:
-            raise HTTPException(status_code=404, detail="Không tìm thấy lịch làm việc")
+            raise HTTPException(
+                status_code=404, detail=StaffMessages.STAFF_SCHEDULE_NOT_FOUND
+            )
 
         update_data = payload.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -236,7 +240,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         db_request = db.get(StaffTimeOff, request_id)
         if not db_request:
             raise HTTPException(
-                status_code=404, detail="Không tìm thấy yêu cầu nghỉ phép"
+                status_code=404, detail=StaffMessages.STAFF_TIME_OFF_REQUEST_NOT_FOUND
             )
 
         db_request.status = data.status

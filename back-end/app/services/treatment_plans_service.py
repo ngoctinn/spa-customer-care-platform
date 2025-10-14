@@ -8,6 +8,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
+from app.core.messages import CategoryMessages, TreatmentPlanMessages
 from app.models.catalog_model import Category
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
 from app.models.services_model import Service
@@ -78,7 +79,7 @@ class TreatmentPlanService(
         if category.category_type != CategoryTypeEnum.treatment_plan:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Danh mục không hợp lệ cho liệu trình.",
+                detail=TreatmentPlanMessages.TREATMENT_PLAN_CATEGORY_INVALID,
             )
 
     async def create(
@@ -97,7 +98,9 @@ class TreatmentPlanService(
         if existing_plan:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Liệu trình '{obj_in.name}' đã tồn tại.",
+                detail=TreatmentPlanMessages.TREATMENT_PLAN_NAME_EXISTS.format(
+                    name=obj_in.name
+                ),
             )
 
         for step_in in obj_in.steps:
@@ -137,7 +140,7 @@ class TreatmentPlanService(
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Lỗi khi lưu liệu trình: {e}",
+                detail=TreatmentPlanMessages.TREATMENT_PLAN_SAVE_ERROR.format(error=e),
             )
 
         db.refresh(db_plan)
@@ -168,7 +171,9 @@ class TreatmentPlanService(
             if existing_plan:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Liệu trình '{plan_data['name']}' đã tồn tại.",
+                    detail=TreatmentPlanMessages.TREATMENT_PLAN_NAME_EXISTS.format(
+                        name=plan_data["name"]
+                    ),
                 )
 
         if "category_id" in plan_data and plan_data["category_id"]:
@@ -201,7 +206,7 @@ class TreatmentPlanService(
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Lỗi khi cập nhật liệu trình: {e}",
+                detail=TreatmentPlanMessages.TREATMENT_PLAN_SAVE_ERROR.format(error=e),
             )
 
         db.refresh(db_obj)
@@ -210,5 +215,5 @@ class TreatmentPlanService(
         return self.get_by_id(db, id=db_obj.id)
 
 
-# NEW: Instantiate the class-based service
+# Tạo một instance duy nhất để import vào API
 treatment_plans_service = TreatmentPlanService()

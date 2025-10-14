@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_BUCKET_NAME: str
 
-    FRONTEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(
         env_file=os.getenv("ENV_FILE", ".env"),  # Đọc biến ENV_FILE, mặc định là .env

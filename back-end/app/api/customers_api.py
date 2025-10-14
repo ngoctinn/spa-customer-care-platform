@@ -9,6 +9,7 @@ from app.core.dependencies import (
     get_current_user,
     get_current_admin_user,
 )
+from app.core.messages import ImageMessages
 from app.schemas.customers_schema import (
     CustomerCreate,
     CustomerCreateAtStore,
@@ -41,7 +42,7 @@ def create_or_update_my_customer_profile(
         if image.uploaded_by_user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Không có quyền sử dụng hình ảnh này làm ảnh đại diện.",
+                detail=ImageMessages.IMAGE_PERMISSION_DENIED,
             )
 
     customer_profile = customers_service.get_or_create_for_user(

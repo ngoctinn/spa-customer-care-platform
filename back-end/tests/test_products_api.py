@@ -5,6 +5,7 @@ from sqlmodel import Session
 
 from app.models.catalog_model import Category
 from app.schemas.catalog_schema import CategoryTypeEnum
+from app.core.messages import ProductMessages
 
 
 def test_create_product_success(client: TestClient, db_session: Session):

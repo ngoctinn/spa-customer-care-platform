@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
+from app.core.messages import CustomerMessages
 from app.models.customers_model import Customer
 from app.models.users_model import User
 from app.models.catalog_model import Image
@@ -116,14 +117,14 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
                     # Người dùng đã có hồ sơ và đang cố đổi sang SĐT của người khác -> Lỗi
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Số điện thoại đã tồn tại.",
+                        detail=CustomerMessages.PHONE_NUMBER_EXISTS,
                     )
 
                 if not customer_profile and existing_phone_profile.user_id:
                     # Người dùng chưa có hồ sơ và SĐT này đã được gán cho 1 user khác -> Lỗi
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Số điện thoại đã được liên kết với một tài khoản khác.",
+                        detail=CustomerMessages.PHONE_NUMBER_LINKED_TO_ANOTHER_ACCOUNT,
                     )
 
                 if not customer_profile and not existing_phone_profile.user_id:
@@ -144,7 +145,7 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             if not profile_in.phone_number:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Số điện thoại là bắt buộc khi tạo hồ sơ.",
+                    detail=CustomerMessages.PHONE_NUMBER_REQUIRED,
                 )
 
             profile_data["user_id"] = user.id

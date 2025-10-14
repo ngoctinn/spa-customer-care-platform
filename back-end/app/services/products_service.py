@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
+from app.core.messages import CategoryMessages, ProductMessages
 from app.models.catalog_model import Category
 from app.models.products_model import Product
 from app.schemas.catalog_schema import CategoryTypeEnum
@@ -18,7 +19,7 @@ def _ensure_product_category(category: Category) -> None:
     if category.category_type != CategoryTypeEnum.product:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Danh mục không hợp lệ cho sản phẩm.",
+            detail=CategoryMessages.CATEGORY_INVALID_FOR_PRODUCT,
         )
 
 
@@ -28,7 +29,7 @@ def _get_valid_product_categories(
     if not category_ids:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Sản phẩm phải thuộc ít nhất một danh mục.",
+            detail=ProductMessages.PRODUCT_MUST_HAVE_CATEGORY,
         )
     categories: List[Category] = []
     seen_ids: set[uuid.UUID] = set()
@@ -82,7 +83,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
         if existing_product:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Sản phẩm '{product_in.name}' đã tồn tại.",
+                detail=ProductMessages.PRODUCT_NAME_EXISTS.format(name=product_in.name),
             )
 
         product_data = product_in.model_dump(
@@ -110,7 +111,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Lỗi khi lưu sản phẩm: {e}",
+                detail=ProductMessages.PRODUCT_SAVE_ERROR.format(error=e),
             )
 
         db.refresh(db_product)
@@ -139,7 +140,9 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Sản phẩm '{product_data['name']}' đã tồn tại.",
+                    detail=ProductMessages.PRODUCT_NAME_EXISTS.format(
+                        name=product_data["name"]
+                    ),
                 )
 
         if "category_ids" in product_data:
@@ -174,7 +177,7 @@ class ProductService(BaseService[Product, ProductCreate, ProductUpdate]):
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Lỗi khi cập nhật sản phẩm: {e}",
+                detail=ProductMessages.PRODUCT_SAVE_ERROR.format(error=e),
             )
 
         db.refresh(db_obj)

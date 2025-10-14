@@ -4,6 +4,7 @@ from typing import List
 from sqlmodel import Session, select
 from fastapi import HTTPException, status
 
+from app.core.messages import UserMessages
 from app.models.users_model import User
 from app.models.schedules_model import DefaultSchedule
 from app.schemas.schedules_schema import DefaultScheduleBase
@@ -20,7 +21,8 @@ def get_or_create_default_schedules(
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Người dùng không tồn tại"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=UserMessages.USER_NOT_FOUND_SIMPLE,
         )
 
     schedules = db.exec(

@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from app.models.users_model import User, Role
 from app.models.services_model import Service
+from app.core.messages import GenericMessages, RoleMessages
 
 # SỬA LỖI: Import schema mới
 from app.schemas.users_schema import AdminCreateStaffRequest
@@ -40,7 +41,9 @@ def test_create_user_by_admin_rollback_on_failure(
     # SỬA LỖI: Endpoint vẫn là /users/ theo users_api.py
     response = admin_authenticated_client.post("/users/", json=user_data)
     assert response.status_code == 404
-    assert "không được tìm thấy" in response.json()["detail"]
+    from app.core.messages import RoleMessages
+
+    assert RoleMessages.ROLE_NOT_FOUND in response.json()["detail"]
 
     # 4. Quan trọng nhất: Kiểm tra lại CSDL để đảm bảo không có user nào được tạo
     final_user_count = len(db_session.exec(select(User)).all())
@@ -124,4 +127,5 @@ def test_get_soft_deleted_object_returns_404(
     # 2. Thử lấy lại đối tượng đó
     response_get = admin_authenticated_client.get(f"/services/{service_id}")
     assert response_get.status_code == 404
-    assert "Không tìm thấy" in response_get.json()["detail"]
+    # Changed assertion to check substring as the error message is truncated
+    assert "Không tìm thấy tài nguyên" in response_get.json()["detail"]

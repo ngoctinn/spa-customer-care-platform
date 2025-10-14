@@ -1,5 +1,4 @@
 # app/core/dependencies.py
-import email
 from functools import lru_cache
 from typing import Set
 import uuid
@@ -8,6 +7,7 @@ from jose import JWTError, jwt
 from sqlmodel import Session
 
 from app.core.config import settings
+from app.core.messages import AuthMessages, RoleMessages
 from app.models.users_model import Role, User
 from app.services import roles_service, users_service
 from app.core.database import engine
@@ -35,7 +35,7 @@ def get_current_user(
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Chưa đăng nhập",
+            detail=AuthMessages.NOT_AUTHENTICATED,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -43,13 +43,13 @@ def get_current_user(
     if scheme.lower() != "bearer" or not param:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sai định dạng token",
+            detail=AuthMessages.INVALID_TOKEN_FORMAT,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token không hợp lệ hoặc đã hết hạn",
+        detail=AuthMessages.INVALID_TOKEN,
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -82,7 +82,7 @@ def has_permission(required_permission: str):
         if required_permission not in user_permissions and not current_user.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Không đủ quyền truy cập.",
+                detail=RoleMessages.INSUFFICIENT_PERMISSIONS,
             )
 
     return permission_checker
@@ -94,7 +94,8 @@ def get_role_by_id_from_path(
     role = roles_service.get_role_by_id(db_session=session, role_id=role_id)
     if not role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vai trò không tồn tại"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=RoleMessages.ROLE_NOT_FOUND_SIMPLE,
         )
     return role
 

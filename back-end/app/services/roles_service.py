@@ -3,6 +3,8 @@ import uuid
 from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
+
+from app.core.messages import RoleMessages
 from app.models.users_model import Role, Permission
 from app.schemas.roles_schema import PermissionCreate, RoleCreate, RoleUpdate
 
@@ -18,7 +20,9 @@ def create_permission(
         select(Permission).where(Permission.name == permission_in.name)
     ).first()
     if permission:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Quyền đã tồn tại")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, RoleMessages.PERMISSION_ALREADY_EXISTS
+        )
     permission = Permission.model_validate(permission_in)
     db_session.add(permission)
     db_session.commit()
@@ -50,7 +54,7 @@ def get_role_by_id(db_session: Session, *, role_id: uuid.UUID) -> Role:
     if not role:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role với ID {role_id} không được tìm thấy.",
+            detail=RoleMessages.ROLE_NOT_FOUND,
         )
     return role
 
@@ -60,7 +64,8 @@ def create_role(db_session: Session, *, role_in: "RoleCreate") -> Role:
     role = get_role_by_name(db_session, name=role_in.name)
     if role:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Vai trò đã tồn tại."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=RoleMessages.ROLE_ALREADY_EXISTS,
         )
 
     role = Role.model_validate(role_in)
@@ -83,7 +88,7 @@ def update_role(db_session: Session, *, db_role: Role, role_in: "RoleUpdate") ->
         if existing_role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Tên vai trò đã tồn tại.",
+                detail=RoleMessages.ROLE_NAME_ALREADY_EXISTS,
             )
     role_data = role_in.model_dump(exclude_unset=True)
     for key, value in role_data.items():
@@ -99,9 +104,7 @@ def delete_role(db_session: Session, *, db_role: Role):
     """Xóa một vai trò khỏi database."""
     # Optional: Kiểm tra xem vai trò này còn được gán cho user nào không
     if db_role.users:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "Không thể xóa vai trò đang được sử dụng"
-        )
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, RoleMessages.ROLE_IN_USE)
 
     db_session.delete(db_role)
     db_session.commit()
@@ -114,15 +117,17 @@ def assign_permission_to_role(
     """Gán một quyền cho một vai trò."""
     role = db_session.get(Role, role_id)
     if not role:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Vai trò không tồn tại")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, RoleMessages.ROLE_NOT_FOUND)
 
     permission = db_session.get(Permission, permission_id)
     if not permission:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Quyền không tồn tại")
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, RoleMessages.PERMISSION_NOT_FOUND
+        )
 
     if permission in role.permissions:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "Quyền đã được gán cho vai trò này"
+            status.HTTP_400_BAD_REQUEST, RoleMessages.PERMISSION_ALREADY_ASSIGNED
         )
 
     role.permissions.append(permission)
@@ -138,15 +143,17 @@ def remove_permission_from_role(
     """Xóa một quyền khỏi vai trò."""
     role = db_session.get(Role, role_id)
     if not role:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Vai trò không tồn tại")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, RoleMessages.ROLE_NOT_FOUND)
 
     permission = db_session.get(Permission, permission_id)
     if not permission:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Quyền không tồn tại")
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, RoleMessages.PERMISSION_NOT_FOUND
+        )
 
     if permission not in role.permissions:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "Quyền này không thuộc vai trò"
+            status.HTTP_400_BAD_REQUEST, RoleMessages.PERMISSION_NOT_IN_ROLE
         )
 
     role.permissions.remove(permission)
