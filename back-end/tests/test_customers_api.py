@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 from app.models.users_model import User
 from app.models.customers_model import Customer
+from app.core.messages import CustomerMessages
 
 # =================================================================
 # Tests for Authenticated User (Regular User)

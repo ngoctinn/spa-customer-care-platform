@@ -10,6 +10,7 @@ from sqlmodel import Session
 from app.core.dependencies import get_db_session
 from app.core.config import settings
 from app.core import security
+from app.core.messages import AuthMessages
 from app.schemas.users_schema import (
     ForgotPasswordRequest,
     ResetPasswordRequest,
@@ -34,18 +35,18 @@ def login_for_access_token(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sai email hoặc mật khẩu.",
+            detail=AuthMessages.INVALID_CREDENTIALS,
             headers={"WWW-Authenticate": "Bearer"},
         )
     if not user.is_email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email chưa được xác thực. Vui lòng kiểm tra hộp thư đến của bạn.",
+            detail=AuthMessages.EMAIL_NOT_VERIFIED,
         )
     elif not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Người dùng không hoạt động.",
+            detail=AuthMessages.USER_INACTIVE,
         )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -57,10 +58,10 @@ def login_for_access_token(
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        expires=access_token_expires.total_seconds(),
+        expires=int(access_token_expires.total_seconds()),
     )
 
-    return {"message": "Login successful"}
+    return {"message": AuthMessages.LOGIN_SUCCESS}
 
 
 @router.post(
@@ -73,28 +74,24 @@ async def register_user(
     Khách hàng tự đăng ký tài khoản online chỉ bằng Email và Mật khẩu.
     Luồng này CHỈ TẠO TÀI KHOẢN (User), KHÔNG tự động tạo Hồ sơ khách hàng (Customer).
     """
-    # SỬA LỖI: Xóa bỏ hoàn toàn logic liên quan đến full_name và tạo Customer
     user = users_service.create_online_user(db_session=session, user_in=user_in)
 
     await auth_service.send_verification_email(user)
     return user
 
 
-# ... các endpoint khác giữ nguyên ...
 @router.get("/verify-email")
 def verify_email(token: str, session: Session = Depends(get_db_session)):
     user_id = auth_service.verify_email_token(token)
     if not user_id:
-        raise HTTPException(
-            status_code=400, detail="Token không hợp lệ hoặc đã hết hạn"
-        )
+        raise HTTPException(status_code=400, detail=AuthMessages.INVALID_TOKEN)
 
     user = users_service.get_user_by_id(db_session=session, user_id=user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+        raise HTTPException(status_code=404, detail=AuthMessages.INVALID_TOKEN)
 
     auth_service.mark_email_as_verified(db_session=session, user=user)
-    return {"message": "Xác thực email thành công!"}
+    return {"message": AuthMessages.EMAIL_VERIFIED_SUCCESS}
 
 
 @router.get("/login/google")
@@ -125,16 +122,17 @@ async def auth_google(
             key="access_token",
             value=f"Bearer {access_token}",
             httponly=True,
-            expires=access_token_expires.total_seconds(),
+            expires=int(access_token_expires.total_seconds()),
             samesite="lax",
         )
 
-        success_url = f"http://localhost:3000/dashboard"
+        success_url = f"{settings.FRONTEND_URL}/dashboard"
         return RedirectResponse(url=success_url, headers=response.headers)
 
     except HTTPException as e:
-        error_detail = e.detail.replace(" ", "_").lower()
-        error_url = f"http://localhost:3000/auth/login?error={error_detail}"
+        # stringify detail safely before manipulating
+        error_detail = str(e.detail).replace(" ", "_").lower()
+        error_url = f"{settings.FRONTEND_URL}/auth/login?error={error_detail}"
         return RedirectResponse(url=error_url)
 
 
@@ -145,9 +143,7 @@ async def forgot_password(
     user = users_service.get_user_by_email(db_session=session, email=body.email)
     if user:
         await auth_service.send_password_reset_email(user)
-    return {
-        "message": "Nếu email của bạn tồn tại trong hệ thống, bạn sẽ nhận được một email hướng dẫn đặt lại mật khẩu."
-    }
+    return {"message": AuthMessages.PASSWORD_RESET_EMAIL_SENT}
 
 
 @router.post("/reset-password")
@@ -158,23 +154,23 @@ def reset_password(
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token không hợp lệ hoặc đã hết hạn.",
+            detail=AuthMessages.INVALID_TOKEN,
         )
 
     user = users_service.get_user_by_id(db_session=session, user_id=user_id)
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Người dùng không tồn tại hoặc không hoạt động.",
+            detail=AuthMessages.INVALID_TOKEN,
         )
 
     auth_service.reset_user_password(
         db_session=session, user=user, new_password=body.new_password
     )
-    return {"message": "Mật khẩu đã được đặt lại thành công."}
+    return {"message": AuthMessages.PASSWORD_RESET_SUCCESS}
 
 
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie(key="access_token")
-    return {"message": "Đăng xuất thành công"}
+    return {"message": AuthMessages.LOGOUT_SUCCESS}

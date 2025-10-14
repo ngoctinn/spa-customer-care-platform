@@ -9,6 +9,7 @@ from sqlmodel import Session, SQLModel, select
 from app.models.users_model import User
 
 from app.core import supabase_client
+from app.core.messages import ImageMessages
 from app.models.catalog_model import Image
 from app.models.products_model import Product
 from app.models.services_model import Service
@@ -45,13 +46,13 @@ OWNER_CONFIG = {
 async def _upload_file_to_storage(file: UploadFile) -> str:
     """Tải file lên Supabase và trả về URL. Hàm này chỉ tập trung vào việc upload."""
     if not getattr(file, "filename", None):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "File không hợp lệ.")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, ImageMessages.INVALID_FILE)
 
     image_url = await supabase_client.upload_image(file=file)
     if not image_url:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
-            "Không thể tải ảnh lên kho lưu trữ.",
+            ImageMessages.UPLOAD_TO_STORAGE_FAILED,
         )
     return image_url
 
@@ -114,7 +115,7 @@ def get_image_by_id(db: Session, image_id: UUID) -> Image:
     if not image or image.is_deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy hình ảnh với ID {image_id}",
+            detail=ImageMessages.IMAGE_NOT_FOUND.format(image_id=image_id),
         )
     return image
 
@@ -181,7 +182,7 @@ async def sync_images_for_entity(
             if not image or image.is_deleted:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Không tìm thấy hình ảnh với ID {image_id}",
+                    detail=ImageMessages.IMAGE_NOT_FOUND.format(image_id=image_id),
                 )
             link = LinkModel(**{link_field: entity_id, "image_id": image_id})
             db.add(link)
@@ -196,7 +197,7 @@ async def sync_images_for_entity(
         if primary_image_id not in final_image_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Ảnh chính được chọn không thuộc danh sách hình ảnh của thực thể.",
+                detail=ImageMessages.PRIMARY_IMAGE_NOT_IN_LIST,
             )
     entity.primary_image_id = primary_image_id
     db.add(entity)

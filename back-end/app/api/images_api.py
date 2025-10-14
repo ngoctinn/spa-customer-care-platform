@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlmodel import Session
 
 from app.core.dependencies import get_current_admin_user, get_current_user
+from app.core.messages import RoleMessages
 from app.models.users_model import User
 from app.core.dependencies import get_db_session
 from app.schemas.catalog_schema import ImagePublic
@@ -73,7 +74,7 @@ def list_images_from_library(
         if not current_user.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Không có quyền truy cập vào thư viện ảnh chung.",
+                detail=RoleMessages.INSUFFICIENT_PERMISSIONS,
             )
         return images_service.get_catalog_images(db=session)
 

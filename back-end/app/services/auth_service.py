@@ -1,29 +1,28 @@
 # app/services/auth_service.py
 
-import token
 from typing import Optional
 import uuid
-from fastapi import HTTPException, Depends, Request, status
+from fastapi import HTTPException, Request, status
 from sqlmodel import Session
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
-from app.core.dependencies import get_db_session
 from authlib.integrations.starlette_client import OAuth
 
 from app.core.mailing import send_email
 from app.core.security import get_password_hash, verify_password
+from app.core.config import settings
+from app.core.constants import TokenExpiry, EmailSalts, PasswordPolicy
+from app.core.messages import AuthMessages, UserMessages
+
 from app.models.users_model import User
 from app.services import users_service
-from app.services.customers_service import customers_service
-from app.core.config import settings
-
-from app.schemas.customers_schema import CustomerCreate
 from app.schemas.users_schema import UserCreate
 
+# Token Serializers
 email_verification_serializer = URLSafeTimedSerializer(
-    settings.SECRET_KEY, salt="email-confirm-salt"
+    settings.SECRET_KEY, salt=EmailSalts.EMAIL_CONFIRMATION
 )
 password_reset_serializer = URLSafeTimedSerializer(
-    settings.SECRET_KEY, salt="password-reset-salt"
+    settings.SECRET_KEY, salt=EmailSalts.PASSWORD_RESET
 )
 
 
@@ -46,14 +45,14 @@ async def handle_google_login_or_register(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Không thể lấy token từ Google: {e}",
+            detail=AuthMessages.OAUTH_TOKEN_ERROR.format(error=e),
         )
 
     user_info = token.get("userinfo")
     if not user_info or not user_info.get("email"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Không thể lấy thông tin người dùng từ Google",
+            detail=AuthMessages.OAUTH_USER_INFO_ERROR,
         )
 
     email = user_info["email"]
@@ -92,8 +91,10 @@ async def send_verification_email(user: User):
     """
     Gửi email xác thực tài khoản.
     """
-    token = email_verification_serializer.dumps(str(user.id), salt="email-confirm-salt")
-    verification_link = f"{settings.FRONTEND_URL}/auth/verify-email?token={token}"
+    token = email_verification_serializer.dumps(
+        str(user.id), salt=EmailSalts.EMAIL_CONFIRMATION
+    )
+    verification_link = f"{settings.BACKEND_URL}/auth/verify-email?token={token}"
 
     body = f"""
     <p>Chào {user.full_name},</p>
@@ -112,7 +113,7 @@ async def send_welcome_and_set_password_email(user: User):
     Gửi email chào mừng kèm liên kết đặt mật khẩu.
     """
     token = password_reset_serializer.dumps(str(user.id))
-    set_password_link = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
+    set_password_link = f"{settings.BACKEND_URL}/auth/reset-password?token={token}"
 
     body = f"""
     <p>Chào {user.full_name},</p>
@@ -136,8 +137,8 @@ def verify_email_token(token: str) -> Optional[str]:
     try:
         user_id = email_verification_serializer.loads(
             token,
-            salt="email-confirm-salt",
-            max_age=3600,  # Token có hiệu lực trong 1 giờ
+            salt=EmailSalts.EMAIL_CONFIRMATION,
+            max_age=TokenExpiry.EMAIL_VERIFICATION_TOKEN_MAX_AGE,
         )
         return user_id
     except (SignatureExpired, BadTimeSignature):
@@ -203,8 +204,9 @@ def verify_password_reset_token(token: str) -> Optional[str]:
     Giải mã token reset mật khẩu. Trả về user_id nếu hợp lệ.
     """
     try:
-        # max_age = 900 giây (15 phút)
-        user_id = password_reset_serializer.loads(token, max_age=900)
+        user_id = password_reset_serializer.loads(
+            token, max_age=TokenExpiry.PASSWORD_RESET_TOKEN_MAX_AGE
+        )
         return user_id
     except (SignatureExpired, BadTimeSignature):
         return None

@@ -9,6 +9,7 @@ from app.core.dependencies import (
     get_current_user,
     get_db_session,
 )
+from app.core.messages import AuthMessages
 from app.models.users_model import User
 from app.schemas.users_schema import (
     AdminCreateStaffRequest,  # THAY ĐỔI
@@ -70,7 +71,7 @@ def update_password_me(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mật khẩu hiện tại không chính xác.",
+            detail=AuthMessages.INCORRECT_CURRENT_PASSWORD,
         )
     return user
 

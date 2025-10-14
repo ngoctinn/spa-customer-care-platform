@@ -6,10 +6,13 @@ from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash
+from app.core.constants import DefaultRoles, PasswordPolicy
+from app.core.messages import UserMessages, RoleMessages
+
 from app.models.users_model import User
 from app.models.staff_model import StaffProfile
 from app.schemas.users_schema import (
-    AdminCreateStaffRequest,  # THAY ĐỔI
+    AdminCreateStaffRequest,
     UserCreate,
     UserUpdateByAdmin,
     UserUpdateMe,
@@ -38,7 +41,7 @@ def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> User:
     if not user or user.is_deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User với ID {user_id} không được tìm thấy.",
+            detail=UserMessages.USER_NOT_FOUND.format(user_id=user_id),
         )
     return user
 
@@ -53,7 +56,9 @@ def create_online_user(db_session: Session, *, user_in: UserCreate) -> User:
     Xử lý luồng đăng ký online. CHỈ TẠO USER, KHÔNG TẠO CUSTOMER.
     """
     if get_user_by_email(db_session, email=user_in.email):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email đã được sử dụng.")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, UserMessages.EMAIL_ALREADY_EXISTS
+        )
 
     hashed_password = get_password_hash(user_in.password)
     # LOẠI BỎ full_name khỏi việc tạo User
@@ -94,7 +99,9 @@ def assign_role_to_user(
     role = roles_service.get_role_by_id(db_session, role_id=role_id)
 
     if role in user.roles:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Người dùng đã có vai trò này")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, RoleMessages.USER_ALREADY_HAS_ROLE
+        )
 
     user.roles.append(role)
     db_session.add(user)
@@ -112,7 +119,7 @@ def remove_role_from_user(
 
     if role not in user.roles:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "Người dùng không có vai trò này"
+            status.HTTP_400_BAD_REQUEST, RoleMessages.USER_DOES_NOT_HAVE_ROLE
         )
 
     user.roles.remove(role)
@@ -145,7 +152,7 @@ def create_staff_account(
     if get_user_by_email(db_session, email=user_in.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email đã tồn tại.",
+            detail=UserMessages.EMAIL_EXISTS,
         )
 
     role = None
@@ -153,12 +160,12 @@ def create_staff_account(
         role = roles_service.get_role_by_id(db_session, role_id=user_in.role_id)
     else:
         role = roles_service.get_role_by_name(
-            db_session, name="staff"
+            db_session, name=DefaultRoles.STAFF
         )  # Mặc định là role 'staff'
 
     try:
         # 1. Tạo User
-        temp_password = f"temp_password_{uuid.uuid4()}"
+        temp_password = f"{PasswordPolicy.TEMP_PASSWORD_PREFIX}{uuid.uuid4()}"
         hashed_password = get_password_hash(temp_password)
         user_data = user_in.model_dump(exclude={"role_id", "full_name", "phone_number"})
         db_user = User(
@@ -168,7 +175,7 @@ def create_staff_account(
         # 2. Gán Role
         if not role:
             role_to_create = RoleCreate(
-                name="staff", description="Vai trò cho nhân viên"
+                name=DefaultRoles.STAFF, description="Vai trò cho nhân viên"
             )
             role = roles_service.create_role(db_session, role_in=role_to_create)
 
@@ -193,7 +200,7 @@ def create_staff_account(
         db_session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Không thể tạo tài khoản nhân viên do lỗi hệ thống: {e}",
+            detail=UserMessages.STAFF_ACCOUNT_CREATE_ERROR.format(error=str(e)),
         )
 
     db_session.refresh(db_user)

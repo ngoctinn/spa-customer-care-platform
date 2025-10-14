@@ -8,6 +8,7 @@ from app.models.catalog_model import Category
 from app.models.services_model import Service
 from app.schemas.catalog_schema import CategoryTypeEnum
 from app.services.services_service import services_service
+from app.core.messages import ServiceMessages
 
 
 # --- Fixtures cho Service Tests ---

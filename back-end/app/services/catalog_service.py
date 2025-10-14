@@ -4,6 +4,7 @@ from typing import List
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
+from app.core.messages import CategoryMessages
 from app.models.catalog_model import Category
 from app.schemas.catalog_schema import CategoryCreate, CategoryUpdate, CategoryTypeEnum
 
@@ -21,7 +22,9 @@ def create_category(db: Session, category_in: CategoryCreate) -> Category:
     if existing_category:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Danh mục '{category_in.name}' cho loại '{category_in.category_type}' đã tồn tại.",
+            detail=CategoryMessages.CATEGORY_NAME_EXISTS.format(
+                name=category_in.name, category_type=category_in.category_type
+            ),
         )
 
     db_category = Category.model_validate(category_in)
@@ -52,7 +55,7 @@ def get_category_by_id(db: Session, category_id: uuid.UUID) -> Category:
     if not category or category.is_deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category với ID {category_id} không được tìm thấy.",
+            detail=CategoryMessages.CATEGORY_NOT_FOUND.format(category_id=category_id),
         )
     return category
 
@@ -76,7 +79,7 @@ def delete_category(db: Session, db_category: Category) -> Category:
     if db_category.services or db_category.products or db_category.treatment_plans:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Không thể xóa danh mục đang được sử dụng.",
+            detail=CategoryMessages.CATEGORY_IN_USE,
         )
 
     db_category.is_deleted = True

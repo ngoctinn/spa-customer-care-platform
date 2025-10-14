@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
+from app.core.messages import CategoryMessages, ServiceMessages
 from app.models.catalog_model import Category
 from app.models.services_model import Service
 from app.schemas.catalog_schema import CategoryTypeEnum
@@ -50,7 +51,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         if not service_in.category_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Dịch vụ phải thuộc về ít nhất một danh mục.",
+                detail=ServiceMessages.SERVICE_MUST_HAVE_CATEGORY,
             )
 
         categories = []
@@ -59,7 +60,9 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             if category.category_type != CategoryTypeEnum.service:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Danh mục ID {cat_id} không hợp lệ cho dịch vụ.",
+                    detail=CategoryMessages.CATEGORY_INVALID_FOR_SERVICE.format(
+                        category_id=cat_id
+                    ),
                 )
             categories.append(category)
 
@@ -71,7 +74,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         if existing_service:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Dịch vụ '{service_in.name}' đã tồn tại.",
+                detail=ServiceMessages.SERVICE_NAME_EXISTS.format(name=service_in.name),
             )
 
         # 2. Chuẩn bị các đối tượng để thêm vào DB
@@ -98,7 +101,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Lỗi khi lưu dịch vụ: {e}",
+                detail=ServiceMessages.SERVICE_SAVE_ERROR.format(error=e),
             )
 
         db.refresh(db_service)
@@ -125,7 +128,9 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
                 if category.category_type != CategoryTypeEnum.service:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Danh mục ID {cat_id} không hợp lệ cho dịch vụ.",
+                        detail=CategoryMessages.CATEGORY_INVALID_FOR_SERVICE.format(
+                            category_id=cat_id
+                        ),
                     )
                 new_categories.append(category)
             db_obj.categories = new_categories
@@ -156,7 +161,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Lỗi khi cập nhật dịch vụ: {e}",
+                detail=ServiceMessages.SERVICE_SAVE_ERROR.format(error=e),
             )
 
         db.refresh(db_obj)
