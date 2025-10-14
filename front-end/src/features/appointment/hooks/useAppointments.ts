@@ -8,6 +8,7 @@ import {
   getAppointmentById,
   getUpcomingAppointmentsByTechnician,
   getSuggestedTechniciansForAppointment,
+  linkAppointmentToPackage,
 } from "@/features/appointment/apis/appointment.api";
 import { Appointment } from "@/features/appointment/types";
 import { toast } from "sonner";
@@ -24,10 +25,7 @@ export const useAppointments = () => {
   });
 };
 
-/**
- * ++ HOOK MỚI: Lấy chi tiết lịch hẹn bằng ID. ++
- * @param appointmentId ID của lịch hẹn
- */
+//Lấy chi tiết lịch hẹn bằng ID
 export const useAppointmentById = (appointmentId: string) => {
   return useQuery<Appointment>({
     queryKey: ["appointments", appointmentId],
@@ -72,7 +70,6 @@ export const useUpdateAppointment = () => {
     },
   });
 };
-
 // Hook để xóa/hủy lịch hẹn
 export const useDeleteAppointment = () => {
   const queryClient = useQueryClient();
@@ -88,10 +85,7 @@ export const useDeleteAppointment = () => {
   });
 };
 
-/**
- * Hook để lấy danh sách lịch hẹn sắp tới của một nhân viên.
- * @param technicianId ID của nhân viên.
- */
+//Hook để lấy danh sách lịch hẹn sắp tới của một nhân viên.
 export const useUpcomingAppointmentsByTechnician = (technicianId?: string) => {
   return useQuery<Appointment[]>({
     queryKey: ["appointments", "upcoming", technicianId],
@@ -100,14 +94,37 @@ export const useUpcomingAppointmentsByTechnician = (technicianId?: string) => {
   });
 };
 
-/**
- * Hook để lấy danh sách nhân viên thay thế được gợi ý.
- * @param appointmentId ID của lịch hẹn.
- */
+//Hook để lấy danh sách nhân viên thay thế được gợi ý.
 export const useSuggestedTechnicians = (appointmentId?: string) => {
   return useQuery<FullStaffProfile[]>({
     queryKey: ["suggestedTechnicians", appointmentId],
     queryFn: () => getSuggestedTechniciansForAppointment(appointmentId!),
     enabled: !!appointmentId,
   });
+};
+
+// Hook mới để liên kết lịch hẹn
+export const useLinkAppointmentToPackage = () => {
+  const queryClient = useQueryClient();
+  const { mutate: linkAppointmentMutation, isPending: isLinking } = useMutation(
+    {
+      mutationFn: linkAppointmentToPackage,
+      onSuccess: (_, variables) => {
+        toast.success("Áp dụng gói/dịch vụ thành công!");
+        // Invalidate cả danh sách lịch hẹn và chi tiết lịch hẹn đang xem
+        queryClient.invalidateQueries({ queryKey: queryKey });
+        queryClient.invalidateQueries({
+          queryKey: ["appointments", variables.appointmentId],
+        });
+        // Invalidate cả thông tin khách hàng để cập nhật số lượng dịch vụ đã mua
+        queryClient.invalidateQueries({ queryKey: ["customerProfile", "me"] });
+        queryClient.invalidateQueries({ queryKey: ["customers"] });
+      },
+      onError: (error) => {
+        toast.error("Áp dụng thất bại", { description: error.message });
+      },
+    }
+  );
+
+  return { linkAppointmentMutation, isLinking };
 };

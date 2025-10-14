@@ -16,6 +16,12 @@ export interface InvoiceItem {
   total_price: number;
   type: InvoiceItemType;
   discount_amount: number;
+  /**
+   * ID của lịch hẹn liên quan.
+   * - Nếu là dịch vụ vừa thực hiện xong, đây là ID của lịch hẹn đó.
+   * - Nếu là dịch vụ/sản phẩm mua trả trước, trường này sẽ là null.
+   */
+  appointment_id?: string | null;
 }
 
 export interface ShippingAddress {

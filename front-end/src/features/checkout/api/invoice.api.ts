@@ -60,7 +60,7 @@ export async function getInvoicesByCustomerId(
 
 export type InvoiceCreationData = Omit<
   Invoice,
-  "id" | "createdAt" | "updatedAt"
+  "id" | "created_at" | "updated_at" | "is_deleted"
 > & {
   pointsToRedeem?: number;
   prepaidCardId?: string;
