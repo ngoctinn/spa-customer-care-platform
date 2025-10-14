@@ -1,4 +1,3 @@
-// src/features/appointment/api/appointment.api.ts
 import { BookingState } from "@/features/booking/schemas";
 import { Appointment } from "@/features/appointment/types";
 import apiClient from "@/lib/apiClient";
@@ -116,4 +115,20 @@ export async function getSuggestedTechniciansForAppointment(
   return apiClient<FullStaffProfile[]>(
     `/appointments/${appointmentId}/suggest-technicians`
   );
+}
+
+/**
+ * Gán một lịch hẹn vào một gói liệu trình hoặc dịch vụ lẻ đã mua.
+ * Backend sẽ tự động cập nhật trạng thái thanh toán của lịch hẹn.
+ */
+export async function linkAppointmentToPackage(variables: {
+  appointmentId: string;
+  packageId?: string;
+  purchasedServiceId?: string;
+}): Promise<Appointment> {
+  const { appointmentId, ...body } = variables;
+  return apiClient<Appointment>(`/appointments/${appointmentId}/link-package`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
