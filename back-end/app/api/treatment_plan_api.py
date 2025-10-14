@@ -40,9 +40,7 @@ def get_all_treatment_plans(
 ):
     """Lấy danh sách tất cả liệu trình chưa bị xóa mềm."""
 
-    return treatment_plans_service.get_all_treatment_plans(
-        db=session, skip=skip, limit=limit
-    )
+    return treatment_plans_service.get_all(db=session, skip=skip, limit=limit)
 
 
 @router.get("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
@@ -82,7 +80,5 @@ def delete_treatment_plan(
     db_treatment_plan = treatment_plans_service.get_by_id(
         db=session, id=treatment_plan_id
     )
-    treatment_plans_service.delete_treatment_plan(
-        db=session, db_treatment_plan=db_treatment_plan
-    )
+    treatment_plans_service.delete(db=session, db_obj=db_treatment_plan)
     return

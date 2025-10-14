@@ -105,11 +105,12 @@ def test_forgot_password(client: TestClient, test_user: User):
 
 def test_reset_password_invalid_token(client: TestClient):
     # Test /auth/reset-password with an invalid token
-    import pytest
-    import itsdangerous
-
-    with pytest.raises(itsdangerous.BadSignature):
-        client.get("/auth/reset-password?token=invalid")
+    response = client.post(
+        "/auth/reset-password",
+        json={"token": "invalid_token", "new_password": "newpassword123"},
+    )
+    assert response.status_code == 400
+    assert "Token không hợp lệ" in response.json()["detail"]
 
 
 def test_login_google_redirect(client: TestClient):

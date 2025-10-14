@@ -144,7 +144,7 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             # Tạo mới hồ sơ
             if not profile_in.phone_number:
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=CustomerMessages.PHONE_NUMBER_REQUIRED,
                 )
 
