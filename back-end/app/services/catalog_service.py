@@ -1,10 +1,10 @@
 # app/services/catalog_service.py
 import uuid
 from typing import List
-from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.core.messages import CategoryMessages
+from app.core.exceptions import CatalogExceptions
 from app.models.catalog_model import Category
 from app.schemas.catalog_schema import CategoryCreate, CategoryUpdate, CategoryTypeEnum
 
@@ -20,12 +20,7 @@ def create_category(db: Session, category_in: CategoryCreate) -> Category:
         )
     ).first()
     if existing_category:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=CategoryMessages.CATEGORY_NAME_EXISTS.format(
-                name=category_in.name, category_type=category_in.category_type
-            ),
-        )
+        raise CatalogExceptions.category_name_exists()
 
     db_category = Category.model_validate(category_in)
     db.add(db_category)
@@ -53,10 +48,7 @@ def get_category_by_id(db: Session, category_id: uuid.UUID) -> Category:
     """
     category = db.get(Category, category_id)
     if not category or category.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=CategoryMessages.CATEGORY_NOT_FOUND.format(category_id=category_id),
-        )
+        raise CatalogExceptions.category_not_found()
     return category
 
 
@@ -77,10 +69,7 @@ def delete_category(db: Session, db_category: Category) -> Category:
     """Xóa mềm một danh mục."""
     # Kiểm tra xem danh mục có đang được sử dụng không
     if db_category.services or db_category.products or db_category.treatment_plans:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=CategoryMessages.CATEGORY_IN_USE,
-        )
+        raise CatalogExceptions.category_in_use()
 
     db_category.is_deleted = True
     db.add(db_category)

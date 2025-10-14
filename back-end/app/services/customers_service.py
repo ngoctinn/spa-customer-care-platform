@@ -2,11 +2,12 @@
 import uuid
 from typing import List, Optional, Tuple
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
 from app.core.messages import CustomerMessages
+from app.core.exceptions import CustomerExceptions, ImageExceptions
+from app.services import images_service
 from app.models.customers_model import Customer
 from app.models.users_model import User
 from app.models.catalog_model import Image
@@ -98,6 +99,12 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
     def get_or_create_for_user(
         self, db: Session, *, user: User, profile_in: CustomerUpdate
     ) -> Customer:
+        # Kiểm tra quyền sở hữu avatar nếu có
+        if profile_in.avatar_id:
+            image = images_service.get_image_by_id(db=db, image_id=profile_in.avatar_id)
+            if image.uploaded_by_user_id != user.id:
+                raise ImageExceptions.image_permission_denied()
+
         # Lấy hồ sơ hiện tại của người dùng (nếu có)
         customer_profile = self.get_by_user_id(db, user_id=user.id)
         profile_data = profile_in.model_dump(exclude_unset=True)
@@ -115,17 +122,11 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
                     and existing_phone_profile.id != customer_profile.id
                 ):
                     # Người dùng đã có hồ sơ và đang cố đổi sang SĐT của người khác -> Lỗi
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=CustomerMessages.PHONE_NUMBER_EXISTS,
-                    )
+                    raise CustomerExceptions.phone_number_exists()
 
                 if not customer_profile and existing_phone_profile.user_id:
                     # Người dùng chưa có hồ sơ và SĐT này đã được gán cho 1 user khác -> Lỗi
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=CustomerMessages.PHONE_NUMBER_LINKED_TO_ANOTHER_ACCOUNT,
-                    )
+                    raise CustomerExceptions.phone_number_linked_to_another_account()
 
                 if not customer_profile and not existing_phone_profile.user_id:
                     # **KỊCH BẢN GÁN SĐT TỒN TẠI**
@@ -143,10 +144,7 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         else:
             # Tạo mới hồ sơ
             if not profile_in.phone_number:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail=CustomerMessages.PHONE_NUMBER_REQUIRED,
-                )
+                raise CustomerExceptions.phone_number_required()
 
             profile_data["user_id"] = user.id
             create_schema = CustomerCreate(**profile_data)

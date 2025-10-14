@@ -1,10 +1,10 @@
 # app/services/roles_service.py
 import uuid
 from typing import List, Optional
-from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.core.messages import RoleMessages
+from app.core.exceptions import RoleExceptions
 from app.models.users_model import Role, Permission
 from app.schemas.roles_schema import PermissionCreate, RoleCreate, RoleUpdate
 
@@ -20,9 +20,7 @@ def create_permission(
         select(Permission).where(Permission.name == permission_in.name)
     ).first()
     if permission:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, RoleMessages.PERMISSION_ALREADY_EXISTS
-        )
+        raise RoleExceptions.permission_already_exists()
     permission = Permission.model_validate(permission_in)
     db_session.add(permission)
     db_session.commit()
@@ -48,14 +46,11 @@ def get_role_by_name(db_session: Session, *, name: str) -> Optional[Role]:
 def get_role_by_id(db_session: Session, *, role_id: uuid.UUID) -> Role:
     """
     Tìm một vai trò bằng ID.
-    Nếu không tìm thấy, raise HTTP 404.
+    Nếu không tìm thấy, raise exception.
     """
     role = db_session.get(Role, role_id)
     if not role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=RoleMessages.ROLE_NOT_FOUND,
-        )
+        raise RoleExceptions.role_not_found()
     return role
 
 
@@ -63,10 +58,7 @@ def create_role(db_session: Session, *, role_in: "RoleCreate") -> Role:
     """Tạo một vai trò mới nếu chưa tồn tại."""
     role = get_role_by_name(db_session, name=role_in.name)
     if role:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=RoleMessages.ROLE_ALREADY_EXISTS,
-        )
+        raise RoleExceptions.role_already_exists()
 
     role = Role.model_validate(role_in)
     db_session.add(role)
@@ -86,10 +78,7 @@ def update_role(db_session: Session, *, db_role: Role, role_in: "RoleUpdate") ->
     if role_in.name and role_in.name != db_role.name:
         existing_role = get_role_by_name(db_session, name=role_in.name)
         if existing_role:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=RoleMessages.ROLE_NAME_ALREADY_EXISTS,
-            )
+            raise RoleExceptions.role_name_already_exists()
     role_data = role_in.model_dump(exclude_unset=True)
     for key, value in role_data.items():
         setattr(db_role, key, value)
@@ -104,7 +93,7 @@ def delete_role(db_session: Session, *, db_role: Role):
     """Xóa một vai trò khỏi database."""
     # Optional: Kiểm tra xem vai trò này còn được gán cho user nào không
     if db_role.users:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, RoleMessages.ROLE_IN_USE)
+        raise RoleExceptions.role_in_use()
 
     db_session.delete(db_role)
     db_session.commit()
@@ -117,18 +106,14 @@ def assign_permission_to_role(
     """Gán một quyền cho một vai trò."""
     role = db_session.get(Role, role_id)
     if not role:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, RoleMessages.ROLE_NOT_FOUND)
+        raise RoleExceptions.role_not_found()
 
     permission = db_session.get(Permission, permission_id)
     if not permission:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, RoleMessages.PERMISSION_NOT_FOUND
-        )
+        raise RoleExceptions.permission_not_found()
 
     if permission in role.permissions:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, RoleMessages.PERMISSION_ALREADY_ASSIGNED
-        )
+        raise RoleExceptions.permission_already_assigned()
 
     role.permissions.append(permission)
     db_session.add(role)
@@ -143,18 +128,14 @@ def remove_permission_from_role(
     """Xóa một quyền khỏi vai trò."""
     role = db_session.get(Role, role_id)
     if not role:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, RoleMessages.ROLE_NOT_FOUND)
+        raise RoleExceptions.role_not_found()
 
     permission = db_session.get(Permission, permission_id)
     if not permission:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, RoleMessages.PERMISSION_NOT_FOUND
-        )
+        raise RoleExceptions.permission_not_found()
 
     if permission not in role.permissions:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, RoleMessages.PERMISSION_NOT_IN_ROLE
-        )
+        raise RoleExceptions.permission_not_in_role()
 
     role.permissions.remove(permission)
     db_session.add(role)

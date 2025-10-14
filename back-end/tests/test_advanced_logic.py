@@ -43,7 +43,7 @@ def test_create_user_by_admin_rollback_on_failure(
     assert response.status_code == 404
     from app.core.messages import RoleMessages
 
-    assert RoleMessages.ROLE_NOT_FOUND in response.json()["detail"]
+    assert "Không tìm thấy vai trò" in response.json()["message"]
 
     # 4. Quan trọng nhất: Kiểm tra lại CSDL để đảm bảo không có user nào được tạo
     final_user_count = len(db_session.exec(select(User)).all())
@@ -128,4 +128,4 @@ def test_get_soft_deleted_object_returns_404(
     response_get = admin_authenticated_client.get(f"/services/{service_id}")
     assert response_get.status_code == 404
     # Changed assertion to match actual error message from base service
-    assert "Không tìm thấy Service" in response_get.json()["detail"]
+    assert "Không tìm thấy Service" in response_get.json()["message"]

@@ -4,12 +4,13 @@
 from __future__ import annotations
 from uuid import UUID
 from typing import List, Optional, Type
-from fastapi import HTTPException, UploadFile, status
+from fastapi import UploadFile
 from sqlmodel import Session, SQLModel, select
 from app.models.users_model import User
 
 from app.core import supabase_client
 from app.core.messages import ImageMessages
+from app.core.exceptions import ImageExceptions
 from app.models.catalog_model import Image
 from app.models.products_model import Product
 from app.models.services_model import Service
@@ -46,14 +47,11 @@ OWNER_CONFIG = {
 async def _upload_file_to_storage(file: UploadFile) -> str:
     """Tải file lên Supabase và trả về URL. Hàm này chỉ tập trung vào việc upload."""
     if not getattr(file, "filename", None):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, ImageMessages.INVALID_FILE)
+        raise ImageExceptions.invalid_file()
 
     image_url = await supabase_client.upload_image(file=file)
     if not image_url:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            ImageMessages.UPLOAD_TO_STORAGE_FAILED,
-        )
+        raise ImageExceptions.upload_failed()
     return image_url
 
 
@@ -110,13 +108,10 @@ def get_images_by_user(db: Session, *, user: User) -> List[Image]:
 
 
 def get_image_by_id(db: Session, image_id: UUID) -> Image:
-    """Lấy ảnh theo ID, nếu không tìm thấy sẽ raise 404."""
+    """Lấy ảnh theo ID, nếu không tìm thấy sẽ raise exception."""
     image = db.get(Image, image_id)
     if not image or image.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=ImageMessages.IMAGE_NOT_FOUND.format(image_id=image_id),
-        )
+        raise ImageExceptions.image_not_found()
     return image
 
 
@@ -180,10 +175,7 @@ async def sync_images_for_entity(
             # Kiểm tra xem ảnh có tồn tại không
             image = db.get(Image, image_id)
             if not image or image.is_deleted:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=ImageMessages.IMAGE_NOT_FOUND.format(image_id=image_id),
-                )
+                raise ImageExceptions.image_not_found()
             link = LinkModel(**{link_field: entity_id, "image_id": image_id})
             db.add(link)
 
@@ -195,10 +187,7 @@ async def sync_images_for_entity(
         )
         final_image_ids = db.exec(final_images_stmt).all()
         if primary_image_id not in final_image_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=ImageMessages.PRIMARY_IMAGE_NOT_IN_LIST,
-            )
+            raise ImageExceptions.invalid_file()
     entity.primary_image_id = primary_image_id
     db.add(entity)
 

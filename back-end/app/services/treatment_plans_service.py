@@ -2,13 +2,12 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import HTTPException, status
-
 # Thêm import Load từ sqlalchemy.orm
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
 from app.core.messages import CategoryMessages, TreatmentPlanMessages
+from app.core.exceptions import TreatmentPlanExceptions
 from app.models.catalog_model import Category
 from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
 from app.models.services_model import Service
@@ -77,10 +76,7 @@ class TreatmentPlanService(
     # --- Helper function (từ original _ensure_...) ---
     def _ensure_treatment_plan_category(self, category: Category) -> None:
         if category.category_type != CategoryTypeEnum.treatment_plan:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=TreatmentPlanMessages.TREATMENT_PLAN_CATEGORY_INVALID,
-            )
+            raise TreatmentPlanExceptions.invalid_category_for_treatment_plan()
 
     async def create(
         self, db: Session, *, obj_in: TreatmentPlanCreate
@@ -96,12 +92,7 @@ class TreatmentPlanService(
             )
         ).first()
         if existing_plan:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=TreatmentPlanMessages.TREATMENT_PLAN_NAME_EXISTS.format(
-                    name=obj_in.name
-                ),
-            )
+            raise TreatmentPlanExceptions.treatment_plan_name_exists()
 
         for step_in in obj_in.steps:
             services_service.get_by_id(db, id=step_in.service_id)
@@ -138,10 +129,7 @@ class TreatmentPlanService(
             db.commit()
         except Exception as e:
             db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=TreatmentPlanMessages.TREATMENT_PLAN_SAVE_ERROR.format(error=e),
-            )
+            raise TreatmentPlanExceptions.treatment_plan_save_error()
 
         db.refresh(db_plan)
         # --- KẾT THÚC LOGIC GIAO TÁC ---
@@ -169,12 +157,7 @@ class TreatmentPlanService(
                 )
             ).first()
             if existing_plan:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=TreatmentPlanMessages.TREATMENT_PLAN_NAME_EXISTS.format(
-                        name=plan_data["name"]
-                    ),
-                )
+                raise TreatmentPlanExceptions.treatment_plan_name_exists()
 
         if "category_id" in plan_data and plan_data["category_id"]:
             category = catalog_service.get_category_by_id(db, plan_data["category_id"])
@@ -204,10 +187,7 @@ class TreatmentPlanService(
             db.commit()
         except Exception as e:
             db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=TreatmentPlanMessages.TREATMENT_PLAN_SAVE_ERROR.format(error=e),
-            )
+            raise TreatmentPlanExceptions.treatment_plan_save_error()
 
         db.refresh(db_obj)
         # --- KẾT THÚC LOGIC GIAO TÁC ---

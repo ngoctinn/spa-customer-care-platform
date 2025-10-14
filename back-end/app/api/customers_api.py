@@ -1,7 +1,7 @@
 # back-end/app/api/customers_api.py
 import uuid
 from typing import List
-from fastapi import APIRouter, Depends, status, HTTPException, Response
+from fastapi import APIRouter, Depends, Response, status
 from sqlmodel import Session
 
 from app.core.dependencies import (
@@ -35,16 +35,6 @@ def create_or_update_my_customer_profile(
     customer_in: CustomerUpdate,
     current_user: User = Depends(get_current_user),
 ):
-    if customer_in.avatar_id:
-        image = images_service.get_image_by_id(
-            db=session, image_id=customer_in.avatar_id
-        )
-        if image.uploaded_by_user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=ImageMessages.IMAGE_PERMISSION_DENIED,
-            )
-
     customer_profile = customers_service.get_or_create_for_user(
         db=session, user=current_user, profile_in=customer_in
     )
