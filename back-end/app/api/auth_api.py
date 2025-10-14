@@ -2,7 +2,7 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
@@ -18,7 +18,7 @@ from app.schemas.users_schema import (
     UserPublic,
 )
 from app.services import users_service, auth_service
-from app.schemas.token_schema import Token
+from app.core.exceptions import AppException
 
 router = APIRouter()
 
@@ -32,22 +32,6 @@ def login_for_access_token(
     user = auth_service.authenticate(
         db_session=session, email=form_data.username, password=form_data.password
     )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=AuthMessages.INVALID_CREDENTIALS,
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    if not user.is_email_verified:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=AuthMessages.EMAIL_NOT_VERIFIED,
-        )
-    elif not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=AuthMessages.USER_INACTIVE,
-        )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
@@ -64,9 +48,7 @@ def login_for_access_token(
     return {"message": AuthMessages.LOGIN_SUCCESS}
 
 
-@router.post(
-    "/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED
-)
+@router.post("/register", response_model=UserPublic, status_code=201)
 async def register_user(
     *, session: Session = Depends(get_db_session), user_in: UserCreate
 ):
@@ -82,16 +64,7 @@ async def register_user(
 
 @router.get("/verify-email")
 def verify_email(token: str, session: Session = Depends(get_db_session)):
-    user_id = auth_service.verify_email_token(token)
-    if not user_id:
-        raise HTTPException(status_code=400, detail=AuthMessages.INVALID_TOKEN)
-
-    user = users_service.get_user_by_id(db_session=session, user_id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=AuthMessages.INVALID_TOKEN)
-
-    auth_service.mark_email_as_verified(db_session=session, user=user)
-    return {"message": AuthMessages.EMAIL_VERIFIED_SUCCESS}
+    return auth_service.verify_email(db_session=session, token=token)
 
 
 @router.get("/login/google")
@@ -129,9 +102,9 @@ async def auth_google(
         success_url = f"{settings.FRONTEND_URL}/dashboard"
         return RedirectResponse(url=success_url, headers=response.headers)
 
-    except HTTPException as e:
+    except AppException as e:
         # stringify detail safely before manipulating
-        error_detail = str(e.detail).replace(" ", "_").lower()
+        error_detail = str(e.message).replace(" ", "_").lower()
         error_url = f"{settings.FRONTEND_URL}/auth/login?error={error_detail}"
         return RedirectResponse(url=error_url)
 
@@ -150,24 +123,9 @@ async def forgot_password(
 def reset_password(
     *, session: Session = Depends(get_db_session), body: ResetPasswordRequest
 ):
-    user_id = auth_service.verify_password_reset_token(body.token)
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=AuthMessages.INVALID_TOKEN,
-        )
-
-    user = users_service.get_user_by_id(db_session=session, user_id=user_id)
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=AuthMessages.INVALID_TOKEN,
-        )
-
-    auth_service.reset_user_password(
-        db_session=session, user=user, new_password=body.new_password
+    return auth_service.reset_password(
+        db_session=session, token=body.token, new_password=body.new_password
     )
-    return {"message": AuthMessages.PASSWORD_RESET_SUCCESS}
 
 
 @router.post("/logout")

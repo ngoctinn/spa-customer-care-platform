@@ -1,7 +1,7 @@
 # app/api/users_api.py
 from typing import List
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from app.core.dependencies import (
@@ -62,18 +62,12 @@ def update_password_me(
     """
     Cập nhật mật khẩu cho người dùng hiện tại.
     """
-    user = auth_service.update_password(
+    return auth_service.update_password(
         db_session=session,
         user=current_user,
         current_password=body.current_password,
         new_password=body.new_password,
     )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=AuthMessages.INCORRECT_CURRENT_PASSWORD,
-        )
-    return user
 
 
 # =================================================================
@@ -85,7 +79,7 @@ def update_password_me(
     "/",
     response_model=UserPublic,
     dependencies=[Depends(get_current_admin_user)],
-    status_code=status.HTTP_201_CREATED,
+    status_code=201,
 )
 async def create_staff_account_endpoint(  # Đổi tên hàm cho rõ
     *,

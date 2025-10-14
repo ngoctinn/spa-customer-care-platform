@@ -45,9 +45,9 @@ def test_user_fails_to_create_profile_without_phone(
     """
     update_data = {"full_name": "A User Without Phone"}
     response = authenticated_client.put("/customers/me/profile", json=update_data)
-    assert response.status_code == 422
+    assert response.status_code == 400
     # SỬA LỖI 1: Truy cập đúng cấu trúc của thông báo lỗi validation
-    assert "Số điện thoại là bắt buộc" in response.json()["detail"]
+    assert "Số điện thoại là bắt buộc" in response.json()["message"]
 
 
 def test_user_update_own_existing_profile(
@@ -77,8 +77,8 @@ def test_user_cannot_update_phone_number_to_duplicate(
     """
     update_data = {"phone_number": offline_customer.phone_number}
     response = authenticated_client.put("/customers/me/profile", json=update_data)
-    assert response.status_code == 400
-    assert "Số điện thoại đã tồn tại" in response.json()["detail"]
+    assert response.status_code == 409
+    assert "Số điện thoại đã được sử dụng" in response.json()["message"]
 
 
 def test_user_can_clear_optional_fields(
@@ -136,8 +136,11 @@ def test_new_user_cannot_claim_profile_already_linked(
         "phone_number": another_user_profile.phone_number,
     }
     response = authenticated_client.put("/customers/me/profile", json=update_data)
-    assert response.status_code == 400
-    assert "Số điện thoại đã được liên kết" in response.json()["detail"]
+    assert response.status_code == 409
+    assert (
+        "Số điện thoại đã được liên kết với tài khoản khác"
+        in response.json()["message"]
+    )
 
 
 def test_update_profile_fails_with_invalid_phone_format(

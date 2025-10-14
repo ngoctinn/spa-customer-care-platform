@@ -3,10 +3,10 @@ from typing import Generic, List, Type, TypeVar, Optional, Any
 import uuid
 from pydantic import BaseModel
 from sqlmodel import Session, SQLModel, select, Field
-from fastapi import HTTPException, status
 
 # Thêm import cần thiết cho SQLAlchemy loading
 from sqlalchemy.orm import Load
+from app.core.exceptions import NotFoundError
 
 # Thay thế cho get_object_or_404 vì chúng ta cần kiểm tra is_deleted và load relationships
 
@@ -76,10 +76,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         if db_obj is None:
             # Cải tiến: Sử dụng tên model trong thông báo lỗi
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Không tìm thấy {self.model.__name__} với ID {id}.",
-            )
+            raise NotFoundError(f"Không tìm thấy {self.model.__name__} với ID {id}.")
 
         # Áp dụng bộ lọc/làm sạch quan hệ
         return self._filter_relationships(db_obj)

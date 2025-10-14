@@ -1,8 +1,6 @@
-# app/services/auth_service.py
-
 from typing import Optional
 import uuid
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 from sqlmodel import Session
 from itsdangerous import (
     URLSafeTimedSerializer,
@@ -17,6 +15,7 @@ from app.core.security import get_password_hash, verify_password
 from app.core.config import settings
 from app.core.constants import TokenExpiry, EmailSalts, PasswordPolicy
 from app.core.messages import AuthMessages, UserMessages
+from app.core.exceptions import AuthExceptions
 
 from app.models.users_model import User
 from app.services import users_service
@@ -44,21 +43,20 @@ oauth.register(
 async def handle_google_login_or_register(
     request: Request, db_session: Session
 ) -> User:
-    # ... (lấy token và user_info từ Google như cũ)
+    """
+    Xử lý đăng nhập hoặc đăng ký qua Google OAuth.
+
+    Logic phức tạp: Kiểm tra xem user đã tồn tại chưa, nếu chưa thì tạo mới
+    với thông tin từ Google, sau đó đánh dấu email đã xác thực.
+    """
     try:
         token = await oauth.google.authorize_access_token(request)
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=AuthMessages.OAUTH_TOKEN_ERROR.format(error=e),
-        )
+        raise AuthExceptions.oauth_error(str(e))
 
     user_info = token.get("userinfo")
     if not user_info or not user_info.get("email"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=AuthMessages.OAUTH_USER_INFO_ERROR,
-        )
+        raise AuthExceptions.oauth_user_info_error()
 
     email = user_info["email"]
     user = users_service.get_user_by_email(db_session=db_session, email=email)
@@ -66,7 +64,7 @@ async def handle_google_login_or_register(
     if user:
         return user
 
-    # --- Nếu user chưa tồn tại, tạo User mới ---
+    # Nếu user chưa tồn tại, tạo User mới
     new_user_data = UserCreate(
         email=email,
         full_name=user_info.get("name", "Người dùng Google"),
@@ -80,15 +78,18 @@ async def handle_google_login_or_register(
     return verified_user
 
 
-def authenticate(db_session: Session, *, email: str, password: str) -> Optional[User]:
+def authenticate(db_session: Session, *, email: str, password: str) -> User:
     """
     Xác thực người dùng bằng email và mật khẩu.
+    Raise exception nếu thông tin không hợp lệ hoặc tài khoản chưa được kích hoạt.
     """
     user = users_service.get_user_by_email(db_session, email=email)
     if not user or not user.is_active:
-        return None
+        raise AuthExceptions.invalid_credentials()
     if not verify_password(password, user.hashed_password):
-        return None
+        raise AuthExceptions.invalid_credentials()
+    if not user.is_email_verified:
+        raise AuthExceptions.email_not_verified()
     return user
 
 
@@ -135,9 +136,10 @@ async def send_welcome_and_set_password_email(user: User):
     )
 
 
-def verify_email_token(token: str) -> Optional[str]:
+def verify_email_token(token: str) -> str:
     """
-    Giải mã token xác thực email.
+    Giải mã token xác thực email và trả về user_id.
+    Raise exception nếu token không hợp lệ.
     """
     try:
         user_id = email_verification_serializer.loads(
@@ -147,7 +149,17 @@ def verify_email_token(token: str) -> Optional[str]:
         )
         return user_id
     except (SignatureExpired, BadTimeSignature):
-        return None
+        raise AuthExceptions.invalid_token()
+
+
+def verify_email(db_session: Session, *, token: str) -> dict:
+    """
+    Xác thực email từ token.
+    """
+    user_id = verify_email_token(token)
+    user = users_service.get_user_by_id(db_session=db_session, user_id=user_id)
+    mark_email_as_verified(db_session=db_session, user=user)
+    return {"message": AuthMessages.EMAIL_VERIFIED_SUCCESS}
 
 
 def mark_email_as_verified(db_session: Session, user: User) -> User:
@@ -167,12 +179,11 @@ def update_password(
 ) -> User:
     """
     Xác thực mật khẩu cũ và cập nhật mật khẩu mới.
+    Raise exception nếu mật khẩu cũ không đúng.
     """
-    # 1. Kiểm tra mật khẩu hiện tại có đúng không
     if not verify_password(current_password, user.hashed_password):
-        return None  # Trả về None nếu mật khẩu cũ sai
+        raise AuthExceptions.incorrect_current_password()
 
-    # 2. Băm và cập nhật mật khẩu mới
     new_hashed_password = get_password_hash(new_password)
     user.hashed_password = new_hashed_password
 
@@ -215,6 +226,20 @@ def verify_password_reset_token(token: str) -> Optional[str]:
         return user_id
     except (SignatureExpired, BadTimeSignature, BadSignature):
         return None
+
+
+def reset_password(db_session: Session, *, token: str, new_password: str) -> dict:
+    """
+    Đặt lại mật khẩu từ token.
+    """
+    user_id = verify_password_reset_token(token)
+    if user_id is None:
+        raise AuthExceptions.invalid_token()
+    user = users_service.get_user_by_id(db_session=db_session, user_id=user_id)
+    if not user.is_active:
+        raise AuthExceptions.invalid_token()
+    reset_user_password(db_session=db_session, user=user, new_password=new_password)
+    return {"message": AuthMessages.PASSWORD_RESET_SUCCESS}
 
 
 def reset_user_password(db_session: Session, *, user: User, new_password: str) -> User:

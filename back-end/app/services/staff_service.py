@@ -5,12 +5,12 @@ import datetime
 import uuid
 from typing import List, Optional
 
-from fastapi import HTTPException, status
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
 from app.core.messages import StaffMessages
+from app.core.exceptions import StaffExceptions
 from app.models.services_model import Service
 from app.models.staff_model import (
     EmploymentStatus,
@@ -85,9 +85,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
     def _ensure_user_exists(self, db: Session, user_id: uuid.UUID) -> User:
         user = db.get(User, user_id)
         if not user:
-            raise HTTPException(
-                status_code=404, detail=StaffMessages.STAFF_USER_NOT_FOUND
-            )
+            raise StaffExceptions.user_not_found()
         return user
 
     def _get_staff_by_user_id(
@@ -113,9 +111,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
     ) -> StaffProfilePublic:
         profile = self._get_staff_by_user_id(db, user_id)
         if not profile:
-            raise HTTPException(
-                status_code=404, detail=StaffMessages.STAFF_PROFILE_NOT_FOUND
-            )
+            raise StaffExceptions.staff_profile_not_found()
         return self._serialize_staff_profile(profile)
 
     def get_staff_profile_detail(
@@ -144,9 +140,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
                 select(Service).where(Service.id.in_(assignment.service_ids))
             ).all()
             if len(services) != len(set(assignment.service_ids)):
-                raise HTTPException(
-                    status_code=404, detail=StaffMessages.STAFF_SERVICE_NOT_FOUND
-                )
+                raise StaffExceptions.service_not_found()
             db_profile.services = services
 
         db.add(db_profile)
@@ -174,10 +168,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         new_schedules = []
         for schedule_data in payload:
             if schedule_data.day_of_week is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail=StaffMessages.STAFF_SCHEDULE_RECURRING_REQUIRE_DAY,
-                )
+                raise StaffExceptions.invalid_schedule_data()
 
             new_schedule = StaffSchedule(
                 **schedule_data.model_dump(), staff_id=staff_id
@@ -193,9 +184,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
     ) -> StaffSchedulePublic:
         db_schedule = db.get(StaffSchedule, schedule_id)
         if not db_schedule:
-            raise HTTPException(
-                status_code=404, detail=StaffMessages.STAFF_SCHEDULE_NOT_FOUND
-            )
+            raise StaffExceptions.schedule_not_found()
 
         update_data = payload.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -215,10 +204,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
             requester.staff_profile.id if requester.staff_profile else None
         )
         if not staff_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Cần cung cấp staff_id hoặc đăng nhập bằng tài khoản nhân viên",
-            )
+            raise StaffExceptions.invalid_request_data()
 
         self.get_by_id(db, id=staff_id)
 
@@ -239,9 +225,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
     ) -> StaffTimeOffPublic:
         db_request = db.get(StaffTimeOff, request_id)
         if not db_request:
-            raise HTTPException(
-                status_code=404, detail=StaffMessages.STAFF_TIME_OFF_REQUEST_NOT_FOUND
-            )
+            raise StaffExceptions.time_off_request_not_found()
 
         db_request.status = data.status
         db_request.approver_id = approver.id
@@ -277,10 +261,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
         self, db: Session, staff_id: uuid.UUID, admin_user: User
     ) -> StaffOffboardingResult:
         if not admin_user.is_admin:
-            raise HTTPException(
-                status_code=403,
-                detail="Chỉ quản trị viên mới được phép offboard nhân viên",
-            )
+            raise StaffExceptions.admin_required()
 
         staff_profile = self.get_by_id(db, id=staff_id)
         db.refresh(staff_profile, attribute_names=["user"])

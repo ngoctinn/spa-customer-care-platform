@@ -2,12 +2,12 @@
 from typing import Any, Dict, List, Optional
 import uuid
 
-from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash
 from app.core.constants import DefaultRoles, PasswordPolicy
 from app.core.messages import UserMessages, RoleMessages
+from app.core.exceptions import UserExceptions, RoleExceptions, BusinessLogicError
 
 from app.models.users_model import User
 from app.models.staff_model import StaffProfile
@@ -35,14 +35,11 @@ def get_user_by_email(db_session: Session, *, email: str) -> Optional[User]:
 def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> User:
     """
     Tìm người dùng bằng ID.
-    Nếu không tìm thấy hoặc đã bị xóa mềm, raise HTTP 404.
+    Nếu không tìm thấy hoặc đã bị xóa mềm, raise exception.
     """
     user = db_session.get(User, user_id)
     if not user or user.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=UserMessages.USER_NOT_FOUND.format(user_id=user_id),
-        )
+        raise UserExceptions.user_not_found()
     return user
 
 
@@ -56,9 +53,7 @@ def create_online_user(db_session: Session, *, user_in: UserCreate) -> User:
     Xử lý luồng đăng ký online. CHỈ TẠO USER, KHÔNG TẠO CUSTOMER.
     """
     if get_user_by_email(db_session, email=user_in.email):
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, UserMessages.EMAIL_ALREADY_EXISTS
-        )
+        raise UserExceptions.email_already_exists()
 
     hashed_password = get_password_hash(user_in.password)
     # LOẠI BỎ full_name khỏi việc tạo User
@@ -99,9 +94,7 @@ def assign_role_to_user(
     role = roles_service.get_role_by_id(db_session, role_id=role_id)
 
     if role in user.roles:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, RoleMessages.USER_ALREADY_HAS_ROLE
-        )
+        raise RoleExceptions.user_already_has_role()
 
     user.roles.append(role)
     db_session.add(user)
@@ -118,9 +111,7 @@ def remove_role_from_user(
     role = roles_service.get_role_by_id(db_session, role_id=role_id)
 
     if role not in user.roles:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, RoleMessages.USER_DOES_NOT_HAVE_ROLE
-        )
+        raise RoleExceptions.user_does_not_have_role()
 
     user.roles.remove(role)
     db_session.add(user)
@@ -150,10 +141,7 @@ def create_staff_account(
     [Admin] Tạo tài khoản nhân viên mới, bao gồm User và StaffProfile trong một giao tác.
     """
     if get_user_by_email(db_session, email=user_in.email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=UserMessages.EMAIL_EXISTS,
-        )
+        raise UserExceptions.email_already_exists()
 
     role = None
     if user_in.role_id:
@@ -198,9 +186,8 @@ def create_staff_account(
 
     except Exception as e:
         db_session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=UserMessages.STAFF_ACCOUNT_CREATE_ERROR.format(error=str(e)),
+        raise BusinessLogicError(
+            message=UserMessages.STAFF_ACCOUNT_CREATE_ERROR.format(error=str(e))
         )
 
     db_session.refresh(db_user)

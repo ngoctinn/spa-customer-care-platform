@@ -2,11 +2,11 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
 
 from app.core.messages import CategoryMessages, ServiceMessages
+from app.core.exceptions import ServiceExceptions
 from app.models.catalog_model import Category
 from app.models.services_model import Service
 from app.schemas.catalog_schema import CategoryTypeEnum
@@ -49,21 +49,13 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
         # --- BẮT ĐẦU LOGIC GIAO TÁC ---
         # 1. Kiểm tra dữ liệu đầu vào (validations)
         if not service_in.category_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=ServiceMessages.SERVICE_MUST_HAVE_CATEGORY,
-            )
+            raise ServiceExceptions.service_must_have_category()
 
         categories = []
         for cat_id in service_in.category_ids:
             category = catalog_service.get_category_by_id(db, cat_id)
             if category.category_type != CategoryTypeEnum.service:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=CategoryMessages.CATEGORY_INVALID_FOR_SERVICE.format(
-                        category_id=cat_id
-                    ),
-                )
+                raise ServiceExceptions.invalid_category_for_service()
             categories.append(category)
 
         existing_service = db.exec(
@@ -72,10 +64,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             )
         ).first()
         if existing_service:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=ServiceMessages.SERVICE_NAME_EXISTS.format(name=service_in.name),
-            )
+            raise ServiceExceptions.service_name_exists()
 
         # 2. Chuẩn bị các đối tượng để thêm vào DB
         service_data = service_in.model_dump(
@@ -99,10 +88,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             db.commit()
         except Exception as e:
             db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=ServiceMessages.SERVICE_SAVE_ERROR.format(error=e),
-            )
+            raise ServiceExceptions.service_save_error()
 
         db.refresh(db_service)
         # --- KẾT THÚC LOGIC GIAO TÁC ---
@@ -126,12 +112,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             for cat_id in service_data.pop("category_ids"):
                 category = catalog_service.get_category_by_id(db, cat_id)
                 if category.category_type != CategoryTypeEnum.service:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=CategoryMessages.CATEGORY_INVALID_FOR_SERVICE.format(
-                            category_id=cat_id
-                        ),
-                    )
+                    raise ServiceExceptions.invalid_category_for_service()
                 new_categories.append(category)
             db_obj.categories = new_categories
 
@@ -159,10 +140,7 @@ class ServiceService(BaseService[Service, ServiceCreate, ServiceUpdate]):
             db.commit()
         except Exception as e:
             db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=ServiceMessages.SERVICE_SAVE_ERROR.format(error=e),
-            )
+            raise ServiceExceptions.service_save_error()
 
         db.refresh(db_obj)
         # --- KẾT THÚC LOGIC GIAO TÁC ---

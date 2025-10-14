@@ -2,9 +2,9 @@
 import uuid
 from typing import List
 from sqlmodel import Session, select
-from fastapi import HTTPException, status
 
 from app.core.messages import UserMessages
+from app.core.exceptions import ScheduleExceptions
 from app.models.users_model import User
 from app.models.schedules_model import DefaultSchedule
 from app.schemas.schedules_schema import DefaultScheduleBase
@@ -20,10 +20,7 @@ def get_or_create_default_schedules(
     # Kiểm tra user có tồn tại không
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=UserMessages.USER_NOT_FOUND_SIMPLE,
-        )
+        raise ScheduleExceptions.user_not_found()
 
     schedules = db.exec(
         select(DefaultSchedule)
@@ -60,10 +57,7 @@ def update_default_schedules(
     db_schedules_map = {s.day_of_week: s for s in db_schedules_list}
 
     if len(schedules_in) != 7:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cần cung cấp đủ thông tin cho 7 ngày trong tuần.",
-        )
+        raise ScheduleExceptions.invalid_schedule_count()
 
     for schedule_in in schedules_in:
         db_schedule = db_schedules_map.get(schedule_in.day_of_week)

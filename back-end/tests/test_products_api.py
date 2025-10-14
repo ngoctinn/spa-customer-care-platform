@@ -72,4 +72,4 @@ def test_create_product_with_non_existent_category(
     # Service của bạn sẽ raise lỗi 404 khi không tìm thấy category
     assert response.status_code == 404
     data = response.json()
-    assert "không được tìm thấy" in data["detail"]
+    assert "Không tìm thấy danh mục" in data["message"]

@@ -42,8 +42,10 @@ def test_user_registration_duplicate_email(client: TestClient, test_user: User):
         "/auth/register",
         json={"email": test_user.email, "password": "anotherpassword123"},
     )
-    assert response.status_code == 400
-    assert "Email đã được sử dụng" in response.json()["detail"]
+    assert response.status_code == 409
+    data = response.json()
+    assert data["error"] is True
+    assert "Email đã được sử dụng" in data["message"]
 
 
 def test_login_success_and_cookie_set(client: TestClient, test_user: User):
@@ -110,7 +112,9 @@ def test_reset_password_invalid_token(client: TestClient):
         json={"token": "invalid_token", "new_password": "newpassword123"},
     )
     assert response.status_code == 400
-    assert "Token không hợp lệ" in response.json()["detail"]
+    data = response.json()
+    assert data["error"] is True
+    assert "Token không hợp lệ" in data["message"]
 
 
 def test_login_google_redirect(client: TestClient):

@@ -312,4 +312,4 @@ def test_delete_category_in_use_fail(
     response = admin_authenticated_client.delete(f"/catalog/categories/{category.id}")
 
     assert response.status_code == 400
-    assert "Không thể xóa danh mục đang được sử dụng" in response.json()["detail"]
+    assert "Danh mục đang được sử dụng" in response.json()["message"]
