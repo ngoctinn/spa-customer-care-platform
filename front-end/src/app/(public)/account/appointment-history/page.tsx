@@ -52,7 +52,7 @@ export default function AppointmentHistoryPage() {
     return allAppointments
       .filter(
         (apt) =>
-          apt.customer_id === customer.customer_profile.id &&
+          apt.customer_id === customer.id &&
           (new Date(apt.start_time) < new Date() ||
             apt.status === "completed" ||
             apt.status === "cancelled" ||

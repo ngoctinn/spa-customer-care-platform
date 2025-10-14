@@ -24,7 +24,7 @@ const ReviewItem = ({
     <Avatar>
       <AvatarImage
         src={
-          customer?.avatar_url ||
+          customer?.avatar_id ||
           `https://api.dicebear.com/7.x/notionists/svg?seed=${customer?.id}`
         }
       />

@@ -54,6 +54,7 @@ export async function resetPassword(data: {
 export async function changePassword(
   data: ChangePasswordFormValues
 ): Promise<{ message: string }> {
+  // This looks correct according to your API spec. No changes needed here.
   return apiClient("/users/me/update-password", {
     method: "POST",
     body: JSON.stringify({

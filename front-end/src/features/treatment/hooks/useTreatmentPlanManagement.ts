@@ -32,7 +32,7 @@ export function useTreatmentPlanManagement() {
     defaultValues: {
       name: "",
       description: "",
-      categories: [],
+      category_ids: [],
       price: 0,
       steps: [{ serviceId: "" }],
       images: [],
@@ -49,8 +49,11 @@ export function useTreatmentPlanManagement() {
       handleOpenEditForm(plan);
       form.reset({
         ...plan,
-        categories: plan.category ? [plan.category.id] : [],
-        steps: plan.steps.map((s) => ({ serviceId: s.service_id })),
+        category_ids: plan.categories ? plan.categories.map((c) => c.id) : [],
+        steps: plan.steps.map((s) => ({
+          serviceId: s.service_id,
+          description: s.description || "",
+        })),
       });
     },
     [form, handleOpenEditForm]

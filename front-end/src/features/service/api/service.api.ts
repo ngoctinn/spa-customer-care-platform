@@ -12,22 +12,28 @@ export interface GetServicesParams {
 
 /**
  * Thêm một dịch vụ mới
- * @param serviceData Dữ liệu dịch vụ từ form (có thể chứa File ảnh)
+ * @param serviceData Dữ liệu dịch vụ từ form
  */
 export async function addService(
   serviceData: ServiceFormValues
 ): Promise<Service> {
-  // Logic upload đã được loại bỏ
+  const payload = {
+    ...serviceData,
+    existing_image_ids: serviceData.images?.map((img) => img.id) || [],
+    primary_image_id: serviceData.images?.[0]?.id || null,
+  };
+  delete (payload as any).images;
+
   return apiClient<Service>("/services", {
     method: "POST",
-    body: JSON.stringify(serviceData),
+    body: JSON.stringify(payload),
   });
 }
 
 /**
  * Cập nhật thông tin một dịch vụ
  * @param serviceId ID của dịch vụ cần cập nhật
- * @param serviceData Dữ liệu cập nhật từ form (có thể chứa File ảnh)
+ * @param serviceData Dữ liệu cập nhật từ form
  */
 export async function updateService({
   serviceId,
@@ -36,10 +42,16 @@ export async function updateService({
   serviceId: string;
   serviceData: Partial<ServiceFormValues>;
 }): Promise<Service> {
-  // Logic upload đã được loại bỏ
+  const payload = {
+    ...serviceData,
+    existing_image_ids: serviceData.images?.map((img) => img.id),
+    primary_image_id: serviceData.images?.[0]?.id,
+  };
+  delete (payload as any).images;
+
   return apiClient<Service>(`/services/${serviceId}`, {
     method: "PUT",
-    body: JSON.stringify(serviceData),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -49,7 +61,7 @@ export async function updateService({
 export async function getServices(
   params?: GetServicesParams
 ): Promise<Service[]> {
-  const query = buildQueryString({ ...params }); // <--- Sửa ở đây
+  const query = buildQueryString({ ...params });
   return apiClient<Service[]>(`/services${query}`);
 }
 

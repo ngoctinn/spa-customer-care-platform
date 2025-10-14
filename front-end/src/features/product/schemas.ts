@@ -7,14 +7,12 @@ import {
   imageSchema,
 } from "@/lib/schemas";
 
-const imageUnionSchema = z.union([imageSchema, z.instanceof(File)]);
-
 // Schema cho form thêm/sửa sản phẩm
 export const productFormSchema = z
   .object({
     name: nameSchema,
     description: descriptionSchema,
-    categories: z.array(z.string()).optional(),
+    category_ids: z.array(z.string()).optional(),
     price: priceSchema.optional(),
     images: z.array(imageSchema).optional(),
     isRetail: z.boolean(),

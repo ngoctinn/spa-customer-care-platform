@@ -1,3 +1,4 @@
+// src/features/treatment/schemas.ts
 import {
   descriptionSchema,
   nameSchema,
@@ -8,14 +9,13 @@ import { z } from "zod";
 
 const treatmentPlanStepSchema = z.object({
   serviceId: z.string().uuid("Mỗi buổi phải chọn một dịch vụ hợp lệ."),
+  description: z.string().optional(),
 });
-
-const imageUnionSchema = z.union([imageSchema, z.instanceof(File)]);
 
 export const treatmentPlanFormSchema = z.object({
   name: nameSchema,
   description: descriptionSchema,
-  categories: z.array(z.string()).optional(),
+  category_ids: z.array(z.string()).optional(),
   price: priceSchema,
   steps: z
     .array(treatmentPlanStepSchema)

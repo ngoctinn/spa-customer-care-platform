@@ -1,14 +1,28 @@
+// src/features/staff/types.ts
+
+import { Service } from "@/features/service/types";
 import { User } from "@/features/user/types";
 
-export interface Staff {
-  id: string;
-  user_id: string;
-  service_ids?: string[]; // Dịch vụ mà kỹ thuật viên có thể thực hiện
-  is_deleted: boolean;
-  created_at: Date;
-  updated_at: Date;
+// Định nghĩa trạng thái làm việc dựa trên API mới
+export type EmploymentStatus = "active" | "on_leave" | "inactive";
+
+// Cập nhật lại cấu trúc Staff Profile để khớp với API
+export interface StaffProfile {
+  id: string; // ID của Staff Profile
+  user: User;
+  phone_number: string | null;
+  position?: string | null;
+  hire_date?: string | null; // Giữ dạng string ISO 8601
+  employment_status: EmploymentStatus;
+  notes?: string | null;
+  full_name: string;
+
+  user_email: User["email"] | null;
+  user_is_active: User["is_active"] | null;
+
+  // Dữ liệu lồng vào khi gọi API chi tiết
+  services?: Service[];
 }
 
-export type FullStaffProfile = User & {
-  staff_profile: Staff;
-};
+// FullStaffProfile giờ đây chính là StaffProfile
+export type FullStaffProfile = StaffProfile;

@@ -16,14 +16,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UploadCloud, AlertCircle, Check } from "lucide-react";
 import Image from "next/image";
 import { useMediaLibrary } from "@/features/media/stores/use-media-library-store";
-import type { MediaImage, UploadingFile } from "@/features/media/types";
+import type { UploadingFile } from "@/features/media/types";
 import { v4 as uuidv4 } from "uuid";
 import {
+  useDeleteMediaImage,
   useMediaImages,
   useUploadImage,
 } from "@/features/media/hooks/useMedia";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 export function MediaLibraryModal() {
   const { isOpen, onClose, onSelect, maxImages } = useMediaLibrary();
@@ -32,6 +34,7 @@ export function MediaLibraryModal() {
 
   const { data: media = [], isLoading, isError } = useMediaImages();
   const uploadMutation = useUploadImage();
+  const deleteMutation = useDeleteMediaImage();
 
   const handleImageClick = (imageId: string) => {
     setSelectedImageIds((prevSelected) => {
@@ -55,7 +58,6 @@ export function MediaLibraryModal() {
     });
   };
 
-  // Hàm xử lý khi nhấn nút "Chọn ảnh"
   const handleSelect = () => {
     const selectedImages = media.filter((img) =>
       selectedImageIds.includes(img.id)
@@ -69,7 +71,7 @@ export function MediaLibraryModal() {
 
   const onDialogClose = () => {
     onClose();
-    setSelectedImageIds([]); // Reset lựa chọn khi đóng dialog
+    setSelectedImageIds([]);
   };
 
   const onDrop = useCallback(
@@ -110,6 +112,16 @@ export function MediaLibraryModal() {
     onDrop,
     accept: { "image/*": [".jpeg", ".png", ".gif", ".jpg"] },
   });
+
+  const handleImageDelete = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    imageId: string
+  ) => {
+    e.stopPropagation(); // Ngăn không cho sự kiện click vào card
+    if (window.confirm("Bạn có chắc chắn muốn xóa ảnh này vĩnh viễn không?")) {
+      deleteMutation.mutate(imageId);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -223,7 +235,18 @@ export function MediaLibraryModal() {
                           className="aspect-square object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                         />
                         {/* Lớp phủ khi hover */}
-                        <div className="absolute inset-0 bg-background/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => handleImageDelete(e, image.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>{" "}
                       </CardContent>
 
                       {/* Checkbox giả để hiển thị trạng thái chọn */}

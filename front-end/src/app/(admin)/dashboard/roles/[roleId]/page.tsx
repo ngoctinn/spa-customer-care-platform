@@ -4,10 +4,9 @@
 import { useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getRoles } from "@/features/user/apis/role.api";
+
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { FullPageLoader } from "@/components/ui/spinner";
@@ -16,7 +15,10 @@ import {
   permissionsFormSchema,
 } from "@/features/user/schemas";
 import PermissionsForm from "@/features/user/components/PermissionsForm";
-import { useUpdateRolePermissions } from "@/features/user/hooks/useRoles";
+import {
+  useUpdateRolePermissions,
+  useRoleById,
+} from "@/features/user/hooks/useRoles"; // ++ Cập nhật import
 
 interface RoleDetailPageProps {
   params: { roleId: string };
@@ -25,16 +27,7 @@ interface RoleDetailPageProps {
 export default function RoleDetailPage({ params }: RoleDetailPageProps) {
   const { roleId } = params;
 
-  // Lấy chi tiết vai trò
-  const { data: role, isLoading: isLoadingRole } = useQuery({
-    queryKey: ["roles", roleId],
-    queryFn: async () => {
-      // Tạm thời dùng getRoles và find, nên thay bằng API getRoleById(roleId)
-      const roles = await getRoles();
-      return roles.find((r) => r.id === roleId);
-    },
-    enabled: !!roleId,
-  });
+  const { data: role, isLoading: isLoadingRole } = useRoleById(roleId);
 
   const updatePermissionsMutation = useUpdateRolePermissions();
 
@@ -54,10 +47,13 @@ export default function RoleDetailPage({ params }: RoleDetailPageProps) {
   }, [role, form]);
 
   const onSubmit = (data: PermissionsFormValues) => {
-    updatePermissionsMutation.mutate({
-      roleId,
-      permissionIds: data.permissionIds,
-    });
+    if (role) {
+      updatePermissionsMutation.mutate({
+        roleId,
+        newPermissionIds: data.permissionIds,
+        currentPermissions: role.permissions, // Truyền danh sách quyền hiện tại
+      });
+    }
   };
 
   if (isLoadingRole) {

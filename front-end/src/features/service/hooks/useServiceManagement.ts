@@ -9,7 +9,6 @@ import { ServiceFormValues, serviceFormSchema } from "../schemas";
 export function useServiceManagement() {
   const { data: services = [], isLoading } = useServices();
 
-  // ✅ Step 1: Lấy tất cả state và handlers từ useServiceMutations
   const {
     addMutation,
     updateMutation,
@@ -30,13 +29,13 @@ export function useServiceManagement() {
     defaultValues: {
       name: "",
       description: "",
-      categories: [],
+      category_ids: [],
       price: 0,
       duration_minutes: 30,
+      images: [],
     },
   });
 
-  // ✅ Step 2: Tạo các hàm "wrapper" để reset form
   const handleOpenAddFormWithReset = useCallback(() => {
     handleOpenAddForm();
     form.reset();
@@ -47,7 +46,7 @@ export function useServiceManagement() {
       handleOpenEditForm(service);
       form.reset({
         ...service,
-        categories: service.categories.map((c) => c.id),
+        category_ids: service.categories.map((c) => c.id),
         description: service.description || "",
         preparation_notes: service.preparation_notes || "",
         aftercare_instructions: service.aftercare_instructions || "",
@@ -65,7 +64,6 @@ export function useServiceManagement() {
     }
   };
 
-  // ✅ Step 3: Trả về các giá trị đã được quản lý tập trung
   return {
     isLoading,
     data: services,

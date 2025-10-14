@@ -1,4 +1,4 @@
-// src/features/treatment/api/treatment.api.ts
+// src/features/treatment/apis/treatment.api.ts
 import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { TreatmentPlan } from "@/features/treatment/types";
 import apiClient from "@/lib/apiClient";
@@ -11,10 +11,21 @@ import { buildQueryString } from "@/lib/queryString";
 export async function addTreatmentPlan(
   planData: TreatmentPlanFormValues
 ): Promise<TreatmentPlan> {
-  // Logic upload đã được loại bỏ
+  const payload = {
+    ...planData,
+    steps: planData.steps.map((step, index) => ({
+      step_number: index + 1,
+      description: step.description,
+      service_id: step.serviceId,
+    })),
+    existing_image_ids: planData.images?.map((img) => img.id) || [],
+    primary_image_id: planData.images?.[0]?.id || null,
+  };
+  delete (payload as any).images; // Xóa trường images không cần thiết
+
   return apiClient<TreatmentPlan>("/treatment-plans", {
     method: "POST",
-    body: JSON.stringify(planData),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -30,10 +41,16 @@ export async function updateTreatmentPlan({
   planId: string;
   planData: Partial<TreatmentPlanFormValues>;
 }): Promise<TreatmentPlan> {
-  // Logic upload đã được loại bỏ
+  const payload = {
+    ...planData,
+    existing_image_ids: planData.images?.map((img) => img.id),
+    primary_image_id: planData.images?.[0]?.id,
+  };
+  delete (payload as any).images;
+  delete (payload as any).steps;
   return apiClient<TreatmentPlan>(`/treatment-plans/${planId}`, {
     method: "PUT",
-    body: JSON.stringify(planData),
+    body: JSON.stringify(payload),
   });
 }
 
