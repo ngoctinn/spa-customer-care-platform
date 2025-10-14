@@ -16,6 +16,7 @@ import {
 import { getPrimaryImageUrl } from "@/lib/image-utils";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Category } from "@/features/category/types";
 
 // Helper component cho các hành động trên mỗi dòng
 const ServiceRowActions = ({
@@ -123,13 +124,14 @@ export const getServiceColumns = (
     header: "Danh mục",
     cell: ({ row }) => (
       <div className="flex flex-wrap gap-1">
-        {row.original.categories.map((cat) => (
+        {row.original.categories?.map((cat: Category) => (
           <Badge key={cat.id} variant="secondary">
             {cat.name}
           </Badge>
         ))}
       </div>
     ),
+
     filterFn: (row, id, value) => {
       const categoryNames = row.original.categories.map((c) => c.name);
       return value.some((val: string) => categoryNames.includes(val));

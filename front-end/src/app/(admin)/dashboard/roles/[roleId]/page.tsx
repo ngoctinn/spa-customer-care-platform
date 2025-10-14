@@ -1,4 +1,3 @@
-// src/app/(admin)/dashboard/roles/[roleId]/page.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -18,7 +17,7 @@ import PermissionsForm from "@/features/user/components/PermissionsForm";
 import {
   useUpdateRolePermissions,
   useRoleById,
-} from "@/features/user/hooks/useRoles"; // ++ Cập nhật import
+} from "@/features/user/hooks/useRoles";
 
 interface RoleDetailPageProps {
   params: { roleId: string };

@@ -38,7 +38,7 @@ export default function ScheduleListView(props: ScheduleListViewProps) {
       return { upcomingAppointments: [], historyItems: [] };
     }
 
-    const customerId = currentUserProfile.customer_profile.id;
+    const customerId = currentUserProfile.id;
 
     // Lọc các lịch hẹn của khách hàng hiện tại
     const customerAppointments = appointments.filter(

@@ -53,7 +53,10 @@ export function UpcomingAppointments() {
               return (
                 <div key={apt.id} className="flex items-center">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={customer?.avatar_url} alt="Avatar" />
+                    <AvatarImage
+                      src={customer?.avatar_url || ""}
+                      alt="Avatar"
+                    />
                     <AvatarFallback>{customerName[0]}</AvatarFallback>
                   </Avatar>
                   <div className="ml-4 space-y-1">

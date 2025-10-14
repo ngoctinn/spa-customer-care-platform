@@ -48,6 +48,7 @@ import useCartStore from "@/features/cart/stores/cart-store";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { useRouter } from "next/navigation";
+import { useCustomerProfile } from "@/features/customer/hooks/useCustomerProfile";
 
 const navLinks = [
   { href: "/services", label: "Dịch vụ" },
@@ -64,6 +65,8 @@ export function Header() {
   };
   const { user, logout } = useAuth();
   const isLoggedIn = !!user;
+
+  const { data: customerProfile } = useCustomerProfile();
 
   const { items } = useCartStore();
   const router = useRouter();
@@ -193,12 +196,12 @@ export function Header() {
                   {isLoggedIn ? (
                     <>
                       <AvatarImage
-                        src={user?.avatar_url ?? ""}
-                        alt={`@${user?.full_name ?? "user"}`}
+                        src={customerProfile?.avatar_url ?? ""}
+                        alt={customerProfile?.full_name ?? "User"}
                       />
                       <AvatarFallback>
-                        {user?.full_name?.charAt(0) ??
-                          user?.email?.charAt(0) ??
+                        {customerProfile?.full_name?.charAt(0).toUpperCase() ||
+                          user?.email.charAt(0).toUpperCase() ||
                           "A"}
                       </AvatarFallback>
                     </>

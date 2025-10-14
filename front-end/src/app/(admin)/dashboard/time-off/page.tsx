@@ -20,12 +20,24 @@ import {
 } from "@/features/work-schedules/schemas/time-off.schema";
 import { requestTimeOff } from "@/features/work-schedules/api/schedule.api";
 import TimeOffRequestForm from "@/features/work-schedules/components/TimeOffRequestForm";
+import { useAuth } from "@/features/auth/contexts/AuthContexts";
+import { useStaff } from "@/features/staff/hooks/useStaff";
+import { FullPageLoader } from "@/components/ui/spinner";
+import { useMemo } from "react";
 
 export default function RequestTimeOffPage() {
   const queryClient = useQueryClient();
   const form = useForm<TimeOffRequestFormValues>({
     resolver: zodResolver(timeOffRequestSchema),
   });
+
+  const { user } = useAuth();
+  const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
+
+  const currentUserStaffProfile = useMemo(
+    () => staffList.find((staff) => staff.user.id === user?.id),
+    [staffList, user]
+  );
 
   const { mutate, isPending } = useMutation({
     mutationFn: requestTimeOff,
@@ -40,8 +52,18 @@ export default function RequestTimeOffPage() {
   });
 
   const onSubmit = (data: TimeOffRequestFormValues) => {
-    mutate(data);
+    if (!currentUserStaffProfile?.id) {
+      toast.error("Không thể xác định thông tin nhân viên.", {
+        description: "Vui lòng thử đăng nhập lại.",
+      });
+      return;
+    }
+    mutate({ ...data, staff_id: currentUserStaffProfile.id });
   };
+
+  if (isLoadingStaff) {
+    return <FullPageLoader text="Đang tải thông tin..." />;
+  }
 
   return (
     <FormProvider {...form}>

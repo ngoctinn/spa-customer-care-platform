@@ -115,14 +115,14 @@ export const getStaffColumns = (
     accessorKey: "roles",
     header: "Vai trò",
     cell: ({ row }) => {
-      const roles = row.original.roles;
+      const roles = row.original.user.roles;
       if (!roles || roles.length === 0) {
         return <Badge variant="outline">Chưa có vai trò</Badge>;
       }
       return <Badge>{roles[0].name}</Badge>;
     },
     filterFn: (row, id, value) => {
-      const roleName = row.original.roles[0]?.name;
+      const roleName = row.original.user.roles[0]?.name;
       return value.includes(roleName);
     },
     meta: { headerTitle: "Vai trò" },

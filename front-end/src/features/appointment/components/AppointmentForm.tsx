@@ -44,7 +44,7 @@ export default function AppointmentForm() {
 
   // Chỉ lấy các nhân viên có vai trò là kỹ thuật viên (giả sử)
   const technicians = staffList.filter((staff) =>
-    staff.roles.some((role) => role.name === "Technician")
+    staff.user.roles.some((role) => role.name === "Technician")
   );
 
   return (

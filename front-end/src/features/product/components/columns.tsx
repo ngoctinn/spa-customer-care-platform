@@ -145,6 +145,7 @@ export const getProductColumns = (
         ))}
       </div>
     ),
+
     filterFn: (row, id, value) => {
       const categoryNames = row.original.categories.map((c) => c.name);
       return value.some((val: string) => categoryNames.includes(val));

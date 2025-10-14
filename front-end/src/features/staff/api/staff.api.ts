@@ -1,11 +1,22 @@
-// src/features/staff/api/staff.api.ts
-
 import apiClient from "@/lib/apiClient";
 import { FullStaffProfile } from "@/features/staff/types";
 import {
-  StaffFormValues, // Sẽ cập nhật schema này sau
+  StaffFormValues,
+  StaffOnboardingFormValues,
   StaffServicesFormValues,
 } from "@/features/staff/schemas";
+
+export async function onboardStaff(
+  onboardingData: StaffOnboardingFormValues
+): Promise<FullStaffProfile> {
+  // This function will call a single backend endpoint that handles the complex logic
+  // of creating a user, creating a staff profile, assigning roles, services, etc.
+  return apiClient<FullStaffProfile>("/staff/onboard", {
+    // Assuming a new endpoint like this
+    method: "POST",
+    body: JSON.stringify(onboardingData),
+  });
+}
 
 /**
  * Lấy danh sách tất cả nhân viên.
@@ -75,14 +86,9 @@ export async function updateStaffServices(
  * Xử lý cho nhân viên nghỉ việc (offboard).
  * @param staffId ID của Staff Profile.
  */
-export async function offboardStaff(staffId: string): Promise<void> {
-  // LƯU Ý: API yêu cầu thông tin về các cuộc hẹn trong tương lai.
-  // Logic này cần được xử lý ở tầng hook trước khi gọi API này.
-  // Ở đây chúng ta chỉ định nghĩa hàm gọi API.
-  return apiClient<void>(`/staff/${staffId}/offboard`, {
-    // <-- ENDPOINT MỚI
+export async function offboardStaff(staffId: string): Promise<any> {
+  return apiClient<any>(`/staff/${staffId}/offboard`, {
     method: "POST",
-    // body sẽ được cung cấp bởi hook gọi hàm này
   });
 }
 

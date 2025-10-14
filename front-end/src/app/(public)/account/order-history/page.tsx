@@ -46,7 +46,7 @@ const getStatusVariant = (
 export default function OrderHistoryPage() {
   const { data: customer, isLoading: isLoadingProfile } = useCustomerProfile();
   const { data: invoices = [], isLoading: isLoadingInvoices } = useInvoices(
-    customer?.customer_profile.id
+    customer?.id
   );
 
   const sortedInvoices = useMemo(() => {

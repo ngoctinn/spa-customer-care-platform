@@ -32,17 +32,14 @@ const columns: ColumnDef<FullCustomerProfile>[] = [
     accessorKey: "customer_profile.loyalty_points",
     header: "Điểm thưởng",
     cell: ({ row }) =>
-      row.original.customer_profile.loyalty_points?.toLocaleString("vi-VN") ||
-      0,
+      row.original.loyalty_points?.toLocaleString("vi-VN") || 0,
   },
   {
     accessorKey: "customer_profile.last_visit",
     header: "Lần cuối đến",
     cell: ({ row }) =>
-      row.original.customer_profile.last_visit
-        ? new Date(row.original.customer_profile.last_visit).toLocaleDateString(
-            "vi-VN"
-          )
+      row.original.last_visit
+        ? new Date(row.original.last_visit).toLocaleDateString("vi-VN")
         : "Chưa có",
   },
 ];

@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { TimeOffRequest } from "@/features/work-schedules/types";
 import TimeOffApprovalDialog from "@/features/work-schedules/components/TimeOffApprovalDialog";
 import { useStaff } from "@/features/staff/hooks/useStaff";
-import { Badge } from "@/components/ui/badge";
 
 export default function TimeOffRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<TimeOffRequest | null>(

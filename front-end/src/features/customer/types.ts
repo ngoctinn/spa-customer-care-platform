@@ -28,7 +28,7 @@ export interface Customer {
   gender?: string | null;
   address?: string | null;
   note?: string | null; // <-- Đổi tên từ notes
-  avatar_id?: string | null;
+  avatar_url?: string | null;
   user?: User; // <-- Thông tin user lồng vào
 
   // Các trường sau có thể thuộc về một đối tượng con, tùy thuộc vào API cuối cùng

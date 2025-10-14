@@ -59,11 +59,13 @@ export function useCategoryManagement() {
   const handleOpenEditFormWithReset = useCallback(
     (category: Category) => {
       handleOpenEditForm(category);
-      form.reset(category);
+      form.reset({
+        ...category,
+        description: category.description ?? "",
+      });
     },
     [form, handleOpenEditForm]
   );
-
   const handleFormSubmit = (data: CategoryFormValues) => {
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.id, data });

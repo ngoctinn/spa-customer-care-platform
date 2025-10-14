@@ -12,6 +12,7 @@ import { TreatmentPlanFormValues } from "@/features/treatment/schemas";
 import { getPrimaryImageUrl } from "@/lib/image-utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Category } from "@/features/category/types";
 
 const columns: ColumnDef<TreatmentPlan>[] = [
   {
@@ -48,12 +49,17 @@ const columns: ColumnDef<TreatmentPlan>[] = [
     header: "Số buổi",
   },
   {
-    accessorKey: "category",
+    accessorKey: "categories",
     header: "Danh mục",
-    cell: ({ row }) =>
-      row.original.category ? (
-        <Badge variant="secondary">{row.original.category.name}</Badge>
-      ) : null,
+    cell: ({ row }) => (
+      <div className="flex flex-wrap gap-1">
+        {row.original.categories?.map((cat: Category) => (
+          <Badge key={cat.id} variant="secondary">
+            {cat.name}
+          </Badge>
+        ))}
+      </div>
+    ),
   },
   {
     accessorKey: "is_deleted",

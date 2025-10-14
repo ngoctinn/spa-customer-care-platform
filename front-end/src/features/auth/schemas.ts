@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { emailSchema, passwordSchema, nameSchema } from "@/lib/schemas"; // <-- Import schema chung
-import { Phone } from "lucide-react";
-import { min } from "date-fns";
+import { emailSchema, passwordSchema } from "@/lib/schemas"; // <-- Import schema chung
 
 // Sử dụng trực tiếp schema chung
 export const loginSchema = z.object({
@@ -11,7 +9,6 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    name: nameSchema,
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string(),

@@ -46,7 +46,6 @@ export const RegisterForm = () => {
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -57,7 +56,7 @@ export const RegisterForm = () => {
   const onSubmit = (values: z.infer<typeof registerSchema>) => {
     startTransition(async () => {
       try {
-        await register(values.email, values.name, values.password);
+        await register(values.email, values.password);
         setIsSuccess(true);
         toast.success("Đăng ký thành công!");
       } catch (error: unknown) {
@@ -109,30 +108,6 @@ export const RegisterForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel>Họ và Tên</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Nguyễn Văn A"
-                      {...field}
-                      disabled={isPending}
-                      icon={
-                        fieldState.error ? (
-                          <AlertCircle className="h-4 w-4 text-destructive" />
-                        ) : (
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="email"

@@ -42,8 +42,8 @@ const PurchasedItems = ({ onSelect }: ServiceSelectionProps) => {
   // Lấy các gói liệu trình đã mua của khách hàng
   const { data: purchasedPackages = [], isLoading: isLoadingPackages } =
     useQuery({
-      queryKey: ["customerTreatments", profile?.customer_profile.id],
-      queryFn: () => getCustomerTreatments(profile!.customer_profile.id),
+      queryKey: ["customerTreatments", profile?.id],
+      queryFn: () => getCustomerTreatments(profile!.id),
       enabled: !!profile,
     });
 
@@ -54,9 +54,7 @@ const PurchasedItems = ({ onSelect }: ServiceSelectionProps) => {
 
     // Lọc dịch vụ lẻ đã mua còn lượt
     const purchasedServices =
-      profile.customer_profile.purchased_services?.filter(
-        (ps) => ps.quantity > 0
-      ) || [];
+      profile.purchased_services?.filter((ps) => ps.quantity > 0) || [];
 
     for (const ps of purchasedServices) {
       const serviceDetails = allServices?.find((s) => s.id === ps.service_id);
