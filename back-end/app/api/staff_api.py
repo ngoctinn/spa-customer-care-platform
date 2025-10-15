@@ -36,8 +36,8 @@ router = APIRouter()
     dependencies=[Depends(get_current_admin_user)],
     summary="[Admin] Get all staff profiles",
 )
-def get_all_staff(session: Session = Depends(get_db_session)):
-    return staff_service.list_staff_profiles(db=session)
+def get_all_staff(db: Session = Depends(get_db_session)):
+    return staff_service.list_staff_profiles(db=db)
 
 
 @router.get(
@@ -46,8 +46,8 @@ def get_all_staff(session: Session = Depends(get_db_session)):
     dependencies=[Depends(get_current_admin_user)],
     summary="[Admin] Get staff profile details by profile ID",
 )
-def get_staff_detail(staff_id: uuid.UUID, session: Session = Depends(get_db_session)):
-    return staff_service.get_staff_profile_detail(db=session, staff_id=staff_id)
+def get_staff_detail(staff_id: uuid.UUID, db: Session = Depends(get_db_session)):
+    return staff_service.get_staff_profile_detail(db=db, staff_id=staff_id)
 
 
 @router.put(
@@ -59,9 +59,9 @@ def get_staff_detail(staff_id: uuid.UUID, session: Session = Depends(get_db_sess
 def update_staff(
     staff_id: uuid.UUID,
     body: StaffProfileUpdate,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    return staff_service.update_staff_profile(db=session, staff_id=staff_id, data=body)
+    return staff_service.update_staff_profile(db=db, staff_id=staff_id, data=body)
 
 
 @router.put(
@@ -73,11 +73,9 @@ def update_staff(
 def assign_services(
     staff_id: uuid.UUID,
     body: StaffServiceAssignment,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    return staff_service.assign_services_to_staff(
-        db=session, staff_id=staff_id, assignment=body
-    )
+    return staff_service.assign_services_to_staff(db=db, staff_id=staff_id, assignment=body)
 
 
 @router.put(
@@ -90,14 +88,12 @@ def set_staff_schedules(
     staff_id: uuid.UUID,
     # SỬA LỖI: Nhận trực tiếp một List thay vì một object bọc ngoài
     schedules: List[StaffScheduleCreate],
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
     """
     Thiết lập lịch lặp hàng tuần cho nhân viên (mảng các entry).
     """
-    return staff_service.set_weekly_schedules(
-        db=session, staff_id=staff_id, payload=schedules
-    )
+    return staff_service.set_weekly_schedules(db=db, staff_id=staff_id, payload=schedules)
 
 
 @router.put(
@@ -109,11 +105,9 @@ def set_staff_schedules(
 def update_staff_schedule(
     schedule_id: uuid.UUID,
     body: StaffScheduleUpdate,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    return staff_service.update_staff_schedule(
-        db=session, schedule_id=schedule_id, payload=body
-    )
+    return staff_service.update_staff_schedule(db=db, schedule_id=schedule_id, payload=body)
 
 
 @router.post(
@@ -125,11 +119,9 @@ def update_staff_schedule(
 def create_time_off_request(
     body: StaffTimeOffCreate,
     current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    return staff_service.create_time_off_request(
-        db=session, requester=current_user, data=body
-    )
+    return staff_service.create_time_off_request(db=db, requester=current_user, data=body)
 
 
 @router.put(
@@ -142,11 +134,9 @@ def update_time_off_status(
     request_id: uuid.UUID,
     body: StaffTimeOffUpdateStatus,
     approver: User = Depends(get_current_admin_user),
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    return staff_service.update_time_off_status(
-        db=session, request_id=request_id, approver=approver, data=body
-    )
+    return staff_service.update_time_off_status(db=db, request_id=request_id, approver=approver, data=body)
 
 
 @router.post(
@@ -158,8 +148,6 @@ def update_time_off_status(
 def offboard_staff(
     staff_id: uuid.UUID,
     admin_user: User = Depends(get_current_admin_user),
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    return staff_service.offboard_staff(
-        db=session, staff_id=staff_id, admin_user=admin_user
-    )
+    return staff_service.offboard_staff(db=db, staff_id=staff_id, admin_user=admin_user)

@@ -59,6 +59,6 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 
 @app.get("/", tags=["Health Check"])
-def read_root():
-    """Kiểm tra xem API có hoạt động không."""
-    return {"status": "ok", "message": "Welcome to my FastAPI application!"}
+def health_check():
+    """Endpoint health check: verify the API is running."""
+    return {"status": "ok", "message": "API is healthy"}

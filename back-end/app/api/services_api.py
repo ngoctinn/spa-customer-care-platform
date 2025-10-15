@@ -24,48 +24,46 @@ router = APIRouter()
 )
 async def create_new_service(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     service_in: ServiceCreate,
 ):
     """
     Tạo một dịch vụ mới.
     """
-    return await services_service.create(db=session, service_in=service_in)
+    return await services_service.create(db=db, service_in=service_in)
 
 
 @router.put("/{service_id}", response_model=ServicePublicWithDetails)
 async def update_service(
     *,
     service_id: uuid.UUID,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     service_in: ServiceUpdate,
 ):
     """Cập nhật dịch vụ theo ID."""
-    db_service = services_service.get_by_id(db=session, id=service_id)
-    return await services_service.update(
-        db=session, db_obj=db_service, obj_in=service_in
-    )
+    db_service = services_service.get_by_id(db=db, id=service_id)
+    return await services_service.update(db=db, db_obj=db_service, obj_in=service_in)
 
 
 @router.get("", response_model=List[ServicePublicWithDetails])
 def get_all_services(
-    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
+    db: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
     """Lấy danh sách dịch vụ."""
-    return services_service.get_all(db=session, skip=skip, limit=limit)
+    return services_service.get_all(db=db, skip=skip, limit=limit)
 
 
 @router.get("/{service_id}", response_model=ServicePublicWithDetails)
 def get_service_by_id(
-    service_id: uuid.UUID, session: Session = Depends(get_db_session)
+    service_id: uuid.UUID, db: Session = Depends(get_db_session)
 ):
     """Lấy chi tiết một dịch vụ."""
-    return services_service.get_by_id(db=session, id=service_id)
+    return services_service.get_by_id(db=db, id=service_id)
 
 
 @router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_service(service_id: uuid.UUID, session: Session = Depends(get_db_session)):
+def delete_service(service_id: uuid.UUID, db: Session = Depends(get_db_session)):
     """Xóa mềm một dịch vụ."""
-    db_service = services_service.get_by_id(db=session, id=service_id)
-    services_service.delete(db=session, db_obj=db_service)
+    db_service = services_service.get_by_id(db=db, id=service_id)
+    services_service.delete(db=db, db_obj=db_service)
     return

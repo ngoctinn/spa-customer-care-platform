@@ -77,7 +77,7 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = users_service.get_user_by_id(db_session=db, user_id=user_id)
+    user = users_service.get_user_by_id(db=db, user_id=user_id)
     if user is None:
         raise credentials_exception
     return user
@@ -104,9 +104,9 @@ def has_permission(required_permission: str):
 
 
 def get_role_by_id_from_path(
-    role_id: uuid.UUID, session: Session = Depends(get_db_session)
+    role_id: uuid.UUID, db: Session = Depends(get_db_session)
 ) -> Role:
-    role = roles_service.get_role_by_id(db_session=session, role_id=role_id)
+    role = roles_service.get_role_by_id(db=db, role_id=role_id)
     if not role:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

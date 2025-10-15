@@ -31,12 +31,12 @@ router = APIRouter()
 )
 def create_or_update_my_customer_profile(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     customer_in: CustomerUpdate,
     current_user: User = Depends(get_current_user),
 ):
     customer_profile = customers_service.get_or_create_for_user(
-        db=session, user=current_user, profile_in=customer_in
+        db=db, user=current_user, profile_in=customer_in
     )
     return customer_profile
 
@@ -49,12 +49,12 @@ def create_or_update_my_customer_profile(
 )
 def create_customer(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     customer_in: CustomerCreateAtStore,
     response: Response,
 ):
     customer, created = customers_service.find_or_create_offline_customer(
-        db=session, customer_in=customer_in
+        db=db, customer_in=customer_in
     )
     if created:
         response.status_code = status.HTTP_201_CREATED
@@ -69,12 +69,12 @@ def create_customer(
     dependencies=[Depends(get_current_admin_user)],
 )
 def get_all_customers(
-    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
+    db: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
     """
     Lấy danh sách khách hàng có phân trang (skip/limit).
     """
-    return customers_service.get_all(db=session, skip=skip, limit=limit)
+    return customers_service.get_all(db=db, skip=skip, limit=limit)
 
 
 @router.get(
@@ -83,9 +83,9 @@ def get_all_customers(
     dependencies=[Depends(get_current_admin_user)],  # THÊM DEPENDENCY PHÂN QUYỀN
 )
 def get_customer_by_id(
-    customer_id: uuid.UUID, session: Session = Depends(get_db_session)
+    customer_id: uuid.UUID, db: Session = Depends(get_db_session)
 ):
-    return customers_service.get_by_id(db=session, id=customer_id)
+    return customers_service.get_by_id(db=db, id=customer_id)
 
 
 @router.put(
@@ -96,10 +96,10 @@ def get_customer_by_id(
 def update_customer(
     customer_id: uuid.UUID,
     customer_in: CustomerUpdate,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
-    customer = customers_service.get_by_id(db=session, id=customer_id)
-    return customers_service.update(db=session, db_obj=customer, obj_in=customer_in)
+    customer = customers_service.get_by_id(db=db, id=customer_id)
+    return customers_service.update(db=db, db_obj=customer, obj_in=customer_in)
 
 
 @router.delete(
@@ -107,7 +107,7 @@ def update_customer(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(get_current_admin_user)],
 )
-def delete_customer(customer_id: uuid.UUID, session: Session = Depends(get_db_session)):
-    customer_to_delete = customers_service.get_by_id(db=session, id=customer_id)
-    customers_service.delete(db=session, db_obj=customer_to_delete)
+def delete_customer(customer_id: uuid.UUID, db: Session = Depends(get_db_session)):
+    customer_to_delete = customers_service.get_by_id(db=db, id=customer_id)
+    customers_service.delete(db=db, db_obj=customer_to_delete)
     return None
