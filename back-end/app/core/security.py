@@ -1,6 +1,6 @@
 # app/core/security.py
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any
+from typing import Optional, Dict, Any
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -22,7 +22,7 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(
-    data: Dict[str, Any], expires_delta: timedelta | None = None
+    data: Dict[str, Any], expires_delta: Optional[timedelta] = None
 ) -> str:
     """Tạo JWT access token.
 
@@ -40,7 +40,7 @@ def create_access_token(
     return encoded_jwt
 
 
-def decode_access_token(token: str) -> Dict[str, Any] | None:
+def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     """Giải mã JWT và trả payload nếu hợp lệ, ngược lại trả None."""
     try:
         payload = jwt.decode(

@@ -3,7 +3,7 @@
 from __future__ import annotations
 import datetime
 import uuid
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import selectinload, Load
@@ -90,7 +90,7 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
 
     def _get_staff_by_user_id(
         self, db: Session, user_id: uuid.UUID
-    ) -> StaffProfile | None:
+    ) -> Optional[StaffProfile]:
         statement = (
             select(StaffProfile)
             .where(StaffProfile.user_id == user_id)

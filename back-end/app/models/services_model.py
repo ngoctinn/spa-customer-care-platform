@@ -1,8 +1,6 @@
 # app/models/services_model.py
-from __future__ import annotations
-
 import uuid
-from typing import TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING
 from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
@@ -33,17 +31,17 @@ class Service(BaseUUIDModel, table=True):
         default=None, description="Chống chỉ định dịch vụ"
     )
 
-    categories: list["Category"] = Relationship(
+    categories: List["Category"] = Relationship(
         back_populates="services", link_model=ServiceCategoryLink
     )
 
-    images: list["Image"] = Relationship(
+    images: List["Image"] = Relationship(
         back_populates="services", link_model=ServiceImageLink
     )
-    primary_image_id: uuid.UUID | None = Field(
+    primary_image_id: Optional[uuid.UUID] = Field(
         default=None, foreign_key="image.id", nullable=True
     )
-    primary_image: "Image" | None = Relationship(
+    primary_image: Optional["Image"] = Relationship(
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "Service.primary_image_id",
@@ -51,11 +49,11 @@ class Service(BaseUUIDModel, table=True):
     )
 
     @property
-    def category_ids(self) -> list[uuid.UUID]:
+    def category_ids(self) -> List[uuid.UUID]:
         """Danh sách ID của các danh mục không bị xóa mềm."""
 
         return [category.id for category in self.categories if not category.is_deleted]
 
-    staff_members: list["StaffProfile"] = Relationship(
+    staff_members: List["StaffProfile"] = Relationship(
         back_populates="services", link_model=StaffServiceLink
     )

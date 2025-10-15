@@ -1,8 +1,7 @@
 # app/models/users_model.py
-from __future__ import annotations
-
 import uuid
 from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, List
 from app.models.base_model import BaseUUIDModel
 from app.models.schedules_model import DefaultSchedule
 from app.models.customers_model import Customer
@@ -28,21 +27,21 @@ class User(BaseUUIDModel, table=True):
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True, nullable=False)
     is_email_verified: bool = Field(default=False, nullable=False)
-    roles: list["Role"] = Relationship(back_populates="users", link_model=UserRole)
+    roles: List["Role"] = Relationship(back_populates="users", link_model=UserRole)
 
-    default_schedules: list["DefaultSchedule"] = Relationship(
+    default_schedules: List["DefaultSchedule"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
-    customer_profile: "Customer" | None = Relationship(
+    customer_profile: Optional["Customer"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"uselist": False}
     )
-    staff_profile: "StaffProfile" | None = Relationship(
+    staff_profile: Optional["StaffProfile"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
     )
 
     # THÊM MỚI: Mối quan hệ ngược lại với StaffTimeOff
-    approved_time_off_requests: list["StaffTimeOff"] = Relationship(
+    approved_time_off_requests: List["StaffTimeOff"] = Relationship(
         back_populates="approver"
     )
 
@@ -63,8 +62,8 @@ class Role(BaseUUIDModel, table=True):
     __tablename__ = "role"
     name: str = Field(index=True, nullable=False, unique=True)
     description: str | None = Field(default=None, nullable=True)
-    users: list[User] = Relationship(back_populates="roles", link_model=UserRole)
-    permissions: list["Permission"] = Relationship(
+    users: List[User] = Relationship(back_populates="roles", link_model=UserRole)
+    permissions: List["Permission"] = Relationship(
         back_populates="roles", link_model=RolePermission
     )
 
@@ -73,6 +72,6 @@ class Permission(BaseUUIDModel, table=True):
     __tablename__ = "permission"
     name: str = Field(index=True, nullable=False, unique=True)
     description: str | None = Field(default=None, nullable=True)
-    roles: list[Role] = Relationship(
+    roles: List[Role] = Relationship(
         back_populates="permissions", link_model=RolePermission
     )

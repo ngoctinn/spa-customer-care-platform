@@ -215,7 +215,7 @@ async def send_password_reset_email(user: User):
     )
 
 
-def verify_password_reset_token(token: str) -> str | None:
+def verify_password_reset_token(token: str) -> Optional[str]:
     """
     Giải mã token reset mật khẩu. Trả về user_id nếu hợp lệ.
     """

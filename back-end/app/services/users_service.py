@@ -1,5 +1,5 @@
 # app/services/users_service.py
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import uuid
 
 from sqlmodel import Session, select
@@ -27,7 +27,7 @@ from app.schemas.roles_schema import RoleCreate
 # =================================================================
 
 
-def get_user_by_email(db_session: Session, *, email: str) -> User | None:
+def get_user_by_email(db_session: Session, *, email: str) -> Optional[User]:
     """
     Tìm một người dùng trong database bằng email.
     """

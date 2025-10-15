@@ -7,7 +7,7 @@ Mô-đun này chứa các exception cơ sở và các exception cụ thể
 được sử dụng trong toàn bộ ứng dụng để xử lý lỗi nghiệp vụ.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from fastapi import HTTPException, status
 
 
@@ -18,14 +18,14 @@ class AppException(Exception):
     Attributes:
         message (str): Thông báo lỗi bằng tiếng Việt.
         status_code (int): Mã trạng thái HTTP tương ứng.
-        details (Dict[str, Any] | None): Thông tin chi tiết bổ sung.
+        details (Optional[Dict[str, Any]]): Thông tin chi tiết bổ sung.
     """
 
     def __init__(
         self,
         message: str,
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         self.message = message
         self.status_code = status_code
@@ -37,7 +37,7 @@ class AuthenticationError(AppException):
     """Ngoại lệ liên quan đến xác thực người dùng."""
 
     def __init__(
-        self, message: str = "Lỗi xác thực", details: Dict[str, Any] | None = None
+        self, message: str = "Lỗi xác thực", details: Optional[Dict[str, Any]] = None
     ):
         super().__init__(message, status.HTTP_401_UNAUTHORIZED, details)
 
@@ -48,7 +48,7 @@ class AuthorizationError(AppException):
     def __init__(
         self,
         message: str = "Không có quyền truy cập",
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status.HTTP_403_FORBIDDEN, details)
 
@@ -59,7 +59,7 @@ class ValidationError(AppException):
     def __init__(
         self,
         message: str = "Dữ liệu không hợp lệ",
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status.HTTP_400_BAD_REQUEST, details)
 
@@ -70,7 +70,7 @@ class NotFoundError(AppException):
     def __init__(
         self,
         message: str = "Không tìm thấy tài nguyên",
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status.HTTP_404_NOT_FOUND, details)
 
@@ -81,7 +81,7 @@ class ConflictError(AppException):
     def __init__(
         self,
         message: str = "Xung đột dữ liệu",
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status.HTTP_409_CONFLICT, details)
 
@@ -92,7 +92,7 @@ class BusinessLogicError(AppException):
     def __init__(
         self,
         message: str = "Lỗi logic nghiệp vụ",
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status.HTTP_400_BAD_REQUEST, details)
 
@@ -103,7 +103,7 @@ class InternalServerError(AppException):
     def __init__(
         self,
         message: str = "Lỗi máy chủ nội bộ",
-        details: Dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status.HTTP_500_INTERNAL_SERVER_ERROR, details)
 

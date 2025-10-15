@@ -1,8 +1,6 @@
 # app/models/treatment_plans_model.py
-from __future__ import annotations
-
 import uuid
-from typing import TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
 from app.models.association_tables import TreatmentPlanImageLink
@@ -15,7 +13,7 @@ if TYPE_CHECKING:
 class TreatmentPlanStep(BaseUUIDModel, table=True):
     __tablename__ = "treatment_plan_step"
     step_number: int = Field(nullable=False)
-    description: str | None = Field(default=None)
+    description: Optional[str] = Field(default=None)
 
     treatment_plan_id: uuid.UUID = Field(foreign_key="treatment_plan.id")
     service_id: uuid.UUID = Field(foreign_key="service.id")  # Mỗi bước là một dịch vụ
@@ -33,16 +31,16 @@ class TreatmentPlan(BaseUUIDModel, table=True):
 
     category_id: uuid.UUID = Field(foreign_key="category.id")
     category: "Category" = Relationship(back_populates="treatment_plans")
-    images: list["Image"] = Relationship(
+    images: List["Image"] = Relationship(
         back_populates="treatment_plans", link_model=TreatmentPlanImageLink
     )
-    primary_image_id: uuid.UUID | None = Field(
+    primary_image_id: Optional[uuid.UUID] = Field(
         default=None, foreign_key="image.id", nullable=True
     )
-    primary_image: "Image" | None = Relationship(
+    primary_image: Optional["Image"] = Relationship(
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "TreatmentPlan.primary_image_id",
         }
     )
-    steps: list["TreatmentPlanStep"] = Relationship(back_populates="treatment_plan")
+    steps: List["TreatmentPlanStep"] = Relationship(back_populates="treatment_plan")

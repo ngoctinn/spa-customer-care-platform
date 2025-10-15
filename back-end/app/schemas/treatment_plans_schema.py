@@ -1,5 +1,6 @@
 # app/schemas/treatment_plans_schema.py
 import uuid
+from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -11,7 +12,7 @@ from app.schemas.services_schema import ServicePublic
 
 class TreatmentPlanStepBase(SQLModel):
     step_number: int
-    description: str | None = None
+    description: Optional[str] = None
     service_id: uuid.UUID
 
 
@@ -41,11 +42,11 @@ class TreatmentPlanCreate(TreatmentPlanBase):
 
 
 class TreatmentPlanUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    description: str | None = None
-    price: float | None = Field(default=None, gt=0)
-    total_sessions: int | None = Field(default=None, gt=0)
-    category_id: uuid.UUID | None = None
+    name: Optional[str] = Field(default=None, max_length=100)
+    description: Optional[str] = None
+    price: Optional[float] = Field(default=None, gt=0)
+    total_sessions: Optional[int] = Field(default=None, gt=0)
+    category_id: Optional[uuid.UUID] = None
     existing_image_ids: list[uuid.UUID] | None = Field(default=None)
     primary_image_id: uuid.UUID | None = Field(default=None)
 

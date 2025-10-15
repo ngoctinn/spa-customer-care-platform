@@ -1,6 +1,6 @@
 # app/schemas/products_schema.py
 import uuid
-from typing import List
+from typing import List, Optional
 
 from fastapi import UploadFile
 from sqlmodel import Field, SQLModel
@@ -16,8 +16,8 @@ class ProductBase(SQLModel):
     is_retail: bool = Field(default=True)
     is_consumable: bool = Field(default=False)
     base_unit: str = Field(max_length=50)
-    consumable_unit: str | None = Field(default=None, max_length=50)
-    conversion_rate: float | None = Field(default=None, gt=0)
+    consumable_unit: Optional[str] = Field(default=None, max_length=50)
+    conversion_rate: Optional[float] = Field(default=None, gt=0)
 
 
 class ProductCreate(ProductBase):
@@ -38,18 +38,18 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    description: str | None = None
-    price: float | None = Field(default=None, gt=0)
-    stock: int | None = Field(default=None)
-    is_retail: bool | None = None
-    is_consumable: bool | None = None
-    base_unit: str | None = Field(default=None, max_length=50)
-    consumable_unit: str | None = Field(default=None, max_length=50)
-    conversion_rate: float | None = Field(default=None, gt=0)
-    category_ids: List[uuid.UUID] | None = Field(default=None)
+    name: Optional[str] = Field(default=None, max_length=100)
+    description: Optional[str] = None
+    price: Optional[float] = Field(default=None, gt=0)
+    stock: Optional[int] = Field(default=None)
+    is_retail: Optional[bool] = None
+    is_consumable: Optional[bool] = None
+    base_unit: Optional[str] = Field(default=None, max_length=50)
+    consumable_unit: Optional[str] = Field(default=None, max_length=50)
+    conversion_rate: Optional[float] = Field(default=None, gt=0)
+    category_ids: Optional[List[uuid.UUID]] = Field(default=None)
     # Thêm các trường khác nếu muốn cho phép cập nhật
-    existing_image_ids: List[uuid.UUID] | None = Field(default=None, exclude=True)
+    existing_image_ids: Optional[List[uuid.UUID]] = Field(default=None, exclude=True)
     primary_image_id: uuid.UUID | None = Field(
         default=None,
         description="ID của hình ảnh sẽ được đặt làm ảnh chính",

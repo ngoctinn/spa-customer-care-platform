@@ -1,6 +1,6 @@
 # app/services/roles_service.py
 import uuid
-from typing import List
+from typing import List, Optional
 from sqlmodel import Session, select
 
 from app.core.messages import RoleMessages
@@ -38,7 +38,7 @@ def get_all_permissions(db_session: Session) -> List[Permission]:
 # =================================================================
 
 
-def get_role_by_name(db_session: Session, *, name: str) -> Role | None:
+def get_role_by_name(db_session: Session, *, name: str) -> Optional[Role]:
     """Tìm một vai trò trong database bằng tên."""
     return db_session.exec(select(Role).where(Role.name == name)).first()
 
