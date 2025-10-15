@@ -69,9 +69,12 @@ def create_customer(
     dependencies=[Depends(get_current_admin_user)],
 )
 def get_all_customers(
-    session: Session = Depends(get_db_session),
+    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
-    return customers_service.get_all(db=session)
+    """
+    Lấy danh sách khách hàng có phân trang (skip/limit).
+    """
+    return customers_service.get_all(db=session, skip=skip, limit=limit)
 
 
 @router.get(

@@ -44,13 +44,13 @@ def update_user_default_schedules(
     *,
     session: Session = Depends(get_db_session),
     user_id: uuid.UUID,
-    schedules_data: DefaultScheduleUpdate,
+    schedules: DefaultScheduleUpdate,
 ):
     """
     Tạo hoặc cập nhật toàn bộ lịch làm việc mặc định cho một nhân viên.
     Gửi một mảng chứa 7 object, mỗi object cho một ngày trong tuần.
     """
     updated_schedules = schedules_service.update_default_schedules(
-        db=session, user_id=user_id, schedules_in=schedules_data.schedules
+        db=session, user_id=user_id, schedules_in=schedules.schedules
     )
     return updated_schedules
