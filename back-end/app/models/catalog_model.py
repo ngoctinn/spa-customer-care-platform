@@ -1,6 +1,8 @@
 # app/models/catalog_model.py
+from __future__ import annotations
+
 import uuid
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 from app.models.base_model import BaseUUIDModel
 
@@ -23,40 +25,38 @@ if TYPE_CHECKING:
 class Category(BaseUUIDModel, table=True):
     __tablename__ = "category"
     name: str = Field(index=True, nullable=False, max_length=100)
-    description: Optional[str] = Field(default=None)
+    description: str | None = Field(default=None)
     category_type: str = Field(index=True, nullable=False)
 
-    services: List["Service"] = Relationship(
+    services: list["Service"] = Relationship(
         back_populates="categories", link_model=ServiceCategoryLink
     )
-
-    products: List["Product"] = Relationship(
+    products: list["Product"] = Relationship(
         back_populates="categories", link_model=ProductCategoryLink
     )
-    treatment_plans: List["TreatmentPlan"] = Relationship(back_populates="category")
+    treatment_plans: list["TreatmentPlan"] = Relationship(back_populates="category")
 
 
 class Image(BaseUUIDModel, table=True):
     __tablename__ = "image"
     url: str = Field(nullable=False)
-    alt_text: Optional[str] = Field(default=None)
+    alt_text: str | None = Field(default=None)
 
-    uploaded_by_user_id: Optional[uuid.UUID] = Field(
+    uploaded_by_user_id: uuid.UUID | None = Field(
         default=None,
         foreign_key="user.id",
         nullable=True,  # Cho phép NULL cho các ảnh hệ thống/cũ
         index=True,
         description="ID của người dùng đã tải ảnh lên.",
     )
+    uploaded_by: "User" | None = Relationship()
 
-    uploaded_by: Optional["User"] = Relationship()
-
-    products: List["Product"] = Relationship(
+    products: list["Product"] = Relationship(
         back_populates="images", link_model=ProductImageLink
     )
-    services: List["Service"] = Relationship(
+    services: list["Service"] = Relationship(
         back_populates="images", link_model=ServiceImageLink
     )
-    treatment_plans: List["TreatmentPlan"] = Relationship(
+    treatment_plans: list["TreatmentPlan"] = Relationship(
         back_populates="images", link_model=TreatmentPlanImageLink
     )

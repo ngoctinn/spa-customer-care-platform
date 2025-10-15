@@ -1,7 +1,7 @@
 # back-end/app/schemas/customers_schema.py
 import re
 import uuid
-from typing import Optional, Annotated
+from typing import Annotated
 from sqlmodel import SQLModel, Field
 from pydantic import EmailStr, StringConstraints
 
@@ -27,20 +27,20 @@ class CustomerCreateAtStore(SQLModel):
 
 
 class CustomerCreate(CustomerBase):
-    user_id: Optional[uuid.UUID] = None
+    user_id: uuid.UUID | None = None
     pass
 
 
 class CustomerUpdate(SQLModel):
-    phone_number: Optional[PhoneNumber] = Field(default=None)
-    full_name: Optional[str] = Field(default=None, max_length=100)
-    date_of_birth: Optional[str] = None
-    gender: Optional[str] = Field(default=None, max_length=10)
-    address: Optional[str] = None
-    note: Optional[str] = None
-    avatar_id: Optional[uuid.UUID] = None
+    phone_number: PhoneNumber | None = Field(default=None)
+    full_name: str | None = Field(default=None, max_length=100)
+    date_of_birth: str | None = None
+    gender: str | None = Field(default=None, max_length=10)
+    address: str | None = None
+    note: str | None = None
+    avatar_id: uuid.UUID | None = None
 
 
 class CustomerPublic(CustomerBase):
     id: uuid.UUID
-    user: Optional[UserPublic] = None
+    user: UserPublic | None = None

@@ -1,6 +1,5 @@
 # app/schemas/services_schema.py
 import uuid
-from typing import Optional
 
 from fastapi import UploadFile
 from sqlmodel import Field, SQLModel

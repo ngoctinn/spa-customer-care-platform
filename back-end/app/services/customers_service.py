@@ -1,6 +1,6 @@
 # app/services/customers_service.py
 import uuid
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from sqlalchemy.orm import selectinload, Load
 from sqlmodel import Session, select
@@ -40,9 +40,7 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             customer.avatar_id = None
         return customer
 
-    def get_by_phone_number(
-        self, db: Session, *, phone_number: str
-    ) -> Optional[Customer]:
+    def get_by_phone_number(self, db: Session, *, phone_number: str) -> Customer | None:
         statement = (
             select(self.model)
             .where(
@@ -55,7 +53,7 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             return self._filter_relationships(customer)
         return None
 
-    def get_by_user_id(self, db: Session, *, user_id: uuid.UUID) -> Optional[Customer]:
+    def get_by_user_id(self, db: Session, *, user_id: uuid.UUID) -> Customer | None:
         """Lấy hồ sơ khách hàng bằng user_id."""
         statement = (
             select(self.model)

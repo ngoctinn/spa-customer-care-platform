@@ -1,5 +1,4 @@
 # app/schemas/token_schema.py
-from typing import Optional
 from sqlmodel import SQLModel
 
 
@@ -11,4 +10,4 @@ class Token(SQLModel):
 
 # Schema cho dữ liệu chứa bên trong token
 class TokenData(SQLModel):
-    email: Optional[str] = None
+    email: str | None = None
