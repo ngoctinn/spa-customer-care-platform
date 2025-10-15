@@ -1,8 +1,10 @@
 # app/services/users_service.py
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import uuid
 
 from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
+from app.models.users_model import Role
 
 from app.core.security import get_password_hash
 from app.core.constants import DefaultRoles, PasswordPolicy
@@ -25,7 +27,7 @@ from app.schemas.roles_schema import RoleCreate
 # =================================================================
 
 
-def get_user_by_email(db_session: Session, *, email: str) -> Optional[User]:
+def get_user_by_email(db_session: Session, *, email: str) -> User | None:
     """
     Tìm một người dùng trong database bằng email.
     """
@@ -37,7 +39,13 @@ def get_user_by_id(db_session: Session, *, user_id: uuid.UUID) -> User:
     Tìm người dùng bằng ID.
     Nếu không tìm thấy hoặc đã bị xóa mềm, raise exception.
     """
-    user = db_session.get(User, user_id)
+    # Eager-load roles and permissions để tránh N+1 khi truy cập user.roles -> role.permissions
+    stmt = (
+        select(User)
+        .where(User.id == user_id)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+    )
+    user = db_session.exec(stmt).first()
     if not user or user.is_deleted:
         raise UserExceptions.user_not_found()
     return user

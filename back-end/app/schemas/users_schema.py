@@ -1,7 +1,6 @@
 # app/schemas/users_schema.py
 import uuid
 import re
-from typing import Optional
 
 from pydantic import EmailStr, Field, field_validator
 from sqlmodel import SQLModel

@@ -1,8 +1,7 @@
 # app/core/dependencies.py
-from functools import lru_cache
 from typing import Set
 import uuid
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status, Header
 from jose import JWTError, jwt
 from sqlmodel import Session
 
@@ -14,6 +13,7 @@ from app.core.database import engine
 
 from fastapi.security import OAuth2PasswordBearer
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
@@ -22,28 +22,37 @@ def get_db_session():
         yield session
 
 
-def get_token_from_cookie(request: Request) -> str | None:
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-    return token
+def get_token_from_request(
+    authorization: str | None = Header(default=None), request: Request = None
+) -> str | None:
+    """Lấy token theo thứ tự: Authorization header (Bearer) -> cookie 'access_token'.
+
+    Trả về token thuần (không kèm 'Bearer ')."""
+    # ưu tiên header Authorization: "Bearer <token>"
+    if authorization:
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() == "bearer" and token:
+            return token
+
+    # fallback: cookie chứa token thuần
+    if request:
+        token = request.cookies.get("access_token")
+        if token:
+            return token
+    return None
 
 
 def get_current_user(
-    db: Session = Depends(get_db_session), token: str = Depends(get_token_from_cookie)
+    db: Session = Depends(get_db_session), token: str = Depends(get_token_from_request)
 ) -> User:
+    """Lấy user hiện tại từ token JWT (tự động convert 'sub' sang UUID).
+
+    Trả HTTP 401 khi token không hợp lệ hoặc user không tồn tại.
+    """
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=AuthMessages.NOT_AUTHENTICATED,
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    scheme, _, param = token.partition(" ")
-    if scheme.lower() != "bearer" or not param:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=AuthMessages.INVALID_TOKEN_FORMAT,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -52,12 +61,18 @@ def get_current_user(
         detail=AuthMessages.INVALID_TOKEN,
         headers={"WWW-Authenticate": "Bearer"},
     )
+
     try:
         payload = jwt.decode(
-            param, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        user_id_raw: str | None = payload.get("sub")
+        if user_id_raw is None:
+            raise credentials_exception
+        try:
+            user_id = uuid.UUID(str(user_id_raw))
+        except Exception:
+            # Không phải UUID hợp lệ
             raise credentials_exception
     except JWTError:
         raise credentials_exception

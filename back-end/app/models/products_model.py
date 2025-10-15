@@ -1,6 +1,8 @@
 # app/models/products_model.py
+from __future__ import annotations
+
 import uuid
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from sqlmodel import Field, Relationship
 from app.models.base_model import BaseUUIDModel
 from app.models.association_tables import ProductCategoryLink, ProductImageLink
@@ -18,19 +20,19 @@ class Product(BaseUUIDModel, table=True):
     is_retail: bool = Field(default=True)
     is_consumable: bool = Field(default=False)
     base_unit: str = Field(max_length=50)  # vd: "chai", "lọ"
-    consumable_unit: Optional[str] = Field(default=None, max_length=50)  # vd: "ml", "g"
-    conversion_rate: Optional[float] = Field(default=None, gt=0)  # Tỷ lệ quy đổi
+    consumable_unit: str | None = Field(default=None, max_length=50)  # vd: "ml", "g"
+    conversion_rate: float | None = Field(default=None, gt=0)  # Tỷ lệ quy đổi
 
-    categories: List["Category"] = Relationship(
+    categories: list["Category"] = Relationship(
         back_populates="products", link_model=ProductCategoryLink
     )
-    images: List["Image"] = Relationship(
+    images: list["Image"] = Relationship(
         back_populates="products", link_model=ProductImageLink
     )
-    primary_image_id: Optional[uuid.UUID] = Field(
+    primary_image_id: uuid.UUID | None = Field(
         default=None, foreign_key="image.id", nullable=True
     )
-    primary_image: Optional["Image"] = Relationship(
+    primary_image: "Image" | None = Relationship(
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "Product.primary_image_id",

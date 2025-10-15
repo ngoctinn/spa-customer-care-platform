@@ -1,7 +1,9 @@
 # app/models/staff_model.py
+from __future__ import annotations
+
 import uuid
 import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 from enum import Enum
 
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
@@ -44,10 +46,8 @@ class StaffProfile(BaseUUIDModel, table=True):
     full_name: str = Field(max_length=100)
     user_id: uuid.UUID = Field(foreign_key="user.id", unique=True, index=True)
     phone_number: str = Field(max_length=20, unique=True, index=True)
-    position: Optional[str] = Field(
-        default=None, description="Chức danh/Vị trí làm việc"
-    )
-    hire_date: Optional[datetime.date] = Field(
+    position: str | None = Field(default=None, description="Chức danh/Vị trí làm việc")
+    hire_date: datetime.date | None = Field(
         default=None, description="Ngày bắt đầu làm việc"
     )
     employment_status: EmploymentStatus = Field(
@@ -55,23 +55,23 @@ class StaffProfile(BaseUUIDModel, table=True):
         nullable=False,
         description="Trạng thái làm việc hiện tại",
     )
-    notes: Optional[str] = Field(default=None, description="Ghi chú nội bộ khác")
+    notes: str | None = Field(default=None, description="Ghi chú nội bộ khác")
 
     # Mối quan hệ One-to-One ngược lại với User
     user: "User" = Relationship(back_populates="staff_profile")
 
     # Mối quan hệ Many-to-Many với Service
-    services: List["Service"] = Relationship(
+    services: list["Service"] = Relationship(
         back_populates="staff_members", link_model=StaffServiceLink
     )
 
     # Mối quan hệ One-to-Many với Lịch làm việc
-    schedules: List["StaffSchedule"] = Relationship(
+    schedules: list["StaffSchedule"] = Relationship(
         back_populates="staff", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
     # Mối quan hệ One-to-Many với Đơn nghỉ phép
-    time_off_requests: List["StaffTimeOff"] = Relationship(
+    time_off_requests: list["StaffTimeOff"] = Relationship(
         back_populates="staff", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
@@ -97,12 +97,12 @@ class StaffSchedule(BaseUUIDModel, table=True):
     staff_id: uuid.UUID = Field(foreign_key="staff_profile.id", index=True)
 
     # Dùng cho ca lặp lại hàng tuần
-    day_of_week: Optional[int] = Field(
+    day_of_week: int | None = Field(
         default=None, ge=1, le=7, description="1: Thứ Hai ... 7: Chủ Nhật"
     )
 
     # Dùng cho ca đặc biệt (nghỉ, làm bù)
-    specific_date: Optional[datetime.date] = Field(default=None)
+    specific_date: datetime.date | None = Field(default=None)
 
     start_time: datetime.time = Field(description="Giờ bắt đầu ca")
     end_time: datetime.time = Field(description="Giờ kết thúc ca")
@@ -112,7 +112,7 @@ class StaffSchedule(BaseUUIDModel, table=True):
     schedule_type: ScheduleType = Field(
         default=ScheduleType.WORKING, description="Phân loại ca"
     )
-    note: Optional[str] = Field(default=None, description="Ghi chú chi tiết cho ca")
+    note: str | None = Field(default=None, description="Ghi chú chi tiết cho ca")
 
     staff: "StaffProfile" = Relationship(back_populates="schedules")
 
@@ -133,20 +133,18 @@ class StaffTimeOff(BaseUUIDModel, table=True):
     staff_id: uuid.UUID = Field(foreign_key="staff_profile.id", index=True)
     start_date: datetime.date = Field(description="Ngày bắt đầu nghỉ")
     end_date: datetime.date = Field(description="Ngày kết thúc nghỉ")
-    reason: Optional[str] = Field(default=None, description="Lý do xin nghỉ")
+    reason: str | None = Field(default=None, description="Lý do xin nghỉ")
 
     status: StaffTimeOffStatus = Field(
         default=StaffTimeOffStatus.PENDING, nullable=False
     )
 
     # Thông tin người duyệt
-    approver_id: Optional[uuid.UUID] = Field(default=None, foreign_key="user.id")
-    approved_at: Optional[datetime.datetime] = Field(default=None)
-    decision_note: Optional[str] = Field(
+    approver_id: uuid.UUID | None = Field(default=None, foreign_key="user.id")
+    approved_at: datetime.datetime | None = Field(default=None)
+    decision_note: str | None = Field(
         default=None, description="Ghi chú của người duyệt"
     )
 
     staff: "StaffProfile" = Relationship(back_populates="time_off_requests")
-    approver: Optional["User"] = Relationship(
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
+    approver: "User" | None = Relationship(sa_relationship_kwargs={"lazy": "selectin"})

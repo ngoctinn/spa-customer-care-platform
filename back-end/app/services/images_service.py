@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 from uuid import UUID
-from typing import List, Optional, Type
+from typing import List, Type
 from fastapi import UploadFile
 from sqlmodel import Session, SQLModel, select
 from app.models.users_model import User
@@ -134,8 +134,8 @@ async def sync_images_for_entity(
     *,
     entity: OwnerModel,
     owner_type: str,
-    existing_image_ids: Optional[List[UUID]],
-    primary_image_id: Optional[UUID],
+    existing_image_ids: list[UUID] | None,
+    primary_image_id: UUID | None,
 ):
     """
     Hàm chính để đồng bộ hóa tất cả các hình ảnh cho một thực thể (Product, Service, TreatmentPlan).

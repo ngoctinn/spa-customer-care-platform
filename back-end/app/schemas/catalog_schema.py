@@ -1,7 +1,7 @@
 # app/schemas/catalog_schema.py
 import uuid
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from sqlmodel import Field, SQLModel
 
@@ -38,8 +38,8 @@ class CategoryCreate(CategoryBase):
 
 
 class CategoryUpdate(SQLModel):
-    name: Optional[str] = Field(default=None, max_length=100)
-    description: Optional[str] = None
+    name: str | None = Field(default=None, max_length=100)
+    description: str | None = None
 
 
 class CategoryPublic(CategoryBase):

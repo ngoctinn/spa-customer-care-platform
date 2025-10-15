@@ -18,9 +18,22 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Proxy headers: trong môi trường production hãy cấu hình TRUSTED_HOSTS cụ thể.
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
-app.add_middleware(SessionMiddleware, same_site="lax", secret_key=settings.SECRET_KEY)
+# Session cookie: bật secure (https_only) nếu BACKEND_URL sử dụng https
+https_only = False
+try:
+    https_only = str(settings.BACKEND_URL).lower().startswith("https")
+except Exception:
+    https_only = False
+
+app.add_middleware(
+    SessionMiddleware,
+    same_site="lax",
+    secret_key=settings.SECRET_KEY,
+    https_only=https_only,
+)
 
 
 app.add_middleware(
