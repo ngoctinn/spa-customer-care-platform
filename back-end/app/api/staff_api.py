@@ -89,11 +89,14 @@ def assign_services(
 def set_staff_schedules(
     staff_id: uuid.UUID,
     # SỬA LỖI: Nhận trực tiếp một List thay vì một object bọc ngoài
-    payload: List[StaffScheduleCreate],
+    schedules: List[StaffScheduleCreate],
     session: Session = Depends(get_db_session),
 ):
+    """
+    Thiết lập lịch lặp hàng tuần cho nhân viên (mảng các entry).
+    """
     return staff_service.set_weekly_schedules(
-        db=session, staff_id=staff_id, payload=payload
+        db=session, staff_id=staff_id, payload=schedules
     )
 
 

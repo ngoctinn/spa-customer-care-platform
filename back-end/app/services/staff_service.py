@@ -153,17 +153,29 @@ class StaffService(BaseService[StaffProfile, StaffProfileCreate, StaffProfileUpd
     def set_weekly_schedules(
         self, db: Session, staff_id: uuid.UUID, payload: List[StaffScheduleCreate]
     ) -> List[StaffSchedulePublic]:
-        self.get_by_id(db, id=staff_id)
+        # Lock staff row to prevent concurrent modifications
+        staff_row = db.get(StaffProfile, staff_id)
+        if not staff_row:
+            raise StaffExceptions.staff_profile_not_found()
 
-        # << THAY ĐỔI: Sửa DeprecationWarning >>
-        old_schedules = db.exec(
+        # Xóa các schedule hiện tại bằng một truy vấn để tránh nhiều roundtrips
+        db.exec(
             select(StaffSchedule).where(
                 StaffSchedule.staff_id == staff_id,
                 StaffSchedule.schedule_type == ScheduleType.WORKING,
             )
+        )
+        # Thực hiện xóa bằng cách lấy id và gọi delete trên từng đối tượng để trigger cascade nếu cần
+        existing = db.exec(
+            select(StaffSchedule.id).where(
+                StaffSchedule.staff_id == staff_id,
+                StaffSchedule.schedule_type == ScheduleType.WORKING,
+            )
         ).all()
-        for s in old_schedules:
-            db.delete(s)
+        for (sid,) in existing:
+            obj = db.get(StaffSchedule, sid)
+            if obj:
+                db.delete(obj)
 
         new_schedules = []
         for schedule_data in payload:
