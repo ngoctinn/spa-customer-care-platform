@@ -61,14 +61,14 @@ def _error_slug_from_exception(exc: Exception) -> str:
 def login_for_access_token(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ) -> Dict[str, Any]:
     """
     Đăng nhập bằng username/password (OAuth2PasswordRequestForm).
     Trả về message thành công và set cookie access_token (httponly).
     """
     user = auth_service.authenticate(
-        db_session=session, email=form_data.username, password=form_data.password
+        db_session=db, email=form_data.username, password=form_data.password
     )
 
     if not user:
@@ -91,13 +91,13 @@ def login_for_access_token(
 
 @router.post("/register", response_model=UserPublic, status_code=201)
 async def register_user(
-    *, session: Session = Depends(get_db_session), user_in: UserCreate
+    *, db: Session = Depends(get_db_session), user_in: UserCreate
 ) -> UserPublic:
     """
     Khách hàng tự đăng ký tài khoản online chỉ bằng Email và Mật khẩu.
     Luồng này CHỈ TẠO TÀI KHOẢN (User), KHÔNG tự động tạo Hồ sơ khách hàng (Customer).
     """
-    user = users_service.create_online_user(db_session=session, user_in=user_in)
+    user = users_service.create_online_user(db=db, user_in=user_in)
 
     await auth_service.send_verification_email(user)
     return user
@@ -105,12 +105,12 @@ async def register_user(
 
 @router.get("/verify-email")
 def verify_email(
-    token: str, session: Session = Depends(get_db_session)
+    token: str, db: Session = Depends(get_db_session)
 ) -> Dict[str, Any]:
     """
     Xác thực email qua token.
     """
-    return auth_service.verify_email(db_session=session, token=token)
+    return auth_service.verify_email(db_session=db, token=token)
 
 
 @router.get("/login/google")
@@ -124,7 +124,7 @@ async def login_google(request: Request):
 
 @router.get("/google")
 async def auth_google(
-    request: Request, response: Response, session: Session = Depends(get_db_session)
+    request: Request, response: Response, db: Session = Depends(get_db_session)
 ):
     """
     Callback Google OAuth.
@@ -133,7 +133,7 @@ async def auth_google(
     """
     try:
         user = await auth_service.handle_google_login_or_register(
-            request=request, db_session=session
+            request=request, db_session=db
         )
 
         if not user:
@@ -164,12 +164,12 @@ async def auth_google(
 
 @router.post("/forgot-password")
 async def forgot_password(
-    *, session: Session = Depends(get_db_session), body: ForgotPasswordRequest
+    *, db: Session = Depends(get_db_session), body: ForgotPasswordRequest
 ) -> Dict[str, Any]:
     """
     Yêu cầu reset mật khẩu: gửi email chứa token nếu user tồn tại.
     """
-    user = users_service.get_user_by_email(db_session=session, email=body.email)
+    user = users_service.get_user_by_email(db=db, email=body.email)
     if user:
         await auth_service.send_password_reset_email(user)
     return {"message": AuthMessages.PASSWORD_RESET_EMAIL_SENT}
@@ -177,13 +177,13 @@ async def forgot_password(
 
 @router.post("/reset-password")
 def reset_password(
-    *, session: Session = Depends(get_db_session), body: ResetPasswordRequest
+    *, db: Session = Depends(get_db_session), body: ResetPasswordRequest
 ) -> Dict[str, Any]:
     """
     Reset mật khẩu bằng token.
     """
     return auth_service.reset_password(
-        db_session=session, token=body.token, new_password=body.new_password
+        db_session=db, token=body.token, new_password=body.new_password
     )
 
 

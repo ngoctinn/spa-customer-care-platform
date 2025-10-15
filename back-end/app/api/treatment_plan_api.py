@@ -24,32 +24,32 @@ router = APIRouter()
 )
 async def create_treatment_plan(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     treatment_plan_in: TreatmentPlanCreate,
 ):
     """Tạo mới một liệu trình cùng các bước."""
 
     return await treatment_plans_service.create_treatment_plan(
-        db=session, treatment_plan_in=treatment_plan_in
+        db=db, treatment_plan_in=treatment_plan_in
     )
 
 
 @router.get("", response_model=List[TreatmentPlanPublicWithDetails])
 def get_all_treatment_plans(
-    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
+    db: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
     """Lấy danh sách tất cả liệu trình chưa bị xóa mềm."""
 
-    return treatment_plans_service.get_all(db=session, skip=skip, limit=limit)
+    return treatment_plans_service.get_all(db=db, skip=skip, limit=limit)
 
 
 @router.get("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
 def get_treatment_plan_by_id(
-    treatment_plan_id: uuid.UUID, session: Session = Depends(get_db_session)
+    treatment_plan_id: uuid.UUID, db: Session = Depends(get_db_session)
 ):
     """Lấy chi tiết một liệu trình theo ID."""
 
-    return treatment_plans_service.get_by_id(db=session, id=treatment_plan_id)
+    return treatment_plans_service.get_by_id(db=db, id=treatment_plan_id)
 
 
 @router.put("/{treatment_plan_id}", response_model=TreatmentPlanPublicWithDetails)
@@ -57,15 +57,13 @@ async def update_treatment_plan(
     *,
     treatment_plan_id: uuid.UUID,
     treatment_plan_in: TreatmentPlanUpdate,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
     """Cập nhật thông tin một liệu trình."""
 
-    db_treatment_plan = treatment_plans_service.get_by_id(
-        db=session, id=treatment_plan_id
-    )
+    db_treatment_plan = treatment_plans_service.get_by_id(db=db, id=treatment_plan_id)
     return await treatment_plans_service.update_treatment_plan(
-        db=session,
+        db=db,
         db_treatment_plan=db_treatment_plan,
         treatment_plan_in=treatment_plan_in,
     )
@@ -73,12 +71,10 @@ async def update_treatment_plan(
 
 @router.delete("/{treatment_plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_treatment_plan(
-    treatment_plan_id: uuid.UUID, session: Session = Depends(get_db_session)
+    treatment_plan_id: uuid.UUID, db: Session = Depends(get_db_session)
 ):
     """Xóa mềm một liệu trình."""
 
-    db_treatment_plan = treatment_plans_service.get_by_id(
-        db=session, id=treatment_plan_id
-    )
-    treatment_plans_service.delete(db=session, db_obj=db_treatment_plan)
+    db_treatment_plan = treatment_plans_service.get_by_id(db=db, id=treatment_plan_id)
+    treatment_plans_service.delete(db=db, db_obj=db_treatment_plan)
     return

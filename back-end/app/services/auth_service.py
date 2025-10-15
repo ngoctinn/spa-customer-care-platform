@@ -59,7 +59,7 @@ async def handle_google_login_or_register(
         raise AuthExceptions.oauth_user_info_error()
 
     email = user_info["email"]
-    user = users_service.get_user_by_email(db_session=db_session, email=email)
+    user = users_service.get_user_by_email(db=db_session, email=email)
 
     if user:
         return user
@@ -72,7 +72,7 @@ async def handle_google_login_or_register(
     )
 
     new_user = users_service.create_online_user(  # Sử dụng hàm mới
-        db_session=db_session, user_in=new_user_data
+        db=db_session, user_in=new_user_data
     )
     verified_user = mark_email_as_verified(db_session=db_session, user=new_user)
     return verified_user
@@ -157,7 +157,7 @@ def verify_email(db_session: Session, *, token: str) -> dict:
     Xác thực email từ token.
     """
     user_id = verify_email_token(token)
-    user = users_service.get_user_by_id(db_session=db_session, user_id=user_id)
+    user = users_service.get_user_by_id(db=db_session, user_id=user_id)
     mark_email_as_verified(db_session=db_session, user=user)
     return {"message": AuthMessages.EMAIL_VERIFIED_SUCCESS}
 
@@ -235,7 +235,7 @@ def reset_password(db_session: Session, *, token: str, new_password: str) -> dic
     user_id = verify_password_reset_token(token)
     if user_id is None:
         raise AuthExceptions.invalid_token()
-    user = users_service.get_user_by_id(db_session=db_session, user_id=user_id)
+    user = users_service.get_user_by_id(db=db_session, user_id=user_id)
     if not user.is_active:
         raise AuthExceptions.invalid_token()
     reset_user_password(db_session=db_session, user=user, new_password=new_password)

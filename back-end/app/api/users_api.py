@@ -39,23 +39,21 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 @router.put("/me", response_model=UserPublic)
 def update_user_me(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     user_in: UserUpdateMe,
     current_user: User = Depends(get_current_user),
 ):
     """
     Cập nhật thông tin cá nhân của người dùng. (Hiện tại không có trường nào để cập nhật trực tiếp trên User)
     """
-    user = users_service.update_user(
-        db_session=session, db_user=current_user, user_in=user_in
-    )
+    user = users_service.update_user(db=db, db_user=current_user, user_in=user_in)
     return user
 
 
 @router.post("/me/update-password", response_model=UserPublic)
 def update_password_me(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     body: UpdatePassword,
     current_user: User = Depends(get_current_user),
 ):
@@ -63,7 +61,7 @@ def update_password_me(
     Cập nhật mật khẩu cho người dùng hiện tại.
     """
     return auth_service.update_password(
-        db_session=session,
+        db_session=db,
         user=current_user,
         current_password=body.current_password,
         new_password=body.new_password,
@@ -83,13 +81,13 @@ def update_password_me(
 )
 async def create_staff_account_endpoint(  # Đổi tên hàm cho rõ
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     user_in: AdminCreateStaffRequest,  # Sử dụng schema mới
 ):
     """
     [Admin] Tạo một tài khoản nhân viên mới (User và StaffProfile) và gửi email kích hoạt.
     """
-    new_user = users_service.create_staff_account(db_session=session, user_in=user_in)
+    new_user = users_service.create_staff_account(db=db, user_in=user_in)
     await auth_service.send_welcome_and_set_password_email(new_user)
     return new_user
 
@@ -100,12 +98,12 @@ async def create_staff_account_endpoint(  # Đổi tên hàm cho rõ
     dependencies=[Depends(get_current_admin_user)],
 )
 def get_all_users(
-    session: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
+    db: Session = Depends(get_db_session), skip: int = 0, limit: int = 100
 ):
     """
     [Admin] Lấy danh sách tất cả người dùng.
     """
-    return users_service.get_all_users(db_session=session, skip=skip, limit=limit)
+    return users_service.get_all(db=db, skip=skip, limit=limit)
 
 
 @router.get(
@@ -113,11 +111,11 @@ def get_all_users(
     response_model=UserPublicWithRolesAndPermissions,
     dependencies=[Depends(get_current_admin_user)],
 )
-def get_user_by_id(user_id: uuid.UUID, session: Session = Depends(get_db_session)):
+def get_user_by_id(user_id: uuid.UUID, db: Session = Depends(get_db_session)):
     """
     [Admin] Lấy thông tin chi tiết của một người dùng bằng ID.
     """
-    return users_service.get_user_by_id(db_session=session, user_id=user_id)
+    return users_service.get_user_by_id(db=db, user_id=user_id)
 
 
 @router.put(
@@ -128,15 +126,13 @@ def get_user_by_id(user_id: uuid.UUID, session: Session = Depends(get_db_session
 def update_user_by_admin(
     user_id: uuid.UUID,
     user_in: UserUpdateByAdmin,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
     """
     [Admin] Cập nhật thông tin người dùng.
     """
-    db_user = users_service.get_user_by_id(db_session=session, user_id=user_id)
-    return users_service.update_user_by_admin(
-        db_session=session, db_user=db_user, user_in=user_in
-    )
+    db_user = users_service.get_user_by_id(db=db, user_id=user_id)
+    return users_service.update_user_by_admin(db=db, db_user=db_user, user_in=user_in)
 
 
 @router.delete(
@@ -146,12 +142,10 @@ def update_user_by_admin(
 )
 def delete_user(
     user_id: uuid.UUID,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
 ):
     """
     [Admin] Xóa mềm một người dùng.
     """
-    user_to_delete = users_service.get_user_by_id(db_session=session, user_id=user_id)
-    return users_service.delete_user_by_id(
-        db_session=session, user_to_delete=user_to_delete
-    )
+    user_to_delete = users_service.get_user_by_id(db=db, user_id=user_id)
+    return users_service.delete_user_by_id(db=db, user_to_delete=user_to_delete)

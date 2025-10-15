@@ -23,15 +23,13 @@ router = APIRouter()
     # dependencies=[Depends(has_permission("manage_schedules"))] # Sẽ dùng sau
 )
 def get_user_default_schedules(
-    *, session: Session = Depends(get_db_session), user_id: uuid.UUID
+    *, db: Session = Depends(get_db_session), user_id: uuid.UUID
 ):
     """
     Lấy lịch làm việc mặc định của một nhân viên.
     Nếu chưa có, hệ thống sẽ tự tạo lịch trống.
     """
-    schedules = schedules_service.get_or_create_default_schedules(
-        db=session, user_id=user_id
-    )
+    schedules = schedules_service.get_or_create_default_schedules(db=db, user_id=user_id)
     return schedules
 
 
@@ -42,7 +40,7 @@ def get_user_default_schedules(
 )
 def update_user_default_schedules(
     *,
-    session: Session = Depends(get_db_session),
+    db: Session = Depends(get_db_session),
     user_id: uuid.UUID,
     schedules: DefaultScheduleUpdate,
 ):
@@ -51,6 +49,6 @@ def update_user_default_schedules(
     Gửi một mảng chứa 7 object, mỗi object cho một ngày trong tuần.
     """
     updated_schedules = schedules_service.update_default_schedules(
-        db=session, user_id=user_id, schedules_in=schedules.schedules
+        db=db, user_id=user_id, schedules_in=schedules.schedules
     )
     return updated_schedules
