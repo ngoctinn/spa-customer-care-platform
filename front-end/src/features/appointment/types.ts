@@ -13,7 +13,7 @@ export interface Appointment {
   id: string;
   customer_id: string;
   service_id: string;
-  resource_id?: string; // Có thể giữ lại hoặc bỏ đi tuỳ vào logic mới
+  resource_id?: string;
   invoice_id?: string;
   start_time: Date;
   end_time: Date;
@@ -35,7 +35,7 @@ export interface Appointment {
   treatment_package_id?: string;
   treatment_session_id?: string;
 
-  assigned_staff_ids: string[]; // Thay cho technician_id
+  assigned_staff_ids: string[];
   assigned_room_id: string | null;
   assigned_bed_id: string | null;
   assigned_mobile_equipment_ids: string[];

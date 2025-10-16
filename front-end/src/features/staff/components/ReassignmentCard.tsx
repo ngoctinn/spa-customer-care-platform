@@ -1,4 +1,3 @@
-// src/features/staff/components/ReassignmentCard.tsx
 "use client";
 
 import { useState } from "react";
@@ -34,7 +33,7 @@ export default function ReassignmentCard({
   const handleReassign = () => {
     if (!selectedTech) return;
     updateAppointment(
-      { id: appointment.id, data: { technician_id: selectedTech } },
+      { id: appointment.id, data: { assigned_staff_ids: [selectedTech] } },
       {
         onSuccess: () => {
           onReassigned(appointment.id);

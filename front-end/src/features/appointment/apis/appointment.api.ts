@@ -26,6 +26,7 @@ export async function createAppointment(
     guest_phone: bookingData.customerInfo?.phone,
     guest_email: bookingData.customerInfo?.email,
     customer_note: bookingData.customerInfo?.note,
+    assigned_staff_ids: bookingData.technicianIds,
   };
 
   return apiClient<Appointment>("/appointments", {

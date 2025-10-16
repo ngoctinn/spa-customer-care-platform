@@ -1,4 +1,4 @@
-// src/features/product/components/EditProductForm.tsx
+// src/features/product/components/ProductForm.tsx
 "use client";
 
 import PriceInput from "@/components/common/PriceInput";

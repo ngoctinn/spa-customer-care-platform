@@ -1,4 +1,3 @@
-// src/features/appointment/apis/availability.api.ts
 import apiClient from "@/lib/apiClient";
 
 /**

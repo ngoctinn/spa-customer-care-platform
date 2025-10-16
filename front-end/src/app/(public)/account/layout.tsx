@@ -1,4 +1,3 @@
-// src/app/(public)/account/layout.tsx
 "use client";
 
 import {

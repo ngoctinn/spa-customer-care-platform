@@ -1,11 +1,9 @@
-// src/hooks/useCrudMutations.ts
+// src/features/management-pages/hooks/useCrudMutations.ts
 import { useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 
 // --- CẬP NHẬT CÁC ĐỊNH NGHĨA HÀM ---
-// Các hàm này giờ có thể trả về bất kỳ kiểu dữ liệu nào (Promise<any>)
-// vì chúng ta chỉ quan tâm đến việc invalidate query sau khi thành công.
 type AddFunc<TVariables> = (variables: TVariables) => Promise<any>;
 type UpdateFunc<TVariables> = (variables: {
   id: string;
@@ -13,17 +11,18 @@ type UpdateFunc<TVariables> = (variables: {
 }) => Promise<any>;
 type DeleteFunc = (id: string) => Promise<void>;
 
+// ++ SỬA LỖI: Bổ sung các thuộc tính ...Error ++
 interface CustomMessages {
   addSuccess?: string;
-  addError?: string;
+  addError?: string; // Add this line
   updateSuccess?: string;
-  updateError?: string;
+  updateError?: string; // Add this line
   deleteSuccess?: string;
-  deleteError?: string;
+  deleteError?: string; // Add this line
 }
 
 export function useCrudMutations<
-  TItem extends { id: string }, // TItem là kiểu đầy đủ (vd: FullStaffProfile)
+  TItem extends { id: string },
   TAddVariables = any,
   TUpdateVariables = any
 >(
@@ -36,7 +35,6 @@ export function useCrudMutations<
   const queryClient = useQueryClient();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // State `editingItem` và `itemToDelete` vẫn sử dụng kiểu TItem đầy đủ
   const [editingItem, setEditingItem] = useState<TItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<TItem | null>(null);
 
@@ -72,7 +70,6 @@ export function useCrudMutations<
     deleteError: customMessages.deleteError || "Xóa thất bại",
   };
 
-  // Kiểu dữ liệu trả về của useMutation giờ là `any`
   const addMutation = useMutation<any, Error, TAddVariables>({
     mutationFn: addFn,
     onSuccess: () => {

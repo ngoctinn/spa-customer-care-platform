@@ -42,7 +42,7 @@ export async function updateRole({
   data,
 }: {
   id: string;
-  data: RoleFormValues;
+  data: Partial<RoleFormValues>;
 }): Promise<Role> {
   return apiClient<Role>(`/admin/roles/${id}`, {
     method: "PUT",
