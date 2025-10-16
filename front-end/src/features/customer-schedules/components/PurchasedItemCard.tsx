@@ -1,4 +1,3 @@
-// src/features/customer-schedules/components/PurchasedItemCard.tsx
 "use client";
 
 import { useState } from "react";
@@ -130,9 +129,12 @@ export default function PurchasedItemCard({
         )}
 
         <div className="flex items-center gap-2">
+          {/* SỬA ĐỔI: Thêm purchasedServiceId vào URL */}
           {!isTreatment && (
             <Button asChild>
-              <Link href={`/booking?serviceId=${details.id}`}>
+              <Link
+                href={`/booking?serviceId=${details.id}&purchasedServiceId=${item.data.purchase_invoice_id}`}
+              >
                 <CalendarPlus className="w-4 h-4 mr-2" />
                 Đặt lịch
               </Link>

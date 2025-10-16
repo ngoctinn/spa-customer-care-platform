@@ -14,6 +14,7 @@ export const customerInfoSchema = z.object({
 export type CustomerInfoValues = z.infer<typeof customerInfoSchema>;
 
 // Type để quản lý trạng thái của toàn bộ quy trình đặt lịch
+// ++ SỬA ĐỔI: Bổ sung các trường mới ++
 export interface BookingState {
   serviceId?: string;
   treatmentId?: string;
@@ -21,4 +22,8 @@ export interface BookingState {
   selectedTime?: string;
   customerInfo?: CustomerInfoValues;
   technicianIds: string[];
+  // --- Các trường mới ---
+  treatmentPackageId?: string; // ID của gói liệu trình đã mua
+  sessionId?: string; // ID của buổi trong gói liệu trình
+  purchasedServiceId?: string; // ID định danh dịch vụ lẻ đã mua
 }

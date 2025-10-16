@@ -1,3 +1,4 @@
+// src/features/checkout/types.ts
 export type InvoiceItemType = "service" | "product" | "treatment" | "other";
 export type PaymentMethod =
   | "cash"
@@ -5,8 +6,15 @@ export type PaymentMethod =
   | "transfer"
   | "cod"
   | "combined"
-  | "prepaid";
-export type InvoiceStatus = "pending" | "paid" | "cancelled" | "refunded";
+  | "prepaid"
+  | "debt";
+
+export type InvoiceStatus =
+  | "pending"
+  | "paid"
+  | "cancelled"
+  | "refunded"
+  | "partial";
 
 export interface InvoiceItem {
   id: string; // ID của service, product...
