@@ -15,11 +15,11 @@ interface TimeSelectionProps {
   selectedTime: string | undefined;
   onTimeChange: (time: string) => void;
   serviceId?: string | undefined;
-  technicianId?: string;
+  technicianIds?: string[];
 }
 export default function TimeSelection({
   serviceId,
-  technicianId,
+  technicianIds,
   selectedDate,
   onDateChange,
   selectedTime,
@@ -29,7 +29,7 @@ export default function TimeSelection({
     data: availableTimes,
     isLoading,
     isError,
-  } = useAvailability(serviceId, selectedDate, technicianId);
+  } = useAvailability(serviceId, selectedDate, technicianIds);
 
   return (
     <Card>

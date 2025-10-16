@@ -1,42 +1,33 @@
+// src/features/product/hooks/useProductManagement.ts
+import { useResourceManagement } from "@/features/management-pages/hooks/useResourceManagement";
+import { useProducts } from "./useProducts";
+import { Product } from "../types";
+import {
+  ProductFormValues,
+  productFormSchema,
+  StockAdjustmentFormValues,
+  stockAdjustmentSchema,
+} from "../schemas";
+import {
+  addProduct,
+  updateProduct,
+  deleteProduct,
+} from "@/features/product/api/product.api";
+import { useAdjustStock } from "@/features/inventory/hooks/useInventory";
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  productFormSchema,
-  ProductFormValues,
-  stockAdjustmentSchema,
-  StockAdjustmentFormValues,
-} from "../schemas";
-import { Product } from "../types";
-import { useProducts, useProductMutations } from "./useProducts";
-import { useAdjustStock } from "@/features/inventory/hooks/useInventory";
 
 export function useProductManagement() {
-  const { data: products = [], isLoading } = useProducts();
-  const adjustStockMutation = useAdjustStock();
-
-  const {
-    addMutation,
-    updateMutation,
-    deleteMutation,
-    isFormOpen,
-    editingItem,
-    itemToDelete,
-    handleOpenAddForm,
-    handleOpenEditForm,
-    handleCloseForm,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleConfirmDelete,
-  } = useProductMutations();
-
-  // --- State & Forms for additional logic (stock adjustment) ---
-  const [isStockFormOpen, setIsStockFormOpen] = useState(false);
-  const [productToAdjust, setProductToAdjust] = useState<Product | null>(null);
-
-  const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: {
+  const resourceManagement = useResourceManagement<Product, ProductFormValues>({
+    queryKey: ["products"],
+    useDataHook: useProducts,
+    addFn: addProduct,
+    updateFn: (vars) =>
+      updateProduct({ productId: vars.id, productData: vars.data }),
+    deleteFn: deleteProduct,
+    formSchema: productFormSchema,
+    defaultFormValues: {
       name: "",
       description: "",
       price: 0,
@@ -45,39 +36,38 @@ export function useProductManagement() {
       baseUnit: "cái",
       category_ids: [],
       images: [],
+      low_stock_threshold: 0,
+    },
+    getEditFormValues: (product) => ({
+      name: product.name,
+      description: product.description || "",
+      category_ids: product.categories.map((c) => c.id),
+      price: product.price || 0,
+      images: product.images || [],
+      isRetail: product.is_retail ?? false,
+      isConsumable: product.is_consumable ?? false,
+      baseUnit: product.base_unit,
+      consumableUnit: product.consumable_unit || "",
+      conversionRate: product.conversion_rate || 0,
+      low_stock_threshold: product.low_stock_threshold,
+    }),
+    customMessages: {
+      addSuccess: "Thêm sản phẩm thành công!",
+      updateSuccess: "Cập nhật sản phẩm thành công!",
+      deleteSuccess: "Đã xóa sản phẩm!",
     },
   });
+
+  const adjustStockMutation = useAdjustStock();
+
+  // --- State & Forms for additional logic (stock adjustment) ---
+  const [isStockFormOpen, setIsStockFormOpen] = useState(false);
+  const [productToAdjust, setProductToAdjust] = useState<Product | null>(null);
 
   const stockForm = useForm<StockAdjustmentFormValues>({
     resolver: zodResolver(stockAdjustmentSchema),
     defaultValues: { productId: "", quantity: 1, notes: "" },
   });
-
-  const handleOpenAddFormWithReset = useCallback(() => {
-    handleOpenAddForm();
-    form.reset();
-  }, [form, handleOpenAddForm]);
-
-  const handleOpenEditFormWithReset = useCallback(
-    (product: Product) => {
-      handleOpenEditForm(product);
-      form.reset({
-        ...product,
-        category_ids: product.categories.map((c) => c.id),
-        price: product.price || 0,
-        description: product.description || "",
-      });
-    },
-    [form, handleOpenEditForm]
-  );
-
-  const handleFormSubmit = (data: ProductFormValues) => {
-    if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data });
-    } else {
-      addMutation.mutate(data);
-    }
-  };
 
   // --- Stock Adjustment Handlers ---
   const handleOpenAdjustStockForm = useCallback(
@@ -97,23 +87,8 @@ export function useProductManagement() {
     });
   };
 
-  // Return object now matches the UseManagementHookResult interface
   return {
-    data: products,
-    isLoading,
-    form,
-    isFormOpen,
-    editingItem,
-    itemToDelete,
-    isSubmitting: addMutation.isPending || updateMutation.isPending,
-    handleOpenAddForm: handleOpenAddFormWithReset,
-    handleOpenEditForm: handleOpenEditFormWithReset,
-    handleCloseForm,
-    handleFormSubmit,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleConfirmDelete,
-
+    ...resourceManagement,
     // Extra properties specific to this hook
     stockForm,
     isStockFormOpen,

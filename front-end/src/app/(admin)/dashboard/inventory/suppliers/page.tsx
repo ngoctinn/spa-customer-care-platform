@@ -1,32 +1,13 @@
+// src/app/(admin)/dashboard/inventory/suppliers/page.tsx
 "use client";
 
 import React from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
 import SupplierForm from "@/features/inventory/components/suppliers/SupplierForm";
 import { useSupplierManagement } from "@/features/inventory/hooks/useSupplierManagement";
 import { Supplier } from "@/features/inventory/types";
 import { SupplierFormValues } from "@/features/inventory/schemas/supplier.schema";
-
-const supplierColumns: ColumnDef<Supplier>[] = [
-  {
-    accessorKey: "name",
-    header: "Tên Nhà Cung Cấp",
-    cell: ({ row }) => (
-      <Link
-        href={`/dashboard/inventory/suppliers/${row.original.id}`}
-        className="font-medium text-primary hover:underline"
-      >
-        {row.original.name}
-      </Link>
-    ),
-  },
-  { accessorKey: "contact_person", header: "Người liên hệ" },
-  { accessorKey: "phone", header: "Số điện thoại" },
-  { accessorKey: "email", header: "Email" },
-];
+import { supplierColumns } from "@/features/inventory/components/suppliers/columns";
 
 export default function SuppliersPage() {
   return (

@@ -31,7 +31,8 @@ export const serviceFormSchema = z.object({
 
   // --- CÁC TRƯỜNG MỚI ĐÃ ĐƯỢC THÊM VÀO SCHEMA ---
   required_staff: z.number().min(1, "Yêu cầu ít nhất 1 nhân viên."),
-  requires_bed: z.boolean().default(false),
+  // --- THAY ĐỔI: Loại bỏ .default(false) để TypeScript suy luận kiểu chính xác ---
+  requires_bed: z.boolean(),
   fixed_equipment_requirements: z.array(equipmentRequirementSchema).optional(),
   mobile_equipment_requirements: z.array(equipmentRequirementSchema).optional(),
 });

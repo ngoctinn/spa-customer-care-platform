@@ -1,9 +1,10 @@
-// src/app/(admin)/dashboard/roles/page.tsx (Refactored)
+// src/app/(admin)/dashboard/roles/page.tsx
 "use client";
 
 import React, { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Edit, Trash2, Shield } from "lucide-react";
+import Link from "next/link";
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
 import RoleForm from "@/features/user/components/RoleForm";
@@ -19,16 +20,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Component RowActions tùy chỉnh cho trang Roles
 const RoleRowActions = ({
   item,
   onEdit,
   onDelete,
-  onGoToDetail,
 }: {
   item: Role;
   onEdit: (item: Role) => void;
   onDelete: (item: Role) => void;
-  onGoToDetail: (id: string) => void;
 }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -38,9 +38,11 @@ const RoleRowActions = ({
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
       <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-      <DropdownMenuItem onClick={() => onGoToDetail(item.id)}>
-        <Shield className="mr-2 h-4 w-4" />
-        Phân quyền
+      <DropdownMenuItem asChild>
+        <Link href={`/dashboard/roles/${item.id}`}>
+          <Shield className="mr-2 h-4 w-4" />
+          Phân quyền
+        </Link>
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => onEdit(item)}>
         <Edit className="mr-2 h-4 w-4" />
@@ -61,9 +63,21 @@ const RoleRowActions = ({
 export default function RolesPage() {
   const managementHook = useRoleManagement();
 
+  // Định nghĩa cột trong component để có thể truyền các handlers từ hook
   const roleColumns = useMemo<ColumnDef<Role>[]>(
     () => [
-      { accessorKey: "name", header: "Tên vai trò" },
+      {
+        accessorKey: "name",
+        header: "Tên vai trò",
+        cell: ({ row }) => (
+          <Link
+            href={`/dashboard/roles/${row.original.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {row.original.name}
+          </Link>
+        ),
+      },
       {
         accessorKey: "description",
         header: "Mô tả",
@@ -81,16 +95,11 @@ export default function RolesPage() {
             item={row.original}
             onEdit={managementHook.handleOpenEditForm}
             onDelete={managementHook.handleOpenDeleteDialog}
-            onGoToDetail={managementHook.handleGoToDetail}
           />
         ),
       },
     ],
-    [
-      managementHook.handleOpenEditForm,
-      managementHook.handleOpenDeleteDialog,
-      managementHook.handleGoToDetail,
-    ]
+    [managementHook.handleOpenEditForm, managementHook.handleOpenDeleteDialog]
   );
 
   return (

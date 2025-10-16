@@ -1,83 +1,48 @@
 // src/features/service/hooks/useServiceManagement.ts
-import { useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useServices, useServiceMutations } from "./useServices";
+import { useResourceManagement } from "@/features/management-pages/hooks/useResourceManagement";
+import { useServices } from "./useServices";
 import { Service } from "../types";
 import { ServiceFormValues, serviceFormSchema } from "../schemas";
+import { addService, updateService, deleteService } from "../api/service.api";
 
 export function useServiceManagement() {
-  const { data: services = [], isLoading } = useServices();
-
-  const {
-    addMutation,
-    updateMutation,
-    deleteMutation,
-    isFormOpen,
-    editingItem,
-    itemToDelete,
-    handleOpenAddForm,
-    handleOpenEditForm,
-    handleCloseForm,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleConfirmDelete,
-  } = useServiceMutations();
-
-  const form = useForm<ServiceFormValues>({
-    resolver: zodResolver(serviceFormSchema),
-    defaultValues: {
+  return useResourceManagement<Service, ServiceFormValues>({
+    queryKey: ["services"],
+    useDataHook: useServices,
+    addFn: addService,
+    updateFn: (vars) =>
+      updateService({ serviceId: vars.id, serviceData: vars.data }),
+    deleteFn: deleteService,
+    formSchema: serviceFormSchema,
+    defaultFormValues: {
       name: "",
       description: "",
       category_ids: [],
       price: 0,
       duration_minutes: 30,
+      consumables: [],
+      preparation_notes: "",
+      aftercare_instructions: "",
+      contraindications: "",
       images: [],
+      is_deleted: false,
+      required_staff: 1,
+      requires_bed: false,
+      fixed_equipment_requirements: [],
+      mobile_equipment_requirements: [],
+    },
+    getEditFormValues: (service) => ({
+      ...service,
+      category_ids: service.categories.map((c) => c.id),
+      description: service.description || "",
+      preparation_notes: service.preparation_notes || "",
+      aftercare_instructions: service.aftercare_instructions || "",
+      contraindications: service.contraindications || "",
+    }),
+    customMessages: {
+      addSuccess: "Thêm dịch vụ thành công!",
+      updateSuccess: "Cập nhật dịch vụ thành công!",
+      deleteSuccess: "Đã xóa dịch vụ!",
     },
   });
-
-  const handleOpenAddFormWithReset = useCallback(() => {
-    handleOpenAddForm();
-    form.reset();
-  }, [form, handleOpenAddForm]);
-
-  const handleOpenEditFormWithReset = useCallback(
-    (service: Service) => {
-      handleOpenEditForm(service);
-      form.reset({
-        ...service,
-        category_ids: service.categories.map((c) => c.id),
-        description: service.description || "",
-        preparation_notes: service.preparation_notes || "",
-        aftercare_instructions: service.aftercare_instructions || "",
-        contraindications: service.contraindications || "",
-      });
-    },
-    [form, handleOpenEditForm]
-  );
-
-  const handleFormSubmit = (data: ServiceFormValues) => {
-    if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data });
-    } else {
-      addMutation.mutate(data);
-    }
-  };
-
-  return {
-    isLoading,
-    data: services,
-    form,
-    isFormOpen,
-    editingItem,
-    itemToDelete,
-    isSubmitting: addMutation.isPending || updateMutation.isPending,
-    handleOpenAddForm: handleOpenAddFormWithReset,
-    handleOpenEditForm: handleOpenEditFormWithReset,
-    handleCloseForm,
-    handleFormSubmit,
-    handleOpenDeleteDialog,
-    handleCloseDeleteDialog,
-    handleConfirmDelete,
-  };
 }

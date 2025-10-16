@@ -1,64 +1,17 @@
+// src/features/service/components/columns.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { Service } from "@/features/service/types";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { getPrimaryImageUrl } from "@/lib/image-utils";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Category } from "@/features/category/types";
 
-// Helper component cho các hành động trên mỗi dòng
-const ServiceRowActions = ({
-  service,
-  onEdit,
-  onDelete,
-}: {
-  service: Service;
-  onEdit: (service: Service) => void;
-  onDelete: (service: Service) => void;
-}) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Mở menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => onEdit(service)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Chỉnh sửa
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-destructive"
-          onClick={() => onDelete(service)}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Xóa
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-// Hàm tạo danh sách các cột
-export const getServiceColumns = (
-  onEdit: (service: Service) => void,
-  onDelete: (service: Service) => void
-): ColumnDef<Service>[] => [
+export const serviceColumns: ColumnDef<Service>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -88,7 +41,10 @@ export const getServiceColumns = (
         "/images/placeholder.png"
       );
       return (
-        <div className="flex items-center gap-3">
+        <Link
+          href={`/dashboard/services/${row.original.id}`}
+          className="flex items-center gap-3 group"
+        >
           <Image
             src={primaryImage}
             alt={row.original.name}
@@ -96,8 +52,10 @@ export const getServiceColumns = (
             height={40}
             className="rounded-md object-cover border"
           />
-          <span className="font-medium">{row.original.name}</span>
-        </div>
+          <span className="font-medium group-hover:underline text-primary">
+            {row.original.name}
+          </span>
+        </Link>
       );
     },
     meta: { headerTitle: "Tên dịch vụ" },
@@ -131,7 +89,6 @@ export const getServiceColumns = (
         ))}
       </div>
     ),
-
     filterFn: (row, id, value) => {
       const categoryNames = row.original.categories.map((c) => c.name);
       return value.some((val: string) => categoryNames.includes(val));
@@ -161,15 +118,5 @@ export const getServiceColumns = (
       return value.includes(status);
     },
     meta: { headerTitle: "Trạng thái" },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <ServiceRowActions
-        service={row.original}
-        onEdit={onEdit}
-        onDelete={onDelete}
-      />
-    ),
   },
 ];
