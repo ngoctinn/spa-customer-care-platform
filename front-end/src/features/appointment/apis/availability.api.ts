@@ -1,4 +1,3 @@
-// src/features/appointment/api/availability.api.ts
 import apiClient from "@/lib/apiClient";
 
 /**
@@ -13,6 +12,7 @@ export async function getAvailableSlots(
   date: string,
   technicianId?: string
 ): Promise<string[]> {
+  // Endpoint và các tham số không thay đổi
   let endpoint = `/availability?serviceId=${serviceId}&date=${date}`;
   if (technicianId) {
     endpoint += `&technicianId=${technicianId}`;

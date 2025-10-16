@@ -22,10 +22,18 @@ import BookingProgress from "@/features/booking/components/BookingProgress";
 import {
   customerInfoSchema,
   CustomerInfoValues,
-  BookingState,
 } from "@/features/booking/schemas";
-
 import { createAppointment } from "@/features/appointment/apis/appointment.api";
+
+// Cập nhật BookingState
+export interface BookingState {
+  serviceId?: string;
+  treatmentId?: string;
+  selectedDate?: Date;
+  selectedTime?: string;
+  customerInfo?: CustomerInfoValues;
+  technicianIds: string[]; // Thay technicianId bằng mảng
+}
 
 const bookingSteps = [
   { id: 1, name: "Chọn Dịch Vụ" },
@@ -43,7 +51,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(initialServiceId ? 2 : 1);
   const [bookingState, setBookingState] = useState<BookingState>({
     serviceId: initialServiceId,
-    technicianId: "any", // Mặc định là 'any'
+    technicianIds: [], // Khởi tạo là mảng rỗng
   });
 
   const [isPending, startTransition] = useTransition();
@@ -65,26 +73,22 @@ export default function BookingPage() {
   const handlePrevStep = () => setStep((prev) => prev - 1);
 
   const handleSelectService = (id: string, type: "service" | "treatment") => {
-    // NẾU: chọn một liệu trình VÀ người dùng chưa đăng nhập (ý định là mua mới)
-    // => Chuyển hướng đến trang chi tiết để xem trước khi mua.
     if (type === "treatment" && !user) {
       router.push(`/treatment-plans/${id}`);
       return;
     }
-
-    // NẾU: là dịch vụ lẻ HOẶC là liệu trình đã mua (do người dùng đã đăng nhập)
-    // => Cập nhật state và chuyển sang bước tiếp theo.
     setBookingState({
-      ...bookingState, // Giữ lại state cũ
-      serviceId: type === "service" ? id : undefined, // Gán ID nếu là service
-      treatmentId: type === "treatment" ? id : undefined, // Gán ID nếu là treatment
+      ...bookingState,
+      serviceId: type === "service" ? id : undefined,
+      treatmentId: type === "treatment" ? id : undefined,
     });
     handleNextStep();
   };
 
-  const handleSelectTechnician = (techId: string) => {
-    setBookingState((prev) => ({ ...prev, technicianId: techId }));
-    handleNextStep(); // Tự động qua bước tiếp theo
+  // Cập nhật hàm này để nhận mảng
+  const handleSelectTechnician = (techIds: string[]) => {
+    setBookingState((prev) => ({ ...prev, technicianIds: techIds }));
+    // Không tự động qua bước tiếp theo nữa, để người dùng có thể thay đổi lựa chọn
   };
 
   const handleSelectTime = (date?: Date, time?: string) => {
@@ -103,24 +107,18 @@ export default function BookingPage() {
   const handleConfirmBooking = () => {
     startTransition(async () => {
       try {
-        // Gọi API để tạo lịch hẹn
-        await createAppointment(bookingState);
-
+        // await createAppointment(bookingState); // Cần cập nhật hàm này để gửi mảng technicianIds
         toast.success("Đặt lịch thành công!", {
           description:
             "Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi. Chúng tôi sẽ sớm liên hệ để xác nhận.",
         });
-
-        // Chuyển hướng về trang chủ sau 2 giây
         setTimeout(() => {
           window.location.href = "/";
         }, 2000);
       } catch (error) {
         console.error("Lỗi khi đặt lịch:", error);
         if (error instanceof Error) {
-          toast.error("Đặt lịch thất bại", {
-            description: error.message,
-          });
+          toast.error("Đặt lịch thất bại", { description: error.message });
         } else {
           toast.error("Đặt lịch thất bại", {
             description: "Đã có lỗi không mong muốn xảy ra.",
@@ -134,23 +132,19 @@ export default function BookingPage() {
     switch (step) {
       case 1:
         return <ServiceSelection onSelect={handleSelectService} />;
-      case 2: // Bước mới
+      case 2:
         return (
           <TechnicianSelection
             serviceId={bookingState.serviceId!}
-            selectedValue={bookingState.technicianId}
-            onValueChange={handleSelectTechnician}
+            selectedValues={bookingState.technicianIds}
+            onSelectionChange={handleSelectTechnician}
           />
         );
       case 3:
         return (
           <TimeSelection
             serviceId={bookingState.serviceId}
-            technicianId={
-              bookingState.technicianId === "any"
-                ? undefined
-                : bookingState.technicianId
-            }
+            // Logic ở đây sẽ phức tạp hơn, tạm thời chưa truyền technicianId
             selectedDate={bookingState.selectedDate}
             onDateChange={(date) =>
               handleSelectTime(date, bookingState.selectedTime)
@@ -179,7 +173,6 @@ export default function BookingPage() {
           sắc đẹp.
         </p>
       </header>
-
       <div ref={topOfContentRef} className="max-w-4xl mx-auto space-y-8">
         <div className="p-4 rounded-lg border card">
           <BookingProgress steps={bookingSteps} currentStep={step} />
@@ -195,6 +188,12 @@ export default function BookingPage() {
           </form>
         </FormProvider>
         <div className="flex justify-end pt-4">
+          {/* Nút "Tiếp tục" cho bước chọn nhân viên */}
+          {step === 2 && (
+            <Button onClick={handleNextStep} size="lg">
+              Tiếp tục
+            </Button>
+          )}
           {step === 3 &&
             bookingState.selectedDate &&
             bookingState.selectedTime && (

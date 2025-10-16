@@ -1,4 +1,3 @@
-// src/features/appointment/hooks/useAppointments.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAppointments,
@@ -59,7 +58,7 @@ export const useUpdateAppointment = () => {
       data,
     }: {
       id: string;
-      data: Partial<Appointment | AppointmentFormValues>;
+      data: Partial<Appointment> | Partial<AppointmentFormValues>;
     }) => updateAppointment(id, data),
     onSuccess: () => {
       toast.success("Cập nhật lịch hẹn thành công!");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,11 +23,12 @@ import {
   FileText,
   Gift,
   CreditCard,
+  Users, // Bổ sung icon Users
 } from "lucide-react";
 import { Appointment } from "@/features/appointment/types";
 import { useCustomerById } from "@/features/customer/hooks/useCustomers";
 import { useServiceById } from "@/features/service/hooks/useServices";
-import { useStaffById } from "@/features/staff/hooks/useStaff";
+import { useStaff } from "@/features/staff/hooks/useStaff"; // Sửa đổi hook
 import Link from "next/link";
 import ApplyPurchasedItemDialog from "./ApplyPurchasedItemDialog";
 
@@ -50,7 +51,17 @@ export function AppointmentDetailDialog({
 
   const { data: customer } = useCustomerById(appointment?.customer_id || "");
   const { data: service } = useServiceById(appointment?.service_id || "");
-  const { data: technician } = useStaffById(appointment?.technician_id || "");
+
+  // Lấy danh sách tất cả nhân viên
+  const { data: allStaff = [] } = useStaff();
+
+  // TÌM KIẾM: Tìm thông tin các nhân viên được gán
+  const assignedStaff = useMemo(() => {
+    if (!appointment || !allStaff.length) return [];
+    return allStaff.filter((staff) =>
+      appointment.assigned_staff_ids.includes(staff.id)
+    );
+  }, [appointment, allStaff]);
 
   if (!appointment) return null;
 
@@ -62,7 +73,7 @@ export function AppointmentDetailDialog({
 
   const handleApplySuccess = () => {
     setIsApplyItemDialogOpen(false);
-    onClose(); // Đóng cả dialog chi tiết sau khi thành công
+    onClose();
   };
 
   return (
@@ -79,7 +90,6 @@ export function AppointmentDetailDialog({
           </DialogHeader>
           <Separator />
           <div className="grid gap-4 py-4 text-sm">
-            {/* ... giữ nguyên phần hiển thị thông tin ... */}
             <div className="flex items-center gap-4">
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -106,11 +116,20 @@ export function AppointmentDetailDialog({
                 <p>{service?.name}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <UserCog className="h-5 w-5 text-muted-foreground" />
+            {/* THAY ĐỔI: Hiển thị danh sách nhân viên */}
+            <div className="flex items-start gap-4">
+              <Users className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-semibold">Kỹ thuật viên</p>
-                <p>{technician?.full_name || "Chưa chỉ định"}</p>
+                <p className="font-semibold">Nhân viên thực hiện</p>
+                {assignedStaff.length > 0 ? (
+                  <ul className="list-disc pl-5">
+                    {assignedStaff.map((staff) => (
+                      <li key={staff.id}>{staff.full_name}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Chưa chỉ định</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
