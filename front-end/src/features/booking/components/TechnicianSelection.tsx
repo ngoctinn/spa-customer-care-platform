@@ -1,3 +1,4 @@
+// src/features/booking/components/TechnicianSelection.tsx
 "use client";
 
 import {
@@ -18,8 +19,8 @@ import { Button } from "@/components/ui/button";
 
 interface TechnicianSelectionProps {
   serviceId: string;
-  selectedValues: string[]; // Thay đổi từ selectedValue
-  onSelectionChange: (technicianIds: string[]) => void; // Thay đổi từ onValueChange
+  selectedValues: string[];
+  onSelectionChange: (technicianIds: string[]) => void;
 }
 
 export default function TechnicianSelection({
@@ -32,14 +33,22 @@ export default function TechnicianSelection({
   const { data: technicians = [], isLoading: isLoadingTechnicians } =
     useTechniciansByService(serviceId);
 
+  const requiredStaffCount = service?.required_staff || 1;
+  const isSelectionDisabled = selectedValues.length >= requiredStaffCount;
+
   const handleCheckboxChange = (techId: string) => {
-    const newSelection = selectedValues.includes(techId)
-      ? selectedValues.filter((id) => id !== techId)
-      : [...selectedValues, techId];
+    const isSelected = selectedValues.includes(techId);
+    let newSelection;
+
+    if (isSelected) {
+      newSelection = selectedValues.filter((id) => id !== techId);
+    } else if (!isSelectionDisabled) {
+      newSelection = [...selectedValues, techId];
+    } else {
+      return; // Do nothing if selection is disabled
+    }
     onSelectionChange(newSelection);
   };
-
-  const requiredStaffCount = service?.required_staff || 1;
 
   if (isLoadingService || isLoadingTechnicians) {
     return (
@@ -66,30 +75,43 @@ export default function TechnicianSelection({
           Để hệ thống tự sắp xếp
         </Button>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4">
-          {technicians.map((tech) => (
-            <Label
-              key={tech.id}
-              htmlFor={tech.id}
-              className={cn(
-                "flex flex-col items-center justify-center gap-2 rounded-md border p-4 cursor-pointer transition-colors hover:bg-muted/50",
-                selectedValues.includes(tech.id)
-                  ? "border-primary bg-muted/50"
-                  : ""
-              )}
-            >
-              <Checkbox
-                id={tech.id}
-                checked={selectedValues.includes(tech.id)}
-                onCheckedChange={() => handleCheckboxChange(tech.id)}
-                className="sr-only"
-              />
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={tech.avatar_url || ""} alt={tech.full_name} />
-                <AvatarFallback>{tech.full_name[0]}</AvatarFallback>
-              </Avatar>
-              <span className="font-medium text-center">{tech.full_name}</span>
-            </Label>
-          ))}
+          {technicians.map((tech) => {
+            const isSelected = selectedValues.includes(tech.id);
+            const isDisabled = !isSelected && isSelectionDisabled;
+            return (
+              <Label
+                key={tech.id}
+                htmlFor={tech.id}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-2 rounded-md border p-4 transition-colors",
+                  isSelected
+                    ? "border-primary bg-muted/50"
+                    : "hover:bg-muted/50",
+                  isDisabled
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer"
+                )}
+              >
+                <Checkbox
+                  id={tech.id}
+                  checked={isSelected}
+                  onCheckedChange={() => handleCheckboxChange(tech.id)}
+                  className="sr-only"
+                  disabled={isDisabled}
+                />
+                <Avatar className="h-12 w-12">
+                  <AvatarImage
+                    src={tech.avatar_url || ""}
+                    alt={tech.full_name}
+                  />
+                  <AvatarFallback>{tech.full_name[0]}</AvatarFallback>
+                </Avatar>
+                <span className="font-medium text-center">
+                  {tech.full_name}
+                </span>
+              </Label>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

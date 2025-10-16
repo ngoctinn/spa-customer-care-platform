@@ -11,7 +11,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    // highlight-start
     <div className="grid min-h-screen w-full lg:grid-cols-[256px_1fr]">
       {/* Sidebar này chỉ hiển thị trên màn hình lớn (lg) */}
       <AdminSidebar className="hidden lg:flex" />
@@ -21,6 +20,5 @@ export default function AdminLayout({
       </div>
       <MediaLibraryModal />
     </div>
-    // highlight-end
   );
 }

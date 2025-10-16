@@ -22,7 +22,7 @@ export async function onboardStaff(
  * Lấy danh sách tất cả nhân viên.
  */
 export async function getStaffList(): Promise<FullStaffProfile[]> {
-  return apiClient<FullStaffProfile[]>("/staff/"); // <-- ENDPOINT MỚI
+  return apiClient<FullStaffProfile[]>("/staff/");
 }
 
 /**
@@ -102,5 +102,3 @@ export async function getTechniciansByService(
   // Giả định API hỗ trợ query param này
   return apiClient<FullStaffProfile[]>(`/staff?service_id=${serviceId}`);
 }
-
-// XÓA các hàm không còn phù hợp: onboardStaff, deleteStaff (thay bằng offboard), updateStaffStatus

@@ -6,6 +6,16 @@ import { useCallback } from "react";
 import { useCrudMutations } from "./useCrudMutations";
 import { QueryKey } from "@tanstack/react-query";
 
+// SỬA LỖI: Thêm các thuộc tính ...Error vào đây
+interface CustomMessages {
+  addSuccess?: string;
+  addError?: string;
+  updateSuccess?: string;
+  updateError?: string;
+  deleteSuccess?: string;
+  deleteError?: string;
+}
+
 // Define the type for the configuration object the hook will receive
 interface ResourceManagementOptions<
   T extends { id: string },
@@ -16,14 +26,11 @@ interface ResourceManagementOptions<
   addFn: (data: TFormValues) => Promise<T>;
   updateFn: (params: { id: string; data: Partial<TFormValues> }) => Promise<T>;
   deleteFn: (id: string) => Promise<void>;
-  formSchema: z.ZodType<TFormValues, any, any>; // <-- FIXED TYPE
+  formSchema: z.ZodType<TFormValues, any, any>;
   defaultFormValues: TFormValues;
   getEditFormValues: (item: T) => TFormValues;
-  customMessages?: {
-    addSuccess?: string;
-    updateSuccess?: string;
-    deleteSuccess?: string;
-  };
+  // Kiểu dữ liệu này bây giờ sẽ sử dụng CustomMessages đã được cập nhật ở trên
+  customMessages?: CustomMessages;
 }
 
 /**
@@ -72,7 +79,7 @@ export function useResourceManagement<
   // 3. Initialize form
   const form = useForm<TFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues as any, // Use `as any` to bypass the stricter type check which is now handled by Zod
+    defaultValues: defaultFormValues as any,
   });
 
   // 4. Add logic to reset form when opening dialog

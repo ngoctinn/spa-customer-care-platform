@@ -21,18 +21,9 @@ import BookingProgress from "@/features/booking/components/BookingProgress";
 import {
   customerInfoSchema,
   CustomerInfoValues,
+  BookingState, // Import BookingState đã được cập nhật
 } from "@/features/booking/schemas";
 import { createAppointment } from "@/features/appointment/apis/appointment.api";
-
-// Cập nhật BookingState
-export interface BookingState {
-  serviceId?: string;
-  treatmentId?: string;
-  selectedDate?: Date;
-  selectedTime?: string;
-  customerInfo?: CustomerInfoValues;
-  technicianIds: string[]; // Thay technicianId bằng mảng
-}
 
 const bookingSteps = [
   { id: 1, name: "Chọn Dịch Vụ" },
@@ -105,7 +96,7 @@ export default function BookingPage() {
   const handleConfirmBooking = () => {
     startTransition(async () => {
       try {
-        // await createAppointment(bookingState); // Cần cập nhật hàm này để gửi mảng technicianIds
+        await createAppointment(bookingState);
         toast.success("Đặt lịch thành công!", {
           description:
             "Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi. Chúng tôi sẽ sớm liên hệ để xác nhận.",

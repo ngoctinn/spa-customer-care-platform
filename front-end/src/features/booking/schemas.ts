@@ -20,5 +20,5 @@ export interface BookingState {
   selectedDate?: Date;
   selectedTime?: string;
   customerInfo?: CustomerInfoValues;
-  technicianId?: string; // 'any' hoặc ID của kỹ thuật viên
+  technicianIds: string[];
 }

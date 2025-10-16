@@ -3,10 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
-import {
-  CategoryFormValues,
-  categoryFormSchema,
-} from "@/features/category/schemas";
+import { CategoryFormValues } from "@/features/category/schemas";
 import { Category } from "@/features/category/types";
 import { useCategoryManagement } from "@/features/category/hooks/useCategoryManagement";
 import CategoryFormFields from "@/features/category/components/CategoryFormFields";

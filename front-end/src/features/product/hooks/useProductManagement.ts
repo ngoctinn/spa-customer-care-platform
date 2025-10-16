@@ -1,4 +1,3 @@
-// src/features/product/hooks/useProductManagement.ts
 import { useResourceManagement } from "@/features/management-pages/hooks/useResourceManagement";
 import { useProducts } from "./useProducts";
 import { Product } from "../types";

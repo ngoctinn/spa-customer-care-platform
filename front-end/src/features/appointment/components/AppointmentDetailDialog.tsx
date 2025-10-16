@@ -28,7 +28,7 @@ import {
 import { Appointment } from "@/features/appointment/types";
 import { useCustomerById } from "@/features/customer/hooks/useCustomers";
 import { useServiceById } from "@/features/service/hooks/useServices";
-import { useStaff } from "@/features/staff/hooks/useStaff"; // Sửa đổi hook
+import { useStaff } from "@/features/staff/hooks/useStaff";
 import Link from "next/link";
 import ApplyPurchasedItemDialog from "./ApplyPurchasedItemDialog";
 

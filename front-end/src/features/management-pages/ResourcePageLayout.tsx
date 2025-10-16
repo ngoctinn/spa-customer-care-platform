@@ -20,10 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // --- Import các kiểu đã định nghĩa ---
-import {
-  ResourcePageLayoutProps,
-  UseManagementHookResult,
-} from "@/features/management-pages/types";
+import { ResourcePageLayoutProps } from "@/features/management-pages/types";
 
 // Component Actions cho mỗi dòng, được layout tự quản lý
 const RowActions = <T extends { id: string }>({
