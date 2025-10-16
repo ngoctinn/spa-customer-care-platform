@@ -2,7 +2,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Eye, Printer, Trash2, Edit } from "lucide-react"; // Thêm icon Edit
+import { MoreHorizontal, Eye, Printer, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,51 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { WarehouseSlip } from "../../types";
 
-// Helper component cho các hành động trên mỗi dòng
-const SlipRowActions = ({
-  slip,
-  onView,
-  onEdit, // Thêm prop onEdit
-  onDelete,
-}: {
-  slip: WarehouseSlip;
-  onView: (slip: WarehouseSlip) => void;
-  onEdit: (slip: WarehouseSlip) => void; // Định nghĩa kiểu
-  onDelete: (slip: WarehouseSlip) => void;
-}) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="h-8 w-8 p-0">
-        <span className="sr-only">Mở menu</span>
-        <MoreHorizontal className="h-4 w-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
-      <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-      <DropdownMenuItem onClick={() => onView(slip)}>
-        <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
-      </DropdownMenuItem>
-      {/* Thêm mục Sửa */}
-      <DropdownMenuItem onClick={() => onEdit(slip)}>
-        <Edit className="mr-2 h-4 w-4" /> Sửa phiếu
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => alert(`In phiếu ${slip.code}`)}>
-        <Printer className="mr-2 h-4 w-4" /> In phiếu
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        className="text-destructive"
-        onClick={() => onDelete(slip)}
-      >
-        <Trash2 className="mr-2 h-4 w-4" /> Xóa phiếu
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
-
 // Hàm tạo danh sách các cột cho bảng
 export const getSlipColumns = (
   onView: (slip: WarehouseSlip) => void,
-  onEdit: (slip: WarehouseSlip) => void, // Thêm onEdit
+  onEdit: (slip: WarehouseSlip) => void,
   onDelete: (slip: WarehouseSlip) => void
 ): ColumnDef<WarehouseSlip>[] => [
   {
@@ -88,7 +47,7 @@ export const getSlipColumns = (
       new Date(row.original.created_at).toLocaleDateString("vi-VN"),
   },
   {
-    accessorKey: "supplier.name", // Cập nhật để sort/filter
+    accessorKey: "supplier.name",
     header: "Nhà Cung Cấp",
     cell: ({ row }) => row.original.supplier?.name || "N/A",
   },
@@ -103,12 +62,34 @@ export const getSlipColumns = (
   {
     id: "actions",
     cell: ({ row }) => (
-      <SlipRowActions
-        slip={row.original}
-        onView={onView}
-        onEdit={onEdit}
-        onDelete={onDelete}
-      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Mở menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => onView(row.original)}>
+            <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onEdit(row.original)}>
+            <Edit className="mr-2 h-4 w-4" /> Sửa phiếu
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => alert(`In phiếu ${row.original.code}`)}
+          >
+            <Printer className="mr-2 h-4 w-4" /> In phiếu
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => onDelete(row.original)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" /> Xóa phiếu
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     ),
   },
 ];

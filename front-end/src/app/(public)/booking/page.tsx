@@ -1,4 +1,3 @@
-// src/app/(public)/booking/page.tsx
 "use client";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { useRouter } from "next/navigation";
@@ -51,7 +50,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(initialServiceId ? 2 : 1);
   const [bookingState, setBookingState] = useState<BookingState>({
     serviceId: initialServiceId,
-    technicianIds: [], // Khởi tạo là mảng rỗng
+    technicianIds: [],
   });
 
   const [isPending, startTransition] = useTransition();
@@ -88,7 +87,6 @@ export default function BookingPage() {
   // Cập nhật hàm này để nhận mảng
   const handleSelectTechnician = (techIds: string[]) => {
     setBookingState((prev) => ({ ...prev, technicianIds: techIds }));
-    // Không tự động qua bước tiếp theo nữa, để người dùng có thể thay đổi lựa chọn
   };
 
   const handleSelectTime = (date?: Date, time?: string) => {
@@ -144,7 +142,7 @@ export default function BookingPage() {
         return (
           <TimeSelection
             serviceId={bookingState.serviceId}
-            // Logic ở đây sẽ phức tạp hơn, tạm thời chưa truyền technicianId
+            technicianIds={bookingState.technicianIds}
             selectedDate={bookingState.selectedDate}
             onDateChange={(date) =>
               handleSelectTime(date, bookingState.selectedTime)
