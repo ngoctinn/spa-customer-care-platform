@@ -24,12 +24,12 @@ import { ServiceFormValues } from "@/features/service/schemas";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { ImageSelectionInput } from "@/features/media/components/ImageSelectionInput";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ServiceForm() {
   const form = useFormContext<ServiceFormValues>();
   const { data: products = [] } = useProducts();
 
-  // Lọc ra các sản phẩm là hàng tiêu hao
   const consumableProducts = products.filter((p) => p.is_consumable);
 
   const { fields, append, remove } = useFieldArray({
@@ -74,13 +74,10 @@ export default function ServiceForm() {
         <FormField
           control={form.control}
           name="price"
-          render={(
-            { field } // Nhận vào { field }
-          ) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Giá dịch vụ</FormLabel>
               <FormControl>
-                {/* Thay thế bằng PriceInput */}
                 <PriceInput name={field.name} label="Giá dịch vụ" />
               </FormControl>
               <FormMessage />
@@ -113,6 +110,48 @@ export default function ServiceForm() {
           )}
         />
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField
+          control={form.control}
+          name="required_staff"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Số lượng nhân viên</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="1"
+                  {...field}
+                  value={field.value || 1}
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value, 10) || 1)
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="requires_bed"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-end space-x-3 space-y-0 rounded-md border p-4 h-full">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Yêu cầu giường riêng</FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
+
       <FormField
         name="images"
         control={form.control}

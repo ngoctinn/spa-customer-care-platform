@@ -11,6 +11,11 @@ const serviceConsumableSchema = z.object({
   quantityUsed: z.number().min(0.01, "Số lượng phải lớn hơn 0."),
 });
 
+const equipmentRequirementSchema = z.object({
+  equipment_id: z.string().uuid("ID thiết bị không hợp lệ."),
+  quantity: z.number().min(1, "Số lượng phải lớn hơn 0."),
+});
+
 export const serviceFormSchema = z.object({
   name: nameSchema,
   description: descriptionSchema,
@@ -23,6 +28,12 @@ export const serviceFormSchema = z.object({
   contraindications: z.string().optional(),
   images: z.array(imageSchema).optional(),
   is_deleted: z.boolean().optional(),
+
+  // --- CÁC TRƯỜNG MỚI ĐÃ ĐƯỢC THÊM VÀO SCHEMA ---
+  required_staff: z.number().min(1, "Yêu cầu ít nhất 1 nhân viên."),
+  requires_bed: z.boolean().default(false),
+  fixed_equipment_requirements: z.array(equipmentRequirementSchema).optional(),
+  mobile_equipment_requirements: z.array(equipmentRequirementSchema).optional(),
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;
