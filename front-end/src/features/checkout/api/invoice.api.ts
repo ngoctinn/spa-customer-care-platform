@@ -1,5 +1,3 @@
-// src/features/checkout/api/invoice.api.ts
-// src/features/billing/api/invoice.api.ts
 import { Invoice, ShippingAddress } from "@/features/checkout/types";
 import { v4 as uuidv4 } from "uuid";
 import { Customer } from "@/features/customer/types";
@@ -65,6 +63,7 @@ export type InvoiceCreationData = Omit<
   pointsToRedeem?: number;
   prepaidCardId?: string;
   prepaidAmountToUse?: number;
+  amount_paid?: number;
 };
 
 export const createInvoice = async (

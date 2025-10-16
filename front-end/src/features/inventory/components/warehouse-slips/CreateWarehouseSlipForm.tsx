@@ -1,4 +1,3 @@
-// src/features/inventory/components/warehouse-slips/CreateWarehouseSlipForm.tsx
 "use client";
 
 import { useForm, FormProvider } from "react-hook-form";
@@ -41,12 +40,12 @@ import {
 } from "@/features/inventory/schemas/warehouse-slip.schema";
 import { useSuppliers } from "../../hooks/useSuppliers";
 import { WarehouseSlip } from "../../types";
+import { toast } from "sonner";
 
 interface CreateWarehouseSlipFormProps {
   type: "IMPORT" | "EXPORT";
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
-  // Prop mới để truyền dữ liệu phiếu cần sửa
   initialData?: WarehouseSlip;
 }
 
@@ -74,36 +73,34 @@ export function CreateWarehouseSlipForm({
     },
   });
 
-  // Điền dữ liệu cho form sửa
   useEffect(() => {
     if (initialData) {
       form.reset({
         notes: initialData.notes || "",
         ...(isImport && { supplier_id: initialData.supplier?.id }),
       });
+      // Cần lấy thông tin tồn kho mới nhất khi edit
+      // Giả sử `initialData.items` có thông tin `stock_quantity`
       setItems(initialData.items);
     }
   }, [initialData, form, setItems, isImport]);
 
   useEffect(() => {
-    form.setValue("items", items);
+    form.setValue("items", items, { shouldValidate: true });
   }, [items, form]);
 
   useEffect(() => {
-    // Xóa item trong store khi component unmount
     return () => clearItems();
   }, [clearItems]);
 
   const handleProductSelect = (product: Product) => {
-    // Không cho phép xuất quá tồn kho
     if (!isImport && product.stock <= 0) {
-      alert("Sản phẩm đã hết hàng, không thể xuất kho.");
+      toast.warning("Sản phẩm đã hết hàng, không thể thêm vào phiếu xuất.");
       return;
     }
     addItem(product, isImport);
   };
 
-  // Tự động tính tổng tiền
   const totalAmount = items.reduce(
     (sum, item) => sum + item.quantity * (item.unit_price || 0),
     0
@@ -196,19 +193,29 @@ export function CreateWarehouseSlipForm({
                     </TableCell>
                   </TableRow>
                 )}
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <TableRow key={item.product_id}>
                     <TableCell>{item.product_name}</TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItem(item.product_id, {
-                            quantity: parseInt(e.target.value) || 1,
-                          })
-                        }
+                      {/* ++ THAY ĐỔI: Bọc Input trong FormField để hiển thị lỗi ++ */}
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.quantity`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(parseInt(e.target.value) || 1)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                     </TableCell>
                     {isImport && (

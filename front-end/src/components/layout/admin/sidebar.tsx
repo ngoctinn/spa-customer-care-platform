@@ -1,3 +1,4 @@
+// src/components/layout/admin/sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -21,6 +22,9 @@ import {
   CalendarOff,
   Wallet,
   ChevronDown,
+  BedDouble,
+  DoorClosed,
+  Cpu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,9 +49,6 @@ type NavGroup = {
   links: NavLink[];
 };
 
-// --- YÊU CẦU 1: PHÂN CẤP MENU ---
-// Cấu trúc dữ liệu được tổ chức lại thành các nhóm (navGroups)
-// và các mục menu con (sublinks) để tạo ra hệ thống phân cấp rõ ràng.
 const navGroups: NavGroup[] = [
   {
     title: "Hoạt động",
@@ -74,7 +75,6 @@ const navGroups: NavGroup[] = [
         label: "Dịch vụ",
         icon: Scissors,
         sublinks: [
-          // Menu Dịch vụ có các mục con
           {
             href: "/dashboard/services",
             label: "Danh sách",
@@ -92,7 +92,6 @@ const navGroups: NavGroup[] = [
         label: "Sản phẩm",
         icon: Tag,
         sublinks: [
-          // Menu Sản phẩm có các mục con
           {
             href: "/dashboard/products",
             label: "Danh sách",
@@ -108,7 +107,26 @@ const navGroups: NavGroup[] = [
       { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
     ],
   },
-  // ... (các nhóm khác tương tự)
+  {
+    title: "Quản lý Tài nguyên",
+    links: [
+      {
+        href: "/dashboard/resources/rooms",
+        label: "Phòng",
+        icon: DoorClosed,
+      },
+      {
+        href: "/dashboard/resources/beds",
+        label: "Giường",
+        icon: BedDouble,
+      },
+      {
+        href: "/dashboard/resources/equipment",
+        label: "Thiết bị",
+        icon: Cpu,
+      },
+    ],
+  },
   {
     title: "Quản lý Kho",
     links: [
@@ -132,7 +150,7 @@ const navGroups: NavGroup[] = [
   {
     title: "Nhân sự",
     links: [
-      { href: "/dashboard/staff", label: "Nhân viên", icon: UserCog },
+      { href: "/dashboard/staffs", label: "Nhân viên", icon: UserCog },
       {
         href: "/dashboard/roles",
         label: "Vai trò & Phân quyền",
@@ -180,10 +198,6 @@ export function AdminSidebar({ className }: { className?: string }) {
           <span>Serenity Spa</span>
         </Link>
       </div>
-
-      {/* --- YÊU CẦU 3: TÍCH HỢP THANH CUỘN --- */}
-      {/* ScrollArea bao bọc toàn bộ menu, với `flex-1` nó sẽ chiếm hết không gian còn lại
-          và tự động hiển thị thanh cuộn khi nội dung vượt quá chiều cao. */}
       <ScrollArea className="flex-1">
         <nav className="p-4 space-y-4">
           {navGroups.map((group) => (
@@ -194,18 +208,13 @@ export function AdminSidebar({ className }: { className?: string }) {
               <div className="space-y-1">
                 {group.links.map((link) =>
                   link.sublinks ? (
-                    // NẾU CÓ SUBLINKS: Render menu `Collapsible`
                     <Collapsible
                       key={link.href}
-                      // --- YÊU CẦU 2: TRẠNG THÁI ĐÓNG/MỞ ---
-                      // Tự động mở menu nếu URL hiện tại bắt đầu bằng href của menu cha.
-                      // Ví dụ: khi ở trang '/dashboard/services/new', menu 'Dịch vụ' sẽ mở.
                       open={pathname.startsWith(link.href)}
                       className="space-y-1"
                     >
                       <CollapsibleTrigger asChild>
                         <Button
-                          // Đặt trạng thái active cho menu cha nếu có menu con đang active
                           variant={
                             isSublinkActive(link.sublinks)
                               ? "secondary"
@@ -236,7 +245,6 @@ export function AdminSidebar({ className }: { className?: string }) {
                       </CollapsibleContent>
                     </Collapsible>
                   ) : (
-                    // NẾU KHÔNG CÓ SUBLINKS: Render Button như bình thường
                     <Button
                       key={link.href}
                       asChild

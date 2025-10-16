@@ -7,7 +7,7 @@ import {
   getTimeEntries,
   checkIn,
   checkOut,
-  getMySchedules, // Import hàm mới
+  getMySchedules,
 } from "@/features/work-schedules/api/schedule.api";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
@@ -31,10 +31,15 @@ import {
   CheckCircle,
   XCircle,
   HelpCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FlexibleSchedule } from "@/features/work-schedules/types";
-import { format, isWithinInterval, subMinutes } from "date-fns";
+import { format, isWithinInterval, subMinutes, getDay } from "date-fns";
+import { useCurrentStaffProfile } from "@/features/staff/hooks/useCurrentStaffProfile";
+import { useWorkSchedule } from "@/features/work-schedules/hooks/useWorkSchedule";
+import { FullPageLoader } from "@/components/ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const scheduleSubmissionSchema = z
   .object({
@@ -112,6 +117,10 @@ const MyScheduleList = ({ schedules }: { schedules: FlexibleSchedule[] }) => {
 export default function EmployeeSchedulePage() {
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [validationResult, setValidationResult] = useState({
+    isValid: true,
+    message: "",
+  });
 
   // --- Real-time clock ---
   useEffect(() => {
@@ -121,12 +130,16 @@ export default function EmployeeSchedulePage() {
     return () => clearInterval(timer);
   }, []);
 
+  const { staffProfile, isLoading: isLoadingStaff } = useCurrentStaffProfile();
+  const { data: workSchedule, isLoading: isLoadingSchedule } = useWorkSchedule(
+    staffProfile?.id || ""
+  );
+
   const { data: timeEntries = [] } = useQuery({
     queryKey: ["myTimeEntries"],
     queryFn: getTimeEntries,
   });
 
-  // Lấy các ca làm việc của nhân viên
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date();
@@ -146,6 +159,55 @@ export default function EmployeeSchedulePage() {
       end_time: "",
     },
   });
+
+  const { watch } = form;
+  const watchedDate = watch("date");
+  const watchedStartTime = watch("start_time");
+  const watchedEndTime = watch("end_time");
+
+  useEffect(() => {
+    if (!watchedDate || !watchedStartTime || !watchedEndTime || !workSchedule) {
+      setValidationResult({ isValid: true, message: "" });
+      return;
+    }
+
+    // JS getDay(): Sunday - 0... Saturday - 6. Backend day_of_week: Monday - 1...Sunday - 7
+    let dayOfWeek = getDay(watchedDate);
+    if (dayOfWeek === 0) dayOfWeek = 7; // Convert Sunday
+
+    const fixedDaySchedule = workSchedule.find(
+      (day) => day.day_of_week === dayOfWeek
+    );
+
+    if (!fixedDaySchedule || !fixedDaySchedule.is_active) {
+      setValidationResult({
+        isValid: false,
+        message: "Bạn không có lịch làm việc cố định vào ngày đã chọn.",
+      });
+      return;
+    }
+
+    if (!fixedDaySchedule.start_time || !fixedDaySchedule.end_time) {
+      setValidationResult({
+        isValid: false,
+        message: "Lịch làm việc cố định cho ngày này không hợp lệ.",
+      });
+      return;
+    }
+
+    if (
+      watchedStartTime < fixedDaySchedule.start_time ||
+      watchedEndTime > fixedDaySchedule.end_time
+    ) {
+      setValidationResult({
+        isValid: false,
+        message: `Ca đăng ký phải nằm trong khung giờ làm việc cố định (${fixedDaySchedule.start_time} - ${fixedDaySchedule.end_time}).`,
+      });
+      return;
+    }
+
+    setValidationResult({ isValid: true, message: "" });
+  }, [watchedDate, watchedStartTime, watchedEndTime, workSchedule]);
 
   const submissionMutation = useMutation({
     mutationFn: submitFlexibleSchedule,
@@ -220,6 +282,11 @@ export default function EmployeeSchedulePage() {
       );
     });
   }, [mySchedules, timeEntries]);
+
+  if (isLoadingStaff || isLoadingSchedule) {
+    return <FullPageLoader text="Đang tải dữ liệu lịch làm việc..." />;
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title="Lịch làm việc & Chấm công của tôi" />
@@ -353,7 +420,21 @@ export default function EmployeeSchedulePage() {
                   </div>
                 )}
               />
-              <Button type="submit" disabled={submissionMutation.isPending}>
+              {!validationResult.isValid && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Đăng ký không hợp lệ</AlertTitle>
+                  <AlertDescription>
+                    {validationResult.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+              <Button
+                type="submit"
+                disabled={
+                  submissionMutation.isPending || !validationResult.isValid
+                }
+              >
                 {submissionMutation.isPending ? "Đang gửi..." : "Gửi Đăng ký"}
               </Button>
             </div>

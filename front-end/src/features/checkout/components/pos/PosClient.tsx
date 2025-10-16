@@ -20,9 +20,14 @@ import { PosInvoice } from "./PosInvoice";
 import { PosActions } from "./PosActions";
 import { XCircle } from "lucide-react";
 import { useCreateInvoice } from "@/features/checkout/hooks/usePos";
+import { PaymentMethod } from "@/features/checkout/types";
 
-// Schema cho form thanh toán
+// ++ THAY ĐỔI: Mở rộng schema để bao gồm phương thức thanh toán và số tiền đã trả ++
 const paymentSchema = z.object({
+  payment_method: z.custom<PaymentMethod>((val) => !!val, {
+    message: "Vui lòng chọn phương thức thanh toán.",
+  }),
+  amount_paid: z.number().min(0, "Số tiền trả không được âm.").optional(),
   notes: z.string().optional(),
 });
 type PaymentFormValues = z.infer<typeof paymentSchema>;
@@ -31,8 +36,7 @@ export function PosClient() {
   const searchParams = useSearchParams();
   const appointmentId = searchParams.get("appointmentId");
 
-  // Lấy state và actions từ store
-  const { setCustomer, addItem, clear, setAppointmentId, receiptRef } =
+  const { setCustomer, addItem, clear, setAppointmentId, receiptRef, total } =
     usePosStore();
 
   const { data: appointment, isLoading: isLoadingAppointment } =
@@ -44,14 +48,24 @@ export function PosClient() {
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
+    // ++ THÊM: Gán giá trị mặc định ++
+    defaultValues: {
+      payment_method: "cash",
+      amount_paid: 0,
+      notes: "",
+    },
   });
+
+  // ++ THÊM: Theo dõi tổng tiền để tự động cập nhật số tiền khách trả ++
+  useEffect(() => {
+    form.setValue("amount_paid", total);
+  }, [total, form]);
 
   const { createInvoiceMutation, isPending } = useCreateInvoice();
 
-  // Effect để tải dữ liệu từ lịch hẹn
   useEffect(() => {
     if (appointment && appointmentCustomer && appointmentService) {
-      clear(); // Xóa state cũ trước khi thêm mới
+      clear();
       setCustomer(appointmentCustomer);
       addItem({
         id: appointmentService.id,
@@ -63,29 +77,33 @@ export function PosClient() {
       });
       setAppointmentId(appointment.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointment, appointmentCustomer, appointmentService]);
+  }, [
+    appointment,
+    appointmentCustomer,
+    appointmentService,
+    clear,
+    setCustomer,
+    addItem,
+    setAppointmentId,
+  ]);
 
   const handlePrint = useReactToPrint({
     // @ts-ignore - This is the correct property for modern react-to-print versions.
     content: () => receiptRef.current,
   });
 
+  // ++ THAY ĐỔI: Truyền toàn bộ dữ liệu form vào mutation ++
   const handleSubmit = form.handleSubmit((data) => {
-    createInvoiceMutation.mutate(
-      { notes: data.notes },
-      {
-        onSuccess: () => {
-          toast.success("Thanh toán thành công!", {
-            action: {
-              label: "In Hóa Đơn",
-              onClick: handlePrint,
-            },
-          });
-          // Không clear() ngay để người dùng có thể in hóa đơn
-        },
-      }
-    );
+    createInvoiceMutation.mutate(data, {
+      onSuccess: () => {
+        toast.success("Thanh toán thành công!", {
+          action: {
+            label: "In Hóa Đơn",
+            onClick: handlePrint,
+          },
+        });
+      },
+    });
   });
 
   if (isLoadingAppointment || isLoadingCustomer || isLoadingService) {
@@ -117,7 +135,6 @@ export function PosClient() {
             {isPending ? "Đang xử lý..." : "Hoàn tất Thanh toán"}
           </Button>
         </div>
-        {/* Component hóa đơn ẩn để in */}
         <div className="hidden">
           {/* <ReceiptToPrint ref={receiptRef} /> */}
         </div>

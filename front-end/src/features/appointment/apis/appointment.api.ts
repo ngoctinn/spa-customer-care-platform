@@ -1,3 +1,4 @@
+// src/features/appointment/apis/appointment.api.ts
 import { BookingState } from "@/features/booking/schemas";
 import { Appointment } from "@/features/appointment/types";
 import apiClient from "@/lib/apiClient";
@@ -15,7 +16,11 @@ export async function createAppointment(
   // Chuyển đổi dữ liệu từ front-end thành định dạng mà back-end mong muốn
   const payload = {
     service_id: bookingData.serviceId,
-    treatment_plan_id: bookingData.treatmentId, // (Nếu có)
+    // ++ SỬA ĐỔI: Gửi thêm các ID liên quan ++
+    treatment_package_id: bookingData.treatmentPackageId,
+    treatment_session_id: bookingData.sessionId,
+    purchased_service_id: bookingData.purchasedServiceId,
+    // -- Kết thúc sửa đổi --
     start_time: new Date(
       `${bookingData.selectedDate?.toISOString().split("T")[0]}T${
         bookingData.selectedTime

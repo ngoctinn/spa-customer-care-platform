@@ -1,4 +1,3 @@
-// src/features/booking/components/PackageSelection.tsx
 "use client";
 
 import { useCustomerPackages } from "@/features/treatment/hooks/useCustomerPackages";
