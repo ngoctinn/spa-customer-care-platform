@@ -1,8 +1,7 @@
 "use client";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +15,7 @@ import CustomerInfoForm from "@/features/booking/components/CustomerInfoForm";
 import Confirmation from "@/features/booking/components/Confirmation";
 import TechnicianSelection from "@/features/booking/components/TechnicianSelection";
 import BookingProgress from "@/features/booking/components/BookingProgress";
-import PackageSelection from "@/features/booking/components/PackageSelection"; // ++ THÊM IMPORT ++
+import PackageSelection from "@/features/booking/components/PackageSelection";
 
 // Import schemas và types
 import {
@@ -24,8 +23,13 @@ import {
   CustomerInfoValues,
   BookingState,
 } from "@/features/booking/schemas";
-import { createAppointment } from "@/features/appointment/apis/appointment.api";
-import { TreatmentPackage } from "@/features/treatment/types"; // ++ THÊM IMPORT ++
+import {
+  createAppointment,
+  updateAppointment,
+} from "@/features/appointment/apis/appointment.api";
+import { TreatmentPackage } from "@/features/treatment/types";
+import { useAppointmentById } from "@/features/appointment/hooks/useAppointments";
+import { FullPageLoader } from "@/components/ui/spinner";
 
 const bookingSteps = [
   { id: 1, name: "Chọn Dịch Vụ" },
@@ -37,7 +41,7 @@ const bookingSteps = [
 
 const bookingStepsForPackage = [
   { id: 1, name: "Chọn Gói" },
-  ...bookingSteps.slice(1), // Giữ lại các bước sau
+  ...bookingSteps.slice(1),
 ];
 
 export default function BookingPage() {
@@ -45,44 +49,59 @@ export default function BookingPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ++ ĐỌC PARAMS TỪ URL ++
   const initialServiceId = searchParams.get("serviceId") || undefined;
-  const initialTreatmentId = searchParams.get("treatmentId") || undefined;
+  const initialTreatmentIdParam = searchParams.get("treatmentId") || undefined;
   const purchasedServiceId =
     searchParams.get("purchasedServiceId") || undefined;
   const sessionId = searchParams.get("sessionId") || undefined;
+  const rescheduleId = searchParams.get("rescheduleId") || undefined;
 
   const [step, setStep] = useState(1);
   const [bookingState, setBookingState] = useState<BookingState>({
     serviceId: initialServiceId,
-    treatmentId: initialTreatmentId,
+    treatmentId: initialTreatmentIdParam,
     purchasedServiceId: purchasedServiceId,
     sessionId: sessionId,
     technicianIds: [],
   });
   const [isPending, startTransition] = useTransition();
   const topOfContentRef = useRef<HTMLDivElement>(null);
+  const [initialTreatmentId, setInitialTreatmentId] = useState(
+    initialTreatmentIdParam
+  );
+
+  const { data: appointmentToReschedule, isLoading: isLoadingAppointment } =
+    useAppointmentById(rescheduleId!);
 
   const form = useForm<CustomerInfoValues>({
     resolver: zodResolver(customerInfoSchema),
     defaultValues: { name: "", phone: "", email: "", note: "" },
   });
 
-  // ++ LOGIC MỚI: Xử lý các luồng khác nhau ++
   useEffect(() => {
-    // Luồng 1: Đặt lịch cho liệu trình đã mua
-    if (initialTreatmentId) {
-      setStep(1); // Bắt đầu từ bước chọn gói
+    if (rescheduleId && appointmentToReschedule) {
+      setBookingState((prev) => ({
+        ...prev,
+        serviceId: appointmentToReschedule.service_id,
+        technicianIds: appointmentToReschedule.assigned_staff_ids || [],
+        treatmentPackageId: appointmentToReschedule.treatment_package_id,
+        sessionId: appointmentToReschedule.treatment_session_id,
+        purchasedServiceId: undefined, // Logic for this can be added if needed
+      }));
+      setStep(2); // Start from technician selection
+    } else if (initialTreatmentId) {
+      setStep(1); // Start from package selection
+    } else if (initialServiceId) {
+      setStep(2); // Skip service selection, go to technician
+    } else {
+      setStep(1); // Normal flow
     }
-    // Luồng 2: Đặt lịch cho dịch vụ lẻ (mới hoặc đã mua)
-    else if (initialServiceId) {
-      setStep(2); // Bỏ qua bước 1, vào thẳng chọn KTV
-    }
-    // Luồng 3: Đặt lịch thông thường
-    else {
-      setStep(1);
-    }
-  }, [initialTreatmentId, initialServiceId]);
+  }, [
+    initialTreatmentId,
+    initialServiceId,
+    rescheduleId,
+    appointmentToReschedule,
+  ]);
 
   useEffect(() => {
     if (topOfContentRef.current) {
@@ -93,22 +112,21 @@ export default function BookingPage() {
   const handleNextStep = () => setStep((prev) => prev + 1);
   const handlePrevStep = () => setStep((prev) => prev - 1);
 
-  // Xử lý khi chọn dịch vụ/liệu trình ở bước 1 (luồng thông thường)
   const handleSelectService = (id: string, type: "service" | "treatment") => {
     if (type === "treatment") {
-      // Chuyển hướng đến trang chi tiết liệu trình để mua
-      router.push(`/treatment-plans/${id}`);
+      setInitialTreatmentId(id); // Set state to trigger package selection flow
+      setBookingState((prev) => ({ ...prev, treatmentId: id }));
+      // The useEffect will handle setting the correct step
       return;
     }
     setBookingState((prev) => ({
       ...prev,
       serviceId: id,
-      treatmentId: undefined, // Reset treatmentId
+      treatmentId: undefined,
     }));
     handleNextStep();
   };
 
-  // ++ HÀM MỚI: Xử lý khi chọn một gói liệu trình ++
   const handleSelectPackage = (pkg: TreatmentPackage) => {
     const session = pkg.sessions.find((s) => s.id === sessionId);
     if (!session) {
@@ -118,16 +136,16 @@ export default function BookingPage() {
 
     setBookingState((prev) => ({
       ...prev,
-      serviceId: (session as any).service_id, // Cần backend trả về service_id trong session
+      serviceId: (session as any).service_id,
       treatmentPackageId: pkg.id,
       sessionId: session.id,
     }));
-    setStep(2); // Chuyển đến bước chọn KTV
+    setStep(2);
   };
 
   const handleSelectTechnician = (techIds: string[]) => {
     setBookingState((prev) => ({ ...prev, technicianIds: techIds }));
-    handleNextStep(); // Tự động chuyển bước khi chọn xong
+    handleNextStep();
   };
 
   const handleSelectTime = (date?: Date, time?: string) => {
@@ -146,15 +164,23 @@ export default function BookingPage() {
   const handleConfirmBooking = () => {
     startTransition(async () => {
       try {
-        await createAppointment(bookingState);
-        toast.success("Đặt lịch thành công!", {
-          description:
-            "Cảm ơn bạn đã tin tưởng. Chúng tôi sẽ sớm liên hệ để xác nhận.",
-        });
-        // Chuyển hướng về trang lịch trình của tôi để xem lịch hẹn mới
+        if (rescheduleId) {
+          // UPDATE (RESCHEDULE) LOGIC
+          await updateAppointment(rescheduleId, bookingState);
+          toast.success("Thay đổi lịch hẹn thành công!", {
+            description: "Chúng tôi đã cập nhật thông tin lịch hẹn của bạn.",
+          });
+        } else {
+          // CREATE LOGIC
+          await createAppointment(bookingState);
+          toast.success("Đặt lịch thành công!", {
+            description:
+              "Cảm ơn bạn đã tin tưởng. Chúng tôi sẽ sớm liên hệ để xác nhận.",
+          });
+        }
         router.push("/account/my-schedule");
       } catch (error) {
-        toast.error("Đặt lịch thất bại", {
+        toast.error("Thao tác thất bại", {
           description:
             error instanceof Error
               ? error.message
@@ -164,8 +190,11 @@ export default function BookingPage() {
     });
   };
 
+  if (isLoadingAppointment) {
+    return <FullPageLoader text="Đang tải thông tin lịch hẹn..." />;
+  }
+
   const renderStep = () => {
-    // Luồng đặt từ gói liệu trình
     if (initialTreatmentId) {
       switch (step) {
         case 1:
@@ -175,11 +204,9 @@ export default function BookingPage() {
               onSelect={handleSelectPackage}
             />
           );
-        // Các case sau dùng chung
       }
     }
 
-    // Luồng chung (cho dịch vụ mới, dịch vụ lẻ đã mua)
     switch (step) {
       case 1:
         return <ServiceSelection onSelect={handleSelectService} />;
@@ -207,6 +234,11 @@ export default function BookingPage() {
           />
         );
       case 4:
+        // Skip this step if rescheduling and user is logged in
+        if (rescheduleId && user) {
+          handleNextStep();
+          return null;
+        }
         return <CustomerInfoForm />;
       case 5:
         return <Confirmation bookingState={bookingState} />;
@@ -216,11 +248,12 @@ export default function BookingPage() {
   };
 
   const steps = initialTreatmentId ? bookingStepsForPackage : bookingSteps;
+  const headerTitle = rescheduleId ? "Thay đổi lịch hẹn" : "Đặt Lịch Hẹn";
 
   return (
     <div className="container mx-auto px-4 py-12">
       <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Đặt Lịch Hẹn</h1>
+        <h1 className="text-4xl font-bold tracking-tight">{headerTitle}</h1>
         <p className="text-muted-foreground mt-2">
           Chỉ với vài bước đơn giản để có ngay một cuộc hẹn.
         </p>
@@ -261,7 +294,11 @@ export default function BookingPage() {
               size="lg"
               disabled={isPending}
             >
-              {isPending ? "Đang xử lý..." : "Xác nhận & Hoàn tất"}
+              {isPending
+                ? "Đang xử lý..."
+                : rescheduleId
+                ? "Xác nhận thay đổi"
+                : "Xác nhận & Hoàn tất"}
             </Button>
           )}
         </div>

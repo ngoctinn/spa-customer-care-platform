@@ -1,4 +1,3 @@
-// src/app/(public)/checkout/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gift } from "lucide-react";
 import { createOrder } from "@/features/checkout/api/invoice.api";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import useCartStore from "@/features/cart/stores/cart-store";
@@ -34,6 +33,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCustomerProfile } from "@/features/customer/hooks/useCustomerProfile";
+import { applyPrepaidCard } from "@/features/prepaid-card/api/prepaid-card.api"; // ++ THÊM IMPORT ++
+import { Label } from "@/components/ui/label";
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -45,6 +47,11 @@ export default function CheckoutPage() {
     null
   );
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // ++ STATE CHO THẺ TRẢ TRƯỚC ++
+  const [prepaidCardCode, setPrepaidCardCode] = useState("");
+  const [prepaidCardDiscount, setPrepaidCardDiscount] = useState(0);
+  const [isApplyingCard, setIsApplyingCard] = useState(false);
 
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
@@ -77,16 +84,47 @@ export default function CheckoutPage() {
 
   const hasShippableItems = items.some((item) => item.type === "product");
 
+  const subtotal = items.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+  // ++ TÍNH TOÁN LẠI TỔNG TIỀN ++
+  const total = subtotal - prepaidCardDiscount;
+
+  // ++ HÀM ÁP DỤNG THẺ TRẢ TRƯỚC ++
+  const handleApplyPrepaidCard = async () => {
+    if (!prepaidCardCode.trim()) {
+      toast.warning("Vui lòng nhập mã thẻ.");
+      return;
+    }
+    setIsApplyingCard(true);
+    try {
+      const result = await applyPrepaidCard({
+        card_code: prepaidCardCode,
+        total_amount: subtotal,
+      });
+      setPrepaidCardDiscount(result.applicable_amount);
+      toast.success(
+        `Đã áp dụng giảm giá ${result.applicable_amount.toLocaleString(
+          "vi-VN"
+        )}đ từ thẻ.`
+      );
+    } catch (error: any) {
+      toast.error("Áp dụng thẻ thất bại", { description: error.message });
+    } finally {
+      setIsApplyingCard(false);
+    }
+  };
+
   const handleConfirmPayment = async (shippingData: ShippingFormValues) => {
     if (!paymentMethod) {
       toast.warning("Vui lòng chọn phương thức thanh toán.");
       return;
     }
 
-    setIsProcessing(true); // <--- Bắt đầu xử lý
+    setIsProcessing(true);
 
     try {
-      // Gọi hàm API mới
       const newInvoice = await createOrder({
         items,
         payment_method: paymentMethod,
@@ -94,11 +132,12 @@ export default function CheckoutPage() {
           ? (shippingData as ShippingAddress)
           : undefined,
         notes: shippingData.notes,
+        // @ts-ignore - Bổ sung thuộc tính vào payload
+        prepaid_card_code:
+          prepaidCardDiscount > 0 ? prepaidCardCode : undefined,
       });
 
       toast.success("Đã tạo đơn hàng thành công!");
-
-      // Chuyển hướng đến trang success với ID hóa đơn
       router.push(`/checkout/success?invoiceId=${newInvoice.id}`);
     } catch (error) {
       console.error("Create order failed:", error);
@@ -108,9 +147,8 @@ export default function CheckoutPage() {
             ? error.message
             : "Đã có lỗi xảy ra. Vui lòng thử lại.",
       });
-      setIsProcessing(false); // Dừng xử lý nếu có lỗi
+      setIsProcessing(false);
     }
-    // Không cần finally vì đã chuyển trang nếu thành công
   };
 
   const formatCurrency = (amount: number) =>
@@ -118,11 +156,6 @@ export default function CheckoutPage() {
       style: "currency",
       currency: "VND",
     }).format(amount);
-
-  const total = items.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
 
   // Câu lệnh return sớm cho trạng thái loading
   if (isAuthLoading || isLoadingProfile) {
@@ -157,7 +190,7 @@ export default function CheckoutPage() {
           onSubmit={form.handleSubmit(handleConfirmPayment)}
           className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-8 lg:gap-12"
         >
-          {/* Cột trái: Thông tin */}
+          {/* ... (Cột trái thông tin khách hàng, địa chỉ, phương thức thanh toán giữ nguyên) */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -307,10 +340,52 @@ export default function CheckoutPage() {
                     ))}
                   </div>
                 </ScrollArea>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label htmlFor="prepaid-card">Thẻ quà tặng / Trả trước</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="prepaid-card"
+                      placeholder="Nhập mã thẻ..."
+                      value={prepaidCardCode}
+                      onChange={(e) => setPrepaidCardCode(e.target.value)}
+                      disabled={isApplyingCard || prepaidCardDiscount > 0}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleApplyPrepaidCard}
+                      disabled={isApplyingCard || prepaidCardDiscount > 0}
+                    >
+                      <Gift className="mr-2 h-4 w-4" />{" "}
+                      {isApplyingCard ? "Đang..." : "Áp dụng"}
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-between">
+                  <span>Tạm tính</span>
+                  <span className="font-medium">
+                    {formatCurrency(subtotal)}
+                  </span>
+                </div>
+
+                {prepaidCardDiscount > 0 && (
+                  <div className="flex justify-between text-destructive">
+                    <span>Giảm từ thẻ</span>
+                    <span className="font-medium">
+                      -{formatCurrency(prepaidCardDiscount)}
+                    </span>
+                  </div>
+                )}
+
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Tổng cộng</span>
-                  <span>{formatCurrency(total)}</span>
+                  <span>{formatCurrency(total < 0 ? 0 : total)}</span>
                 </div>
                 <Button
                   type="submit"

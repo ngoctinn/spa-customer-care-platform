@@ -1,4 +1,3 @@
-// src/features/appointment/hooks/useAvailability.ts
 import { useQuery } from "@tanstack/react-query";
 import { getAvailableSlots } from "@/features/appointment/apis/availability.api";
 
@@ -11,12 +10,11 @@ import { getAvailableSlots } from "@/features/appointment/apis/availability.api"
 export const useAvailability = (
   serviceId: string | undefined,
   selectedDate: Date | undefined,
-  technicianIds?: string[] // <-- THAY ĐỔI: Chuyển sang mảng string[]
+  technicianIds?: string[]
 ) => {
   const dateString = selectedDate?.toISOString().split("T")[0];
 
   return useQuery<string[]>({
-    // THAY ĐỔI: Đưa technicianIds vào queryKey để đảm bảo cache hoạt động đúng
     queryKey: ["availability", serviceId, dateString, technicianIds],
     queryFn: () => getAvailableSlots(serviceId!, dateString!, technicianIds),
     // Query sẽ chỉ được kích hoạt khi có đủ các tham số cần thiết.

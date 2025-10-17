@@ -7,6 +7,7 @@ import {
   Lock,
   LucideIcon,
   CalendarCheck,
+  Award,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,6 +35,11 @@ const navLinks: NavLink[] = [
     href: "/account/appointment-history",
     label: "Lịch sử đặt hẹn",
     icon: Calendar,
+  },
+  {
+    href: "/account/loyalty-history",
+    label: "Lịch sử điểm thưởng",
+    icon: Award,
   },
   { href: "/account/change-password", label: "Đổi mật khẩu", icon: Lock },
 ];

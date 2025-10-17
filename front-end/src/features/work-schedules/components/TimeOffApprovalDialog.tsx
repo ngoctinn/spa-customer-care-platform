@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // ++ IMPORT ROUTER ++
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { TimeOffRequest } from "../types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { decideTimeOffRequest } from "../api/schedule.api"; // Sử dụng hàm đúng
+import { decideTimeOffRequest } from "../api/schedule.api";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
@@ -33,6 +34,7 @@ export default function TimeOffApprovalDialog({
   request,
 }: Props) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [decisionNote, setDecisionNote] = useState("");
   const hasConflicts = (request.conflicting_appointments?.length || 0) > 0;
 
@@ -60,6 +62,11 @@ export default function TimeOffApprovalDialog({
 
   const handleReject = () => {
     decide({ status: "tu_choi", decision_note: decisionNote });
+  };
+
+  const handleResolveAndApprove = () => {
+    router.push(`/dashboard/time-off-requests/${request.id}/resolve`);
+    onClose();
   };
 
   return (
@@ -90,8 +97,8 @@ export default function TimeOffApprovalDialog({
               <AlertTitle>Cảnh báo xung đột lịch hẹn!</AlertTitle>
               <AlertDescription>
                 Nhân viên này có {request.conflicting_appointments?.length} lịch
-                hẹn đã đặt trong thời gian xin nghỉ. Vui lòng phân công lại
-                trước khi duyệt.
+                hẹn đã đặt trong thời gian xin nghỉ. Cần phải giải quyết các
+                xung đột này trước khi duyệt đơn.
               </AlertDescription>
             </Alert>
           )}
@@ -116,9 +123,15 @@ export default function TimeOffApprovalDialog({
           >
             Từ chối
           </Button>
-          <Button onClick={handleApprove} disabled={hasConflicts || isPending}>
-            Duyệt
-          </Button>
+          {hasConflicts ? (
+            <Button onClick={handleResolveAndApprove}>
+              Giải quyết xung đột & Duyệt
+            </Button>
+          ) : (
+            <Button onClick={handleApprove} disabled={isPending}>
+              Duyệt
+            </Button>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

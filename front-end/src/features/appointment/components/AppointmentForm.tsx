@@ -40,6 +40,11 @@ import { useCustomers } from "@/features/customer/hooks/useCustomers";
 import { useServices } from "@/features/service/hooks/useServices";
 import { useStaff } from "@/features/staff/hooks/useStaff";
 import React from "react";
+import {
+  useBeds,
+  useEquipments,
+  useRooms,
+} from "@/features/resources/hooks/useResources";
 
 export default function AppointmentForm() {
   const { control, setValue, watch } = useFormContext();
@@ -49,9 +54,13 @@ export default function AppointmentForm() {
     useCustomers();
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
-
+  const { data: rooms = [], isLoading: isLoadingRooms } = useRooms();
+  const { data: beds = [], isLoading: isLoadingBeds } = useBeds();
+  const { data: equipments = [], isLoading: isLoadingEquipments } =
+    useEquipments();
   const selectedStaffIds = watch("assigned_staff_ids") || [];
-
+  const selectedMobileEquipmentIds =
+    watch("assigned_mobile_equipment_ids") || [];
   return (
     <div className="space-y-4">
       {/* Customer Selection */}
@@ -176,6 +185,137 @@ export default function AppointmentForm() {
                         {staff.full_name}
                       </CommandItem>
                     ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="assigned_room_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phòng</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoadingRooms}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn phòng..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {rooms.map((room) => (
+                    <SelectItem key={room.id} value={room.id}>
+                      {room.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="assigned_bed_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Giường</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoadingBeds}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn giường..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {beds.map((bed) => (
+                    <SelectItem key={bed.id} value={bed.id}>
+                      {bed.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <FormField
+        control={control}
+        name="assigned_mobile_equipment_ids"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Thiết bị di động</FormLabel>
+            <Popover>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className={cn(
+                      "w-full justify-between h-auto",
+                      !field.value?.length && "text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex gap-1 flex-wrap">
+                      {selectedMobileEquipmentIds.length > 0
+                        ? equipments
+                            .filter((eq) =>
+                              selectedMobileEquipmentIds.includes(eq.id)
+                            )
+                            .map((eq) => (
+                              <Badge key={eq.id} variant="secondary">
+                                {eq.name}
+                              </Badge>
+                            ))
+                        : "Chọn thiết bị..."}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                  <CommandInput placeholder="Tìm thiết bị..." />
+                  <CommandEmpty>Không tìm thấy.</CommandEmpty>
+                  <CommandGroup>
+                    {equipments
+                      .filter((eq) => eq.type === "MOBILE")
+                      .map((eq) => (
+                        <CommandItem
+                          key={eq.id}
+                          onSelect={() => {
+                            const currentIds = field.value || [];
+                            const newIds = currentIds.includes(eq.id)
+                              ? currentIds.filter((id: string) => id !== eq.id)
+                              : [...currentIds, eq.id];
+                            setValue("assigned_mobile_equipment_ids", newIds);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              field.value?.includes(eq.id)
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          {eq.name}
+                        </CommandItem>
+                      ))}
                   </CommandGroup>
                 </Command>
               </PopoverContent>

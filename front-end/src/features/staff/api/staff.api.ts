@@ -6,6 +6,13 @@ import {
   StaffServicesFormValues,
 } from "@/features/staff/schemas";
 
+// Kiểu dữ liệu trả về của API initiate-offboarding
+export interface OffboardingCheckResponse {
+  reassignment_required: boolean;
+  upcoming_appointments_count?: number;
+  message?: string;
+}
+
 export async function onboardStaff(
   onboardingData: StaffOnboardingFormValues
 ): Promise<FullStaffProfile> {
@@ -83,11 +90,27 @@ export async function updateStaffServices(
 }
 
 /**
- * Xử lý cho nhân viên nghỉ việc (offboard).
+ * Bắt đầu quy trình cho nhân viên nghỉ việc.
+ * @param staffId ID của Staff Profile.
+ * @returns Promise chứa thông tin về việc có cần phân công lại hay không.
+ */
+export async function initiateOffboarding(
+  staffId: string
+): Promise<OffboardingCheckResponse> {
+  return apiClient<OffboardingCheckResponse>(
+    `/staff/${staffId}/initiate-offboarding`,
+    {
+      method: "POST",
+    }
+  );
+}
+
+/**
+ * Hoàn tất quy trình nghỉ việc sau khi đã phân công lại lịch hẹn.
  * @param staffId ID của Staff Profile.
  */
-export async function offboardStaff(staffId: string): Promise<any> {
-  return apiClient<any>(`/staff/${staffId}/offboard`, {
+export async function completeOffboarding(staffId: string): Promise<void> {
+  return apiClient<void>(`/staff/${staffId}/complete-offboarding`, {
     method: "POST",
   });
 }

@@ -3,7 +3,7 @@ import {
   getAppointments,
   createAppointmentAdmin,
   updateAppointment,
-  deleteAppointment,
+  cancelAppointment,
   getAppointmentById,
   getUpcomingAppointmentsByTechnician,
   getSuggestedTechniciansForAppointment,
@@ -69,14 +69,19 @@ export const useUpdateAppointment = () => {
     },
   });
 };
-// Hook để xóa/hủy lịch hẹn
-export const useDeleteAppointment = () => {
+
+// Hook để hủy lịch hẹn
+export const useCancelAppointment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteAppointment,
+    mutationFn: cancelAppointment,
     onSuccess: () => {
-      toast.success("Đã hủy lịch hẹn!");
+      toast.success("Đã hủy lịch hẹn thành công!");
+      // Invalidate các query liên quan để cập nhật lại UI
       queryClient.invalidateQueries({ queryKey: queryKey });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["customerProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["customerPackages"] });
     },
     onError: (error) => {
       toast.error("Hủy lịch hẹn thất bại", { description: error.message });

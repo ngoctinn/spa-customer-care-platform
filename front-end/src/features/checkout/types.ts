@@ -1,4 +1,8 @@
-// src/features/checkout/types.ts
+export interface PaymentRecord {
+  method: PaymentMethod;
+  amount: number;
+}
+
 export type InvoiceItemType = "service" | "product" | "treatment" | "other";
 export type PaymentMethod =
   | "cash"
@@ -45,11 +49,12 @@ export interface Invoice {
   customer_id: string;
   appointment_id?: string;
   items: InvoiceItem[];
-  subtotal: number; // Tổng tiền trước giảm giá
+  subtotal: number;
   discount_amount: number;
   tax_amount: number;
-  total_amount: number; // Số tiền cuối cùng
+  total_amount: number;
   payment_method: PaymentMethod;
+  payment_records: PaymentRecord[];
   status: InvoiceStatus;
   shipping_address?: ShippingAddress;
   notes?: string;

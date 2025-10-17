@@ -10,13 +10,16 @@ import apiClient from "@/lib/apiClient";
 export async function getAvailableSlots(
   serviceId: string,
   date: string,
-  technicianIds?: string[] // <-- THAY ĐỔI: Chuyển sang mảng string[]
+  technicianIds?: string[]
 ): Promise<string[]> {
-  // Endpoint và các tham số không thay đổi
   let endpoint = `/availability?serviceId=${serviceId}&date=${date}`;
-  // THAY ĐỔI: Nếu có technicianIds, nối chúng lại thành chuỗi và gửi đi
+
+  // Nếu có technicianIds và mảng không rỗng, nối chúng lại thành chuỗi và gửi đi
   if (technicianIds && technicianIds.length > 0) {
     endpoint += `&technicianIds=${technicianIds.join(",")}`;
   }
+  // Nếu technicianIds là mảng rỗng hoặc undefined, không thêm vào query string.
+  // Backend sẽ hiểu rằng cần tìm bất kỳ kỹ thuật viên nào phù hợp.
+
   return apiClient<string[]>(endpoint);
 }

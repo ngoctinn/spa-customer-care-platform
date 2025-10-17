@@ -38,6 +38,7 @@ export interface Customer {
   preferences?: CustomerPreferences;
   notification_settings?: NotificationSettings;
   loyalty_points?: number;
+  debt_amount?: number;
   joined_date?: Date;
   is_deleted?: boolean;
   created_at?: Date;
