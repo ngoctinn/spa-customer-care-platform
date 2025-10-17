@@ -11,6 +11,7 @@ export interface OffboardingCheckResponse {
   reassignment_required: boolean;
   upcoming_appointments_count?: number;
   message?: string;
+  cancelled_schedules_count?: number;
 }
 
 export async function onboardStaff(

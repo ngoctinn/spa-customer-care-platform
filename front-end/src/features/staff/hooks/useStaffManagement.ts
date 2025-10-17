@@ -1,4 +1,3 @@
-// src/features/staff/hooks/useStaffManagement.ts
 import { useResourceManagement } from "@/features/management-pages/hooks/useResourceManagement";
 import { useStaff } from "./useStaff";
 import { FullStaffProfile } from "../types";
@@ -54,6 +53,15 @@ export function useStaffManagement() {
       // Chuyển trạng thái nhân viên thành PENDING_OFFBOARDING
       queryClient.invalidateQueries({ queryKey: ["staffList"] });
       toast.info("Bắt đầu quy trình cho nghỉ việc.");
+
+      if (
+        data.cancelled_schedules_count &&
+        data.cancelled_schedules_count > 0
+      ) {
+        toast.info(
+          `Đã tự động hủy ${data.cancelled_schedules_count} ca làm việc đã đăng ký của nhân viên này.`
+        );
+      }
 
       if (data.reassignment_required) {
         toast.info(

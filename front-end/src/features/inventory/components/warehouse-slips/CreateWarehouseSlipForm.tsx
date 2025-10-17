@@ -202,7 +202,10 @@ export function CreateWarehouseSlipForm({
             render={() => <FormMessage className="mt-2" />}
           />
           <div className="mt-2 p-4 border rounded-md">
-            <ProductSelector onSelect={handleProductSelect} />
+            <ProductSelector
+              onSelect={handleProductSelect}
+              isImport={isImport}
+            />
             <Table className="mt-4">
               <TableHeader>
                 <TableRow>
@@ -301,7 +304,10 @@ export function CreateWarehouseSlipForm({
         )}
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || (!isImport && !form.formState.isValid)}
+          >
             {isSubmitting ? "Đang xử lý..." : "Lưu Phiếu"}
           </Button>
         </div>

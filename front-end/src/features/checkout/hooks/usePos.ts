@@ -1,4 +1,3 @@
-// src/features/checkout/hooks/usePos.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -12,12 +11,13 @@ import {
   PaymentRecord,
 } from "@/features/checkout/types";
 
-// ++ CẬP NHẬT PAYLOAD ++
 interface CreateInvoicePayload {
   notes?: string;
-  payments: PaymentRecord[]; // Thay thế payment_method và amount_paid
+  payments: PaymentRecord[];
   pointsToRedeem?: number;
   prepaidCardCode?: string;
+  discountFromPoints?: number;
+  prepaidCardDiscount?: number;
 }
 
 export const useCreateInvoice = () => {
@@ -33,7 +33,21 @@ export const useCreateInvoice = () => {
         throw new Error("Hóa đơn phải có ít nhất một sản phẩm/dịch vụ.");
       }
 
-      // Backend sẽ tính toán lại tổng tiền, giảm giá và xác định trạng thái
+      const totalPaid = data.payments.reduce((sum, p) => sum + p.amount, 0);
+      const discountAmount =
+        (data.discountFromPoints || 0) + (data.prepaidCardDiscount || 0);
+      const finalTotal = total - discountAmount;
+      const remainingAmount = finalTotal - totalPaid;
+
+      const hasDebtMethod = data.payments.some((p) => p.method === "debt");
+
+      if (remainingAmount > 0.01 && !hasDebtMethod) {
+        // Cho phép sai số nhỏ
+        throw new Error(
+          "Số tiền thanh toán không đủ. Vui lòng ghi nợ phần còn lại hoặc thanh toán đủ."
+        );
+      }
+
       const invoiceData: InvoiceCreationData = {
         customer_id: customer.id,
         appointment_id: appointmentId || undefined,
@@ -48,17 +62,14 @@ export const useCreateInvoice = () => {
           appointment_id: item.appointment_id,
         })),
         notes: data.notes,
-        // ++ GỬI DỮ LIỆU MỚI LÊN BACKEND ++
         payment_records: data.payments,
         points_to_redeem: data.pointsToRedeem,
         prepaid_card_code: data.prepaidCardCode,
-
-        // Các trường này sẽ do backend tính toán và ghi đè
         subtotal: total,
-        discount_amount: 0,
+        discount_amount: discountAmount,
         tax_amount: 0,
-        total_amount: total,
-        status: "pending", // Backend sẽ quyết định trạng thái cuối cùng
+        total_amount: finalTotal,
+        status: "pending",
       };
 
       return createInvoice(invoiceData);
