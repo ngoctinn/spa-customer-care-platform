@@ -1,4 +1,3 @@
-// src/features/booking/components/ServiceSelection.tsx
 "use client";
 
 import { useMemo } from "react";
@@ -18,6 +17,7 @@ import { FullPageLoader, Spinner } from "@/components/ui/spinner";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { TreatmentPackage } from "@/features/treatment/types";
+import { useRouter } from "next/navigation";
 
 interface ServiceSelectionProps {
   onSelect: (id: string, type: "service" | "treatment") => void;
@@ -140,6 +140,7 @@ const PurchasedItems = ({ onSelect }: ServiceSelectionProps) => {
 
 export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const { data: services, isLoading: isLoadingServices } = useServices();
   const { data: treatments, isLoading: isLoadingTreatments } =
     useTreatmentPlans();
@@ -147,6 +148,12 @@ export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
   if (isLoadingServices || isLoadingTreatments) {
     return <FullPageLoader />;
   }
+
+  // Hàm xử lý khi người dùng chọn MUA một liệu trình mới
+  const handleSelectNewTreatment = (id: string) => {
+    // Chuyển hướng đến trang chi tiết để mua
+    router.push(`/treatment-plans/${id}`);
+  };
 
   return (
     <div className="space-y-8">
@@ -186,7 +193,14 @@ export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
                   key={treatment.id}
                   variant="outline"
                   className="h-auto py-4"
-                  onClick={() => onSelect(treatment.id, "treatment")}
+                  // THAY ĐỔI: Phân biệt giữa việc đặt lịch cho liệu trình đã mua và mua mới
+                  // Nếu là khách vãng lai (chưa login) hoặc họ bấm vào khu vực "mua mới",
+                  // thì sẽ chuyển hướng đến trang chi tiết.
+                  onClick={() =>
+                    user
+                      ? handleSelectNewTreatment(treatment.id)
+                      : handleSelectNewTreatment(treatment.id)
+                  }
                 >
                   {treatment.name}
                 </Button>

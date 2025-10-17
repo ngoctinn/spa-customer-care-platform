@@ -1,16 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+
 import { AdminDetailPageLayout } from "@/components/layout/admin/AdminDetailPageLayout";
 import { FullPageLoader } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Edit,
   Trash2,
@@ -20,10 +18,8 @@ import {
   Award,
   DollarSign,
   CalendarDays,
-  Heart,
+  AlertCircle,
 } from "lucide-react";
-import { useCustomerById } from "@/features/customer/hooks/useCustomers";
-import { FullCustomerProfile } from "@/features/customer/types";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
@@ -35,19 +31,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Link from "next/link";
-import React, { useMemo } from "react";
+import { FormDialog } from "@/components/common/FormDialog";
+import { ConfirmationModal } from "@/components/common/ConfirmationModal";
+import { StatCard } from "@/features/dashboard/components/StatCard";
+
+import { useCustomerById } from "@/features/customer/hooks/useCustomers";
 import { useAppointments } from "@/features/appointment/hooks/useAppointments";
 import { useInvoices } from "@/features/checkout/hooks/useInvoices";
-import { FormDialog } from "@/components/common/FormDialog";
-import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
+import {
+  useCustomerManagement,
+  CustomerFormValues,
+} from "@/features/customer/hooks/useCustomerManagement";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
-import { CustomerFormValues } from "@/features/customer/hooks/useCustomerManagement";
-import { ConfirmationModal } from "@/components/common/ConfirmationModal";
+import { FullCustomerProfile } from "@/features/customer/types";
+import apiClient from "@/lib/apiClient";
+
+// --- Giả định các kiểu dữ liệu và API mới ---
+interface DebtHistoryTransaction {
+  id: string;
+  type: "accrual" | "settlement";
+  amount: number;
+  related_invoice_id?: string;
+  new_balance: number;
+  created_at: string;
+}
+
+const getDebtHistory = async (
+  customerId: string
+): Promise<DebtHistoryTransaction[]> => {
+  return apiClient(`/customers/${customerId}/debt-history`);
+};
 
 // --- Components for the Detail Page ---
 
-// CustomerInfoCard
 const CustomerInfoCard = ({
   customer,
   onEdit,
@@ -88,7 +104,6 @@ const CustomerInfoCard = ({
   </Card>
 );
 
-// CustomerLoyaltyCard
 const CustomerLoyaltyCard = ({
   customer,
 }: {
@@ -104,7 +119,7 @@ const CustomerLoyaltyCard = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Award className="w-5 h-5 text-warning" />
-          Thành viên thân thiết
+          Thành viên
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -114,10 +129,7 @@ const CustomerLoyaltyCard = ({
           </span>
           {currentTier && (
             <Badge
-              style={{
-                backgroundColor: currentTier.color_hex,
-                color: "white",
-              }}
+              style={{ backgroundColor: currentTier.color_hex, color: "white" }}
             >
               {currentTier.name}
             </Badge>
@@ -130,7 +142,7 @@ const CustomerLoyaltyCard = ({
             {Math.max(0, nextTierPoints - currentPoints).toLocaleString(
               "vi-VN"
             )}{" "}
-            điểm để lên hạng tiếp theo.
+            điểm để lên hạng.
           </p>
         </div>
       </CardContent>
@@ -138,53 +150,113 @@ const CustomerLoyaltyCard = ({
   );
 };
 
-// CustomerStats
 const CustomerStats = ({
   totalSpent,
   completedAppointments,
+  debtAmount,
 }: {
   totalSpent: number;
   completedAppointments: number;
+  debtAmount: number;
 }) => (
-  <div className="grid grid-cols-3 gap-4">
-    <Card className="text-center">
-      <CardHeader>
-        <CardTitle className="text-2xl">
-          {totalSpent.toLocaleString("vi-VN")}đ
-        </CardTitle>
-        <CardDescription className="flex items-center justify-center gap-2">
-          <DollarSign className="h-4 w-4" /> Tổng chi tiêu
-        </CardDescription>
-      </CardHeader>
-    </Card>
-    <Card className="text-center">
-      <CardHeader>
-        <CardTitle className="text-2xl">{completedAppointments}</CardTitle>
-        <CardDescription className="flex items-center justify-center gap-2">
-          <CalendarDays className="h-4 w-4" /> Số lần đến
-        </CardDescription>
-      </CardHeader>
-    </Card>
-    <Card className="text-center">
-      <CardHeader>
-        <CardTitle className="text-base">Chăm sóc da</CardTitle>
-        <CardDescription className="flex items-center justify-center gap-2">
-          <Heart className="h-4 w-4" /> Dịch vụ
-        </CardDescription>
-      </CardHeader>
-    </Card>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <StatCard
+      title="Tổng chi tiêu"
+      value={`${totalSpent.toLocaleString("vi-VN")}đ`}
+      icon={DollarSign}
+      description="Dựa trên các hóa đơn đã trả"
+    />
+    <StatCard
+      title="Số lần đến"
+      value={completedAppointments.toString()}
+      icon={CalendarDays}
+      description="Lịch hẹn đã hoàn thành"
+    />
+    <StatCard
+      title="Công nợ hiện tại"
+      value={`${debtAmount.toLocaleString("vi-VN")}đ`}
+      icon={AlertCircle}
+      description="Tổng số tiền chưa thanh toán"
+      iconColor={debtAmount > 0 ? "text-destructive" : "text-success"}
+    />
   </div>
 );
 
-// RecentAppointmentsList
+// ++ COMPONENT MỚI: LỊCH SỬ CÔNG NỢ ++
+const DebtHistoryList = ({ customerId }: { customerId: string }) => {
+  const { data: history = [], isLoading } = useQuery({
+    queryKey: ["debtHistory", customerId],
+    queryFn: () => getDebtHistory(customerId),
+  });
+
+  if (isLoading) return <p>Đang tải lịch sử công nợ...</p>;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Lịch sử Công nợ</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ngày</TableHead>
+              <TableHead>Loại Giao dịch</TableHead>
+              <TableHead>Số tiền</TableHead>
+              <TableHead className="text-right">Số dư nợ</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {history.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center h-24">
+                  Không có lịch sử công nợ.
+                </TableCell>
+              </TableRow>
+            ) : (
+              history.map((tx) => (
+                <TableRow key={tx.id}>
+                  <TableCell>
+                    {new Date(tx.created_at).toLocaleString("vi-VN")}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        tx.type === "accrual" ? "destructive" : "default"
+                      }
+                    >
+                      {tx.type === "accrual" ? "Ghi nợ" : "Thanh toán"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell
+                    className={`font-medium ${
+                      tx.type === "accrual"
+                        ? "text-destructive"
+                        : "text-success"
+                    }`}
+                  >
+                    {tx.type === "accrual" ? "+" : "-"}{" "}
+                    {tx.amount.toLocaleString("vi-VN")}đ
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {tx.new_balance.toLocaleString("vi-VN")}đ
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};
+
 const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
   const { data: allAppointments = [], isLoading } = useAppointments();
   const appointments = allAppointments
     .filter((apt) => apt.customer_id === customerId)
     .slice(0, 5);
-
   if (isLoading) return <p>Đang tải lịch hẹn...</p>;
-
   return (
     <Card>
       <CardHeader>
@@ -210,7 +282,6 @@ const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
               appointments.map((apt) => (
                 <TableRow key={apt.id}>
                   <TableCell className="font-medium">
-                    {/* Cần lấy tên service từ serviceId */}
                     {apt.service_id}
                   </TableCell>
                   <TableCell>
@@ -235,7 +306,6 @@ const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
   );
 };
 
-// RecentOrdersList
 const RecentOrdersList = ({ customerId }: { customerId: string }) => {
   const { data: invoices = [], isLoading } = useInvoices(customerId);
 
@@ -326,7 +396,6 @@ export default function CustomerDetailPage() {
   if (isLoading) {
     return <FullPageLoader text="Đang tải dữ liệu khách hàng..." />;
   }
-
   if (isError || !customer) {
     return (
       <div>
@@ -343,7 +412,9 @@ export default function CustomerDetailPage() {
       <CustomerStats
         totalSpent={totalSpent}
         completedAppointments={completedAppointments}
+        debtAmount={customer.debt_amount || 0}
       />
+      <DebtHistoryList customerId={customerId} />
       <RecentAppointmentsList customerId={customerId} />
       <RecentOrdersList customerId={customerId} />
     </>
@@ -383,7 +454,6 @@ export default function CustomerDetailPage() {
       >
         <CustomerFormFields />
       </FormDialog>
-
       <ConfirmationModal
         isOpen={!!itemToDelete}
         onClose={handleCloseDeleteDialog}

@@ -1,9 +1,9 @@
-import { Invoice, ShippingAddress } from "@/features/checkout/types";
-import { v4 as uuidv4 } from "uuid";
-import { Customer } from "@/features/customer/types";
-import { Product } from "@/features/product/types";
-// import { redeemLoyaltyPoints } from "@/features/customer/api/customer.api";
-// import { debitPrepaidCard } from "@/features/prepaid-card/api/prepaid-card.api";
+// src/features/checkout/api/invoice.api.ts
+import {
+  Invoice,
+  ShippingAddress,
+  PaymentRecord,
+} from "@/features/checkout/types";
 import apiClient from "@/lib/apiClient";
 import { CartItem } from "@/features/cart/stores/cart-store";
 
@@ -58,19 +58,16 @@ export async function getInvoicesByCustomerId(
 
 export type InvoiceCreationData = Omit<
   Invoice,
-  "id" | "created_at" | "updated_at" | "is_deleted"
+  "id" | "created_at" | "updated_at" | "is_deleted" | "payment_method"
 > & {
-  pointsToRedeem?: number;
-  prepaidCardId?: string;
-  prepaidAmountToUse?: number;
-  amount_paid?: number;
+  points_to_redeem?: number;
+  prepaid_card_code?: string;
+  payment_records: PaymentRecord[]; // Sử dụng mảng payment records
 };
 
 export const createInvoice = async (
   invoiceData: InvoiceCreationData
 ): Promise<Invoice> => {
-  // Chỉ giữ lại một lời gọi API duy nhất, sạch sẽ và nhất quán
-  // Backend nên tự xử lý việc tạo ID và timestamps
   try {
     const newInvoice = await apiClient<Invoice>("/invoices", {
       method: "POST",
@@ -79,6 +76,6 @@ export const createInvoice = async (
     return newInvoice;
   } catch (error) {
     console.error("Error creating invoice:", error);
-    throw error; // Ném lỗi để React Query có thể xử lý
+    throw error;
   }
 };

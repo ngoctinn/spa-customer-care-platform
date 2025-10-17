@@ -6,12 +6,18 @@ import {
   InvoiceCreationData,
 } from "@/features/checkout/api/invoice.api";
 import { usePosStore } from "@/features/checkout/stores/pos-store";
-import { InvoiceStatus, PaymentMethod } from "@/features/checkout/types";
+import {
+  InvoiceStatus,
+  PaymentMethod,
+  PaymentRecord,
+} from "@/features/checkout/types";
 
+// ++ CẬP NHẬT PAYLOAD ++
 interface CreateInvoicePayload {
   notes?: string;
-  payment_method: PaymentMethod;
-  amount_paid?: number;
+  payments: PaymentRecord[]; // Thay thế payment_method và amount_paid
+  pointsToRedeem?: number;
+  prepaidCardCode?: string;
 }
 
 export const useCreateInvoice = () => {
@@ -27,17 +33,7 @@ export const useCreateInvoice = () => {
         throw new Error("Hóa đơn phải có ít nhất một sản phẩm/dịch vụ.");
       }
 
-      const amountPaid = data.amount_paid || 0;
-
-      let status: InvoiceStatus = "pending";
-      if (data.payment_method === "debt") {
-        status = "pending";
-      } else if (amountPaid >= total) {
-        status = "paid";
-      } else if (amountPaid > 0 && amountPaid < total) {
-        status = "partial";
-      }
-
+      // Backend sẽ tính toán lại tổng tiền, giảm giá và xác định trạng thái
       const invoiceData: InvoiceCreationData = {
         customer_id: customer.id,
         appointment_id: appointmentId || undefined,
@@ -51,14 +47,18 @@ export const useCreateInvoice = () => {
           discount_amount: 0,
           appointment_id: item.appointment_id,
         })),
+        notes: data.notes,
+        // ++ GỬI DỮ LIỆU MỚI LÊN BACKEND ++
+        payment_records: data.payments,
+        points_to_redeem: data.pointsToRedeem,
+        prepaid_card_code: data.prepaidCardCode,
+
+        // Các trường này sẽ do backend tính toán và ghi đè
         subtotal: total,
         discount_amount: 0,
         tax_amount: 0,
         total_amount: total,
-        payment_method: data.payment_method,
-        amount_paid: amountPaid,
-        status: status,
-        notes: data.notes,
+        status: "pending", // Backend sẽ quyết định trạng thái cuối cùng
       };
 
       return createInvoice(invoiceData);
@@ -66,6 +66,7 @@ export const useCreateInvoice = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
     },
     onError: (error: any) => {
       toast.error("Tạo hóa đơn thất bại", {

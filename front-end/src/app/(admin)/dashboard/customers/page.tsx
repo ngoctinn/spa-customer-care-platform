@@ -1,8 +1,12 @@
+// src/app/(admin)/dashboard/customers/page.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { z } from "zod";
-import Link from "next/link"; // Import Link
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
 import {
@@ -12,39 +16,95 @@ import {
 import { FullCustomerProfile } from "@/features/customer/types";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 
-// Update columns to include a link
-const columns: ColumnDef<FullCustomerProfile>[] = [
-  {
-    accessorKey: "full_name",
-    header: "Tên khách hàng",
-    cell: ({ row }) => (
-      <Link
-        href={`/dashboard/customers/${row.original.id}`}
-        className="font-medium text-primary hover:underline"
-      >
-        {row.original.full_name}
-      </Link>
-    ),
-  },
-  { accessorKey: "email", header: "Email" },
-  { accessorKey: "phone", header: "Số điện thoại" },
-  {
-    accessorKey: "customer_profile.loyalty_points",
-    header: "Điểm thưởng",
-    cell: ({ row }) =>
-      row.original.loyalty_points?.toLocaleString("vi-VN") || 0,
-  },
-  {
-    accessorKey: "customer_profile.last_visit",
-    header: "Lần cuối đến",
-    cell: ({ row }) =>
-      row.original.last_visit
-        ? new Date(row.original.last_visit).toLocaleDateString("vi-VN")
-        : "Chưa có",
-  },
-];
-
 export default function CustomersPage() {
+  const router = useRouter();
+  const managementHook = useCustomerManagement();
+
+  const handleMerge = (selectedCustomers: FullCustomerProfile[]) => {
+    const ids = selectedCustomers.map((c) => c.id);
+    router.push(`/dashboard/customers/merge?ids=${ids.join(",")}`);
+  };
+
+  // Cập nhật định nghĩa cột để thêm cột checkbox
+  const columns: ColumnDef<FullCustomerProfile>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="translate-y-[2px]"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "full_name",
+      header: "Tên khách hàng",
+      cell: ({ row }) => (
+        <Link
+          href={`/dashboard/customers/${row.original.id}`}
+          className="font-medium text-primary hover:underline"
+        >
+          {row.original.full_name}
+        </Link>
+      ),
+    },
+    { accessorKey: "email", header: "Email" },
+    {
+      accessorKey: "phone_number",
+      header: "Số điện thoại",
+    },
+    {
+      accessorKey: "loyalty_points",
+      header: "Điểm thưởng",
+      cell: ({ row }) =>
+        row.original.loyalty_points?.toLocaleString("vi-VN") || 0,
+    },
+    {
+      accessorKey: "last_visit",
+      header: "Lần cuối đến",
+      cell: ({ row }) =>
+        row.original.last_visit
+          ? new Date(row.original.last_visit).toLocaleDateString("vi-VN")
+          : "Chưa có",
+    },
+  ];
+
+  // Thêm nút "Hợp nhất" vào thanh công cụ
+  const CustomToolbar = ({ table }: { table: any }) => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    if (selectedRows.length > 1) {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-2 h-8"
+          onClick={() =>
+            handleMerge(selectedRows.map((row: any) => row.original))
+          }
+        >
+          <Users className="mr-2 h-4 w-4" />
+          Hợp nhất ({selectedRows.length})
+        </Button>
+      );
+    }
+    return null;
+  };
+
   return (
     <ResourcePageLayout<FullCustomerProfile, CustomerFormValues>
       title="Quản lý Khách hàng"
@@ -56,6 +116,8 @@ export default function CustomersPage() {
       toolbarProps={{
         searchColumnId: "full_name",
         searchPlaceholder: "Tìm theo tên hoặc SĐT...",
+        // @ts-ignore
+        CustomActions: CustomToolbar,
       }}
     />
   );

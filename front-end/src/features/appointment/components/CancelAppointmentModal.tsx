@@ -31,8 +31,8 @@ const CancelAppointmentModal = ({
   const [reason, setReason] = useState("");
 
   const handleConfirm = () => {
-    onConfirm(reason);
-    onClose(); // Đảm bảo modal đóng lại sau khi xác nhận
+    onConfirm(reason || "Khách hàng tự hủy");
+    onClose();
   };
 
   return (
@@ -56,16 +56,22 @@ const CancelAppointmentModal = ({
             onChange={(e) => setReason(e.target.value)}
           />
         </div>
+        {/* === UI IMPROVEMENT START === */}
         <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md border">
           <p>
-            <strong>Chính sách hủy lịch:</strong> Hủy lịch trước 24 giờ sẽ được
-            hoàn lại toàn bộ chi phí. Hủy lịch trong vòng 24 giờ sẽ không được
-            hoàn lại.
+            <strong>Chính sách hủy lịch & hoàn tiền:</strong> Hủy lịch trước 24
+            giờ sẽ được hoàn lại toàn bộ chi phí (nếu đã thanh toán) hoặc hoàn
+            lại lượt sử dụng dịch vụ/liệu trình đã mua. Hủy lịch trong vòng 24
+            giờ sẽ không được hoàn lại.
           </p>
         </div>
+        {/* === UI IMPROVEMENT END === */}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onClose}>Không</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm}>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            className="bg-destructive hover:bg-destructive/90"
+          >
             Xác nhận hủy
           </AlertDialogAction>
         </AlertDialogFooter>

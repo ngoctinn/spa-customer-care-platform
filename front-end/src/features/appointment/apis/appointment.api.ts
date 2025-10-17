@@ -16,11 +16,9 @@ export async function createAppointment(
   // Chuyển đổi dữ liệu từ front-end thành định dạng mà back-end mong muốn
   const payload = {
     service_id: bookingData.serviceId,
-    // ++ SỬA ĐỔI: Gửi thêm các ID liên quan ++
     treatment_package_id: bookingData.treatmentPackageId,
     treatment_session_id: bookingData.sessionId,
     purchased_service_id: bookingData.purchasedServiceId,
-    // -- Kết thúc sửa đổi --
     start_time: new Date(
       `${bookingData.selectedDate?.toISOString().split("T")[0]}T${
         bookingData.selectedTime
@@ -50,7 +48,7 @@ export async function getAppointments(): Promise<Appointment[]> {
 }
 
 /**
- * ++ HÀM MỚI: Lấy thông tin chi tiết một lịch hẹn bằng ID ++
+ * Lấy thông tin chi tiết một lịch hẹn bằng ID
  * @param id ID của lịch hẹn
  */
 export async function getAppointmentById(id: string): Promise<Appointment> {
@@ -65,7 +63,6 @@ export async function createAppointmentAdmin(
   appointmentData: AppointmentFormValues
 ): Promise<Appointment> {
   return apiClient<Appointment>("/appointments/admin-create", {
-    // Giả sử có endpoint riêng
     method: "POST",
     body: JSON.stringify(appointmentData),
   });
@@ -78,8 +75,27 @@ export async function createAppointmentAdmin(
  */
 export async function updateAppointment(
   id: string,
-  data: Partial<Appointment | AppointmentFormValues>
+  data: Partial<Appointment | AppointmentFormValues | BookingState>
 ): Promise<Appointment> {
+  // Logic để xử lý payload cho việc reschedule từ booking page
+  if ("selectedDate" in data && "selectedTime" in data) {
+    const bookingData = data as BookingState;
+    const payload = {
+      start_time: new Date(
+        `${bookingData.selectedDate?.toISOString().split("T")[0]}T${
+          bookingData.selectedTime
+        }`
+      ),
+      assigned_staff_ids: bookingData.technicianIds,
+      // Giữ lại các thông tin khác nếu cần
+    };
+    return apiClient<Appointment>(`/appointments/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // Logic cập nhật thông thường
   return apiClient<Appointment>(`/appointments/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
@@ -87,12 +103,22 @@ export async function updateAppointment(
 }
 
 /**
- * Xóa/hủy một lịch hẹn
- * @param id ID của lịch hẹn cần xóa
+ * Hủy một lịch hẹn và xử lý các nghiệp vụ liên quan (hoàn tiền, hoàn lượt).
+ * @param id ID của lịch hẹn cần hủy.
+ * @param reason Lý do hủy.
  */
-export async function deleteAppointment(id: string): Promise<void> {
-  return apiClient<void>(`/appointments/${id}`, {
-    method: "DELETE",
+export async function cancelAppointment({
+  id,
+  reason,
+}: {
+  id: string;
+  reason: string;
+}): Promise<void> {
+  return apiClient<void>(`/appointments/${id}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({
+      cancellation_reason: reason,
+    }),
   });
 }
 
@@ -112,7 +138,6 @@ export async function getUpcomingAppointmentsByTechnician(
 
 /**
  * Lấy danh sách các nhân viên được gợi ý để thay thế cho một lịch hẹn cụ thể.
- * Backend sẽ xử lý logic tìm kiếm dựa trên kỹ năng và lịch trống.
  * @param appointmentId ID của lịch hẹn cần tìm người thay thế.
  */
 export async function getSuggestedTechniciansForAppointment(
@@ -125,7 +150,6 @@ export async function getSuggestedTechniciansForAppointment(
 
 /**
  * Gán một lịch hẹn vào một gói liệu trình hoặc dịch vụ lẻ đã mua.
- * Backend sẽ tự động cập nhật trạng thái thanh toán của lịch hẹn.
  */
 export async function linkAppointmentToPackage(variables: {
   appointmentId: string;

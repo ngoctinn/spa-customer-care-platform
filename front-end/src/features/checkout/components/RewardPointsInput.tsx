@@ -11,11 +11,13 @@ import { toast } from "sonner";
 interface RewardPointsInputProps {
   availablePoints: number;
   onApplyPoints: (points: number) => void;
+  vndPerPoint: number;
 }
 
 export function RewardPointsInput({
   availablePoints,
   onApplyPoints,
+  vndPerPoint,
 }: RewardPointsInputProps) {
   const [pointsToUse, setPointsToUse] = useState<number | string>("");
 
@@ -30,8 +32,10 @@ export function RewardPointsInput({
       return;
     }
     onApplyPoints(points);
-    toast.success(`Đã áp dụng ${points} điểm vào đơn hàng.`);
   };
+
+  const conversionRateText =
+    vndPerPoint > 0 ? `(1 điểm = ${vndPerPoint.toLocaleString("vi-VN")}đ)` : "";
 
   return (
     <Card>
@@ -47,7 +51,7 @@ export function RewardPointsInput({
           <span className="font-bold text-primary">
             {availablePoints.toLocaleString("vi-VN")}
           </span>{" "}
-          điểm.
+          điểm. {conversionRateText}
         </p>
         <div className="flex gap-2">
           <Input
@@ -57,7 +61,9 @@ export function RewardPointsInput({
             onChange={(e) => setPointsToUse(e.target.value)}
             max={availablePoints}
           />
-          <Button onClick={handleApply}>Đổi điểm</Button>
+          <Button type="button" onClick={handleApply}>
+            Đổi điểm
+          </Button>
         </div>
       </CardContent>
     </Card>
