@@ -6,7 +6,6 @@ const slipItemSchema = z.object({
   product_name: z.string(),
   quantity: z.number().min(1, "Số lượng phải lớn hơn 0."),
   unit_price: z.number().min(0, "Đơn giá không được âm.").optional(),
-  // ++ BỔ SUNG: Thêm stock_quantity vào schema để refine có thể truy cập
   stock_quantity: z.number(),
 });
 
@@ -18,6 +17,9 @@ export const importSlipSchema = z.object({
 
 export const exportSlipSchema = z
   .object({
+    reason: z.enum(["INTERNAL_USE", "DAMAGED_GOODS", "TRANSFER", "OTHER"], {
+      message: "Vui lòng chọn lý do xuất kho.",
+    }),
     notes: z.string().optional(),
     items: z
       .array(slipItemSchema)

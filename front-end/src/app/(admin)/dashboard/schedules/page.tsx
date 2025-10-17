@@ -1,3 +1,4 @@
+// src/app/(admin)/dashboard/schedules/page.tsx
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -6,7 +7,11 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
-import { EventClickArg, EventContentArg } from "@fullcalendar/core";
+import {
+  EventClickArg,
+  EventContentArg,
+  DateSelectArg,
+} from "@fullcalendar/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAdminSchedules,
@@ -38,6 +43,11 @@ const statusColors = {
   approved: "bg-success",
   rejected: "bg-destructive",
 };
+
+// ++ BẠN SẼ TẠO COMPONENT NÀY Ở BƯỚC 2 ++
+// import ScheduleOverrideForm from "@/features/work-schedules/components/ScheduleOverrideForm";
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 export default function ScheduleManagementPage() {
   const queryClient = useQueryClient();
   const [dateRange, setDateRange] = useState({
@@ -47,7 +57,12 @@ export default function ScheduleManagementPage() {
   const [selectedEvent, setSelectedEvent] = useState<FlexibleSchedule | null>(
     null
   );
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
+
+  // ++ STATE MỚI CHO OVERRIDE FORM ++
+  const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
+  const [overrideSelection, setOverrideSelection] =
+    useState<DateSelectArg | null>(null);
 
   const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
   const { data: schedules = [], isLoading: isLoadingSchedules } = useQuery({
@@ -103,7 +118,7 @@ export default function ScheduleManagementPage() {
     onSuccess: () => {
       toast.success("Đã duyệt ca làm việc.");
       queryClient.invalidateQueries({ queryKey: ["adminSchedules"] });
-      setIsDialogOpen(false);
+      setIsApprovalDialogOpen(false);
     },
     onError: (error) =>
       toast.error("Duyệt thất bại:", { description: error.message }),
@@ -114,7 +129,7 @@ export default function ScheduleManagementPage() {
     onSuccess: () => {
       toast.success("Đã từ chối ca làm việc.");
       queryClient.invalidateQueries({ queryKey: ["adminSchedules"] });
-      setIsDialogOpen(false);
+      setIsApprovalDialogOpen(false);
     },
     onError: (error) =>
       toast.error("Từ chối thất bại:", { description: error.message }),
@@ -124,9 +139,15 @@ export default function ScheduleManagementPage() {
     const schedule = clickInfo.event.extendedProps as FlexibleSchedule;
     if (schedule.status === "pending") {
       setSelectedEvent(schedule);
-      setIsDialogOpen(true);
+      setIsApprovalDialogOpen(true);
     }
   };
+
+  const handleSelect = (selectInfo: DateSelectArg) => {
+    setOverrideSelection(selectInfo);
+    setIsOverrideDialogOpen(true);
+  };
+
   const renderEventContent = (eventInfo: EventContentArg) => {
     const { timeStatus } = eventInfo.event.extendedProps;
     return (
@@ -157,7 +178,7 @@ export default function ScheduleManagementPage() {
     <>
       <PageHeader
         title="Quản lý Ca làm việc"
-        description="Xem và duyệt các ca làm việc nhân viên đã đăng ký."
+        description="Xem, duyệt các ca làm việc và tạo các sự kiện chặn lịch cho nhân viên."
       />
       <Card>
         <CardContent className="p-4">
@@ -188,11 +209,17 @@ export default function ScheduleManagementPage() {
             datesSet={(arg) => {
               setDateRange({ start: arg.start, end: arg.end });
             }}
+            selectable={true}
+            selectMirror={true}
+            select={handleSelect}
           />
         </CardContent>
       </Card>
 
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <AlertDialog
+        open={isApprovalDialogOpen}
+        onOpenChange={setIsApprovalDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận Ca làm việc</AlertDialogTitle>
@@ -234,6 +261,21 @@ export default function ScheduleManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ++ DIALOG MỚI CHO FORM GHI ĐÈ LỊCH ++
+      <Dialog open={isOverrideDialogOpen} onOpenChange={setIsOverrideDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Tạo Sự kiện Ghi đè</DialogTitle>
+              </DialogHeader>
+              <ScheduleOverrideForm 
+                  selection={overrideSelection}
+                  staffList={staffList}
+                  onClose={() => setIsOverrideDialogOpen(false)}
+              />
+          </DialogContent>
+      </Dialog>
+      */}
     </>
   );
 }

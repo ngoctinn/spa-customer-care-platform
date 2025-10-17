@@ -22,6 +22,7 @@ export interface DataTableToolbarProps<TData> {
   }[];
   onDeleteSelected?: (selectedRows: TData[]) => void;
   onAdjustStockClick?: () => void;
+  CustomActions?: React.ComponentType<{ table: Table<TData> }>;
 }
 
 export function DataTableToolbar<TData>({
@@ -31,6 +32,7 @@ export function DataTableToolbar<TData>({
   facetedFilters = [],
   onDeleteSelected,
   onAdjustStockClick,
+  CustomActions,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const selectedRowsData = table
@@ -59,6 +61,7 @@ export function DataTableToolbar<TData>({
             options={filter.options}
           />
         ))}
+        {CustomActions && <CustomActions table={table} />}
       </div>
       <div className="flex items-center space-x-2">
         {onAdjustStockClick && (

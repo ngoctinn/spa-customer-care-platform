@@ -21,11 +21,11 @@ import { usePosStore } from "@/features/checkout/stores/pos-store";
 import PriceInput from "@/components/common/PriceInput";
 import { PaymentMethod, PaymentRecord } from "@/features/checkout/types";
 import { RewardPointsInput } from "@/features/checkout/components/RewardPointsInput";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { useLoyaltySettings } from "@/features/loyalty/hooks/useLoyalty";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2, Gift } from "lucide-react";
+import { PlusCircle, Trash2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { applyPrepaidCard } from "@/features/prepaid-card/api/prepaid-card.api";
 import { Label } from "@/components/ui/label";
@@ -93,7 +93,7 @@ const PaymentRecordRow = ({
 };
 
 export function PaymentDetails() {
-  const { control, watch, setValue } = useFormContext();
+  const { control, watch, setValue, setError, clearErrors } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "payments",
@@ -124,6 +124,39 @@ export function PaymentDetails() {
   const finalTotal = total - discountFromPoints;
   const remainingAmount = finalTotal - amountPaid;
 
+  // ++ LOGIC KIỂM TRA HẠN MỨC TÍN DỤNG ++
+  const isCreditLimitExceeded = useMemo(() => {
+    if (!customer) return false;
+
+    const debtPayment = watchedPayments.find((p) => p.method === "debt");
+    if (!debtPayment) {
+      clearErrors("payments"); // Xóa lỗi nếu không còn ghi nợ
+      return false;
+    }
+
+    const newDebtAmount = debtPayment.amount;
+    const currentDebt = customer.debt_amount || 0;
+    const creditLimit = customer.credit_limit || 0;
+
+    const willExceed = currentDebt + newDebtAmount > creditLimit;
+
+    if (willExceed) {
+      const debtPaymentIndex = watchedPayments.findIndex(
+        (p) => p.method === "debt"
+      );
+      setError(`payments.${debtPaymentIndex}.amount`, {
+        type: "manual",
+        message: `Vượt hạn mức tín dụng! (Tối đa: ${(
+          creditLimit - currentDebt
+        ).toLocaleString("vi-VN")}đ)`,
+      });
+    } else {
+      clearErrors("payments");
+    }
+
+    return willExceed;
+  }, [watchedPayments, customer, clearErrors, setError]);
+
   // Khởi tạo dòng thanh toán đầu tiên
   useEffect(() => {
     if (fields.length === 0) {
@@ -135,7 +168,9 @@ export function PaymentDetails() {
         watchedPayments
           .slice(1)
           .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-      setValue(`payments.0.amount`, newAmount > 0 ? newAmount : 0);
+      setValue(`payments.0.amount`, newAmount > 0 ? newAmount : 0, {
+        shouldValidate: true,
+      });
     }
   }, [finalTotal, fields.length, append, setValue, watchedPayments]);
 

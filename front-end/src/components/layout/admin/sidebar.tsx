@@ -25,6 +25,7 @@ import {
   BedDouble,
   DoorClosed,
   Cpu,
+  Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -134,6 +135,11 @@ const navGroups: NavGroup[] = [
         href: "/dashboard/inventory/overview",
         label: "Tổng quan",
         icon: Warehouse,
+      },
+      {
+        href: "/dashboard/inventory/stock-taking",
+        label: "Kiểm kê kho",
+        icon: Archive,
       },
       {
         href: "/dashboard/inventory/warehouse-slips",

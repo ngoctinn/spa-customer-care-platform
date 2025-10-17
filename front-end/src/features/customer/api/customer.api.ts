@@ -1,4 +1,3 @@
-// src/features/customer/api/customer.api.ts
 import { FullCustomerProfile } from "@/features/customer/types";
 import apiClient from "@/lib/apiClient";
 import { CustomerFormValues } from "../hooks/useCustomerManagement";
@@ -76,5 +75,20 @@ export async function addCustomer(
 export async function deactivateCustomer(customerId: string): Promise<void> {
   return apiClient<void>(`/customers/${customerId}`, {
     method: "DELETE",
+  });
+}
+
+/**
+ * ++ HÀM MỚI: Gửi yêu cầu hợp nhất các hồ sơ khách hàng. ++
+ * @param payload Dữ liệu chứa ID khách hàng chính, các ID nguồn và các trường ghi đè.
+ */
+export async function mergeCustomers(payload: {
+  mainCustomerId: string;
+  sourceCustomerIds: string[];
+  fieldOverrides: Partial<FullCustomerProfile>;
+}): Promise<void> {
+  return apiClient<void>("/customers/merge", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

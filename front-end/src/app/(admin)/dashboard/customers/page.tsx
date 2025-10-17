@@ -15,6 +15,7 @@ import {
 } from "@/features/customer/hooks/useCustomerManagement";
 import { FullCustomerProfile } from "@/features/customer/types";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
+import { Table } from "@tanstack/react-table";
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -85,7 +86,7 @@ export default function CustomersPage() {
   ];
 
   // Thêm nút "Hợp nhất" vào thanh công cụ
-  const CustomToolbar = ({ table }: { table: any }) => {
+  const CustomToolbar = ({ table }: { table: Table<FullCustomerProfile> }) => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
     if (selectedRows.length > 1) {
       return (
@@ -93,9 +94,7 @@ export default function CustomersPage() {
           variant="outline"
           size="sm"
           className="ml-2 h-8"
-          onClick={() =>
-            handleMerge(selectedRows.map((row: any) => row.original))
-          }
+          onClick={() => handleMerge(selectedRows.map((row) => row.original))}
         >
           <Users className="mr-2 h-4 w-4" />
           Hợp nhất ({selectedRows.length})

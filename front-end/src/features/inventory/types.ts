@@ -19,6 +19,15 @@ export interface Supplier {
 export type WarehouseSlipType = "IMPORT" | "EXPORT";
 
 /**
+ * @description Enum cho lý do xuất kho.
+ */
+export type WarehouseSlipReason =
+  | "INTERNAL_USE"
+  | "DAMAGED_GOODS"
+  | "TRANSFER"
+  | "OTHER";
+
+/**
  * @description Đại diện cho một dòng sản phẩm trong phiếu kho.
  */
 export interface SlipItem {
@@ -35,6 +44,7 @@ export interface WarehouseSlip {
   id: string;
   code: string; // Mã phiếu tự động tạo, ví dụ: PNK20251026001
   type: WarehouseSlipType;
+  reason?: WarehouseSlipReason; // Trường mới: Lý do xuất kho
   created_at: string; // ISO 8601 date string
   user: User; // Thông tin người tạo phiếu
   supplier?: Supplier; // Thông tin nhà cung cấp (chỉ cho phiếu nhập)
@@ -65,4 +75,34 @@ export interface InventoryStats {
   totalValue: number;
   lowStockCount: number;
   supplierCount: number;
+}
+
+/**
+ * @description Trạng thái của một phiên kiểm kê kho.
+ */
+export type StockTakeStatus = "ongoing" | "completed";
+
+/**
+ * @description Chi tiết một sản phẩm trong phiên kiểm kê.
+ */
+export interface StockTakeItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  system_quantity: number;
+  actual_quantity: number | null;
+  variance: number;
+}
+
+/**
+ * @description Một phiên kiểm kê kho.
+ */
+export interface StockTakeSession {
+  id: string;
+  code: string;
+  status: StockTakeStatus;
+  created_by: User;
+  completed_at: string | null;
+  created_at: string;
+  items?: StockTakeItem[]; // Chi tiết các sản phẩm, chỉ có khi gọi API lấy chi tiết
 }

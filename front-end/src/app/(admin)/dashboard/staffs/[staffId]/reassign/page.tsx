@@ -30,7 +30,7 @@ export default function ReassignAppointmentsPage() {
   const completeOffboardingMutation = useMutation({
     mutationFn: () => completeOffboarding(staffId),
     onSuccess: () => {
-      toast.success("Hoàn tất phân công lại và cho nhân viên nghỉ việc.");
+      toast.success("Hoàn tất quy trình nghỉ việc cho nhân viên.");
       queryClient.invalidateQueries({ queryKey: ["staffList"] });
       router.push("/dashboard/staffs");
     },
@@ -65,7 +65,8 @@ export default function ReassignAppointmentsPage() {
   };
 
   const handleFinish = () => {
-    if (allReassigned) {
+    // Luôn cho phép hoàn tất nếu không có lịch hẹn nào cần phân công
+    if (pendingAppointments.length === 0) {
       completeOffboardingMutation.mutate();
     }
   };
@@ -79,17 +80,18 @@ export default function ReassignAppointmentsPage() {
     return (
       <>
         <PageHeader
-          title={`Phân công lại cho ${staff?.full_name || ""}`}
-          description="Nhân viên này không có lịch hẹn nào trong tương lai."
+          title={`Hoàn tất quy trình cho ${staff?.full_name || ""}`}
+          description="Nhân viên này không có lịch hẹn nào trong tương lai cần phân công lại."
         />
         <Alert
           variant="default"
           className="bg-success/10 border-success/50 text-success"
         >
           <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Không có lịch hẹn!</AlertTitle>
+          <AlertTitle>Không có lịch hẹn chờ!</AlertTitle>
           <AlertDescription>
-            Bạn có thể hoàn tất ngay để cho nhân viên nghỉ việc.
+            Bạn có thể nhấn 'Hoàn tất' để chính thức chuyển trạng thái nhân viên
+            sang 'Đã nghỉ việc'.
           </AlertDescription>
         </Alert>
         <div className="mt-4 flex justify-end">
@@ -99,7 +101,7 @@ export default function ReassignAppointmentsPage() {
           >
             {completeOffboardingMutation.isPending
               ? "Đang xử lý..."
-              : "Hoàn tất"}
+              : "Hoàn tất & Cho nghỉ việc"}
           </Button>
         </div>
       </>
@@ -109,7 +111,7 @@ export default function ReassignAppointmentsPage() {
   return (
     <>
       <PageHeader
-        title={`Phân công lại lịch hẹn cho ${staff?.full_name || ""}`}
+        title={`Phân công lại cho ${staff?.full_name || ""}`}
         description={`Vui lòng phân công lại ${pendingAppointments.length} lịch hẹn còn lại của nhân viên này.`}
         actionNode={
           <Button
@@ -118,7 +120,7 @@ export default function ReassignAppointmentsPage() {
           >
             {completeOffboardingMutation.isPending
               ? "Đang xử lý..."
-              : "Hoàn tất"}
+              : "Hoàn tất & Cho nghỉ việc"}
           </Button>
         }
       />
@@ -131,8 +133,8 @@ export default function ReassignAppointmentsPage() {
           <CheckCircle className="h-4 w-4" />
           <AlertTitle>Hoàn tất phân công!</AlertTitle>
           <AlertDescription>
-            Tất cả lịch hẹn đã được phân công lại. Nhấn "Hoàn tất" để xác nhận
-            cho nhân viên nghỉ việc.
+            Tất cả lịch hẹn đã được phân công lại. Nhấn "Hoàn tất & Cho nghỉ
+            việc" để xác nhận.
           </AlertDescription>
         </Alert>
       ) : (
