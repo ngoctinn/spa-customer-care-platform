@@ -96,7 +96,7 @@ export interface ScheduleOverride {
   date: string; // YYYY-MM-DD
   start_time: string | null; // "HH:mm" hoặc null nếu là ngày nghỉ
   end_time: string | null; // "HH:mm" hoặc null nếu là ngày nghỉ
-  type: "WORK" | "DAY_OFF"; // Loại ghi đè: là ca làm việc hay ngày nghỉ
+  type: "WORK" | "DAY_OFF" | "BLOCK" | "TASK"; // Loại ghi đè: là ca làm việc, ngày nghỉ, chặn đặt lịch, hoặc công việc khác
 }
 
 /**

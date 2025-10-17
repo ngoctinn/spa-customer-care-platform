@@ -4,7 +4,11 @@ import { Service } from "@/features/service/types";
 import { User } from "@/features/user/types";
 
 // Định nghĩa trạng thái làm việc dựa trên API mới
-export type EmploymentStatus = "active" | "on_leave" | "inactive";
+export type EmploymentStatus =
+  | "active"
+  | "on_leave"
+  | "inactive"
+  | "pending_offboarding";
 
 // Cập nhật lại cấu trúc Staff Profile để khớp với API
 export interface StaffProfile {

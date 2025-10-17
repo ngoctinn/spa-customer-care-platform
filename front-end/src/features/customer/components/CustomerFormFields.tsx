@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import PriceInput from "@/components/common/PriceInput";
 
 export default function CustomerFormFields() {
   const { control } = useFormContext();
@@ -38,6 +39,19 @@ export default function CustomerFormFields() {
             <FormLabel>Số điện thoại</FormLabel>
             <FormControl>
               <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="credit_limit"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Hạn mức tín dụng (VND)</FormLabel>
+            <FormControl>
+              <PriceInput name={field.name} label="Hạn mức tín dụng" />
             </FormControl>
             <FormMessage />
           </FormItem>

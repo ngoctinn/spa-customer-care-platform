@@ -1,3 +1,4 @@
+// src/features/staff/hooks/useStaffManagement.ts
 import { useResourceManagement } from "@/features/management-pages/hooks/useResourceManagement";
 import { useStaff } from "./useStaff";
 import { FullStaffProfile } from "../types";
@@ -40,8 +41,8 @@ export function useStaffManagement() {
     }),
     customMessages: {
       updateSuccess: "Cập nhật thông tin nhân viên thành công!",
-      deleteSuccess: "Đã cho nhân viên nghỉ việc!",
-      deleteError: "Thao tác cho nghỉ việc thất bại.",
+      deleteSuccess: "Đã bắt đầu quy trình cho nghỉ việc!",
+      deleteError: "Thao tác thất bại.",
     },
   });
 
@@ -50,6 +51,10 @@ export function useStaffManagement() {
     mutationFn: initiateOffboarding,
     onSuccess: (data, staffId) => {
       resourceManagement.handleCloseDeleteDialog();
+      // Chuyển trạng thái nhân viên thành PENDING_OFFBOARDING
+      queryClient.invalidateQueries({ queryKey: ["staffList"] });
+      toast.info("Bắt đầu quy trình cho nghỉ việc.");
+
       if (data.reassignment_required) {
         toast.info(
           `Nhân viên có ${data.upcoming_appointments_count} lịch hẹn cần phân công lại.`
@@ -57,8 +62,11 @@ export function useStaffManagement() {
         // Chuyển hướng đến trang phân công lại
         router.push(`/dashboard/staffs/${staffId}/reassign`);
       } else {
-        toast.success(data.message || "Nhân viên đã được cho nghỉ việc.");
-        queryClient.invalidateQueries({ queryKey: ["staffList"] });
+        toast.success(
+          data.message || "Nhân viên không có lịch hẹn nào cần xử lý."
+        );
+        // Có thể gọi API hoàn tất luôn ở đây nếu muốn, hoặc để user tự vào trang reassign và bấm nút
+        router.push(`/dashboard/staffs/${staffId}/reassign`);
       }
     },
     onError: (error) => {

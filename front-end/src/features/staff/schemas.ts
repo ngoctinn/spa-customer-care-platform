@@ -1,4 +1,3 @@
-// src/features/staff/schemas.ts
 import { z } from "zod";
 import { phoneSchema, nameSchema } from "@/lib/schemas"; // Assuming you have nameSchema
 
@@ -47,7 +46,12 @@ export const staffFormSchema = z.object({
   phone_number: phoneSchema.optional().or(z.literal("")),
   position: z.string().optional(),
   hire_date: z.coerce.date().optional(),
-  employment_status: z.enum(["active", "on_leave", "inactive"]),
+  employment_status: z.enum([
+    "active",
+    "on_leave",
+    "inactive",
+    "pending_offboarding",
+  ]),
   notes: z.string().optional(),
 });
 

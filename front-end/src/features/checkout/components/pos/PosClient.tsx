@@ -1,4 +1,3 @@
-// src/features/checkout/components/pos/PosClient.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -22,15 +21,25 @@ import { XCircle } from "lucide-react";
 import { useCreateInvoice } from "@/features/checkout/hooks/usePos";
 import { PaymentMethod } from "@/features/checkout/types";
 
-// ++ THAY ĐỔI: Mở rộng schema để bao gồm phương thức thanh toán và số tiền đã trả ++
-const paymentSchema = z.object({
-  payment_method: z.custom<PaymentMethod>((val) => !!val, {
-    message: "Vui lòng chọn phương thức thanh toán.",
+// Schema cho một dòng thanh toán
+const paymentRecordSchema = z.object({
+  method: z.custom<PaymentMethod>((val) => !!val, {
+    message: "Vui lòng chọn phương thức.",
   }),
-  amount_paid: z.number().min(0, "Số tiền trả không được âm.").optional(),
-  notes: z.string().optional(),
+  amount: z.number().min(0, "Số tiền không hợp lệ."),
 });
-type PaymentFormValues = z.infer<typeof paymentSchema>;
+
+// Schema chính cho toàn bộ form thanh toán
+const posFormSchema = z.object({
+  payments: z
+    .array(paymentRecordSchema)
+    .min(1, "Phải có ít nhất một phương thức thanh toán."),
+  notes: z.string().optional(),
+  pointsToRedeem: z.number().optional(),
+  prepaidCardCode: z.string().optional(),
+});
+
+type PosFormValues = z.infer<typeof posFormSchema>;
 
 export function PosClient() {
   const searchParams = useSearchParams();
@@ -46,20 +55,13 @@ export function PosClient() {
   const { data: appointmentService, isLoading: isLoadingService } =
     useServiceById(appointment?.service_id || "");
 
-  const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentSchema),
-    // ++ THÊM: Gán giá trị mặc định ++
+  const form = useForm<PosFormValues>({
+    resolver: zodResolver(posFormSchema),
     defaultValues: {
-      payment_method: "cash",
-      amount_paid: 0,
+      payments: [],
       notes: "",
     },
   });
-
-  // ++ THÊM: Theo dõi tổng tiền để tự động cập nhật số tiền khách trả ++
-  useEffect(() => {
-    form.setValue("amount_paid", total);
-  }, [total, form]);
 
   const { createInvoiceMutation, isPending } = useCreateInvoice();
 
@@ -92,7 +94,6 @@ export function PosClient() {
     content: () => receiptRef.current,
   });
 
-  // ++ THAY ĐỔI: Truyền toàn bộ dữ liệu form vào mutation ++
   const handleSubmit = form.handleSubmit((data) => {
     createInvoiceMutation.mutate(data, {
       onSuccess: () => {

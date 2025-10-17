@@ -19,6 +19,7 @@ import {
   DollarSign,
   CalendarDays,
   AlertCircle,
+  CircleDollarSign,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -154,12 +155,14 @@ const CustomerStats = ({
   totalSpent,
   completedAppointments,
   debtAmount,
+  creditLimit,
 }: {
   totalSpent: number;
   completedAppointments: number;
   debtAmount: number;
+  creditLimit: number;
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <StatCard
       title="Tổng chi tiêu"
       value={`${totalSpent.toLocaleString("vi-VN")}đ`}
@@ -178,6 +181,13 @@ const CustomerStats = ({
       icon={AlertCircle}
       description="Tổng số tiền chưa thanh toán"
       iconColor={debtAmount > 0 ? "text-destructive" : "text-success"}
+    />
+    <StatCard
+      title="Hạn mức tín dụng"
+      value={`${creditLimit.toLocaleString("vi-VN")}đ`}
+      icon={CircleDollarSign}
+      description="Hạn mức nợ tối đa cho phép"
+      iconColor="text-info"
     />
   </div>
 );
@@ -413,6 +423,7 @@ export default function CustomerDetailPage() {
         totalSpent={totalSpent}
         completedAppointments={completedAppointments}
         debtAmount={customer.debt_amount || 0}
+        creditLimit={customer.credit_limit || 0}
       />
       <DebtHistoryList customerId={customerId} />
       <RecentAppointmentsList customerId={customerId} />

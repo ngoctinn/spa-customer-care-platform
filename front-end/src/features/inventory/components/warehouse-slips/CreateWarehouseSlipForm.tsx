@@ -39,7 +39,7 @@ import {
   ExportSlipFormValues,
 } from "@/features/inventory/schemas/warehouse-slip.schema";
 import { useSuppliers } from "../../hooks/useSuppliers";
-import { WarehouseSlip } from "../../types";
+import { WarehouseSlip, WarehouseSlipReason } from "../../types";
 import { toast } from "sonner";
 
 interface CreateWarehouseSlipFormProps {
@@ -50,6 +50,13 @@ interface CreateWarehouseSlipFormProps {
 }
 
 type WarehouseSlipFormValues = ImportSlipFormValues | ExportSlipFormValues;
+
+const reasonOptions: { value: WarehouseSlipReason; label: string }[] = [
+  { value: "INTERNAL_USE", label: "Xuất sử dụng nội bộ" },
+  { value: "DAMAGED_GOODS", label: "Hàng hỏng" },
+  { value: "TRANSFER", label: "Chuyển kho" },
+  { value: "OTHER", label: "Khác" },
+];
 
 export function CreateWarehouseSlipForm({
   type,
@@ -68,8 +75,10 @@ export function CreateWarehouseSlipForm({
     resolver: zodResolver(isImport ? importSlipSchema : exportSlipSchema),
     defaultValues: {
       items: [],
-      ...(isImport && { supplier_id: "" }),
       notes: "",
+      ...(isImport
+        ? { supplier_id: "" }
+        : { reason: "INTERNAL_USE" as WarehouseSlipReason }),
     },
   });
 
@@ -77,10 +86,10 @@ export function CreateWarehouseSlipForm({
     if (initialData) {
       form.reset({
         notes: initialData.notes || "",
-        ...(isImport && { supplier_id: initialData.supplier?.id }),
+        ...(isImport
+          ? { supplier_id: initialData.supplier?.id }
+          : { reason: initialData.reason }),
       });
-      // Cần lấy thông tin tồn kho mới nhất khi edit
-      // Giả sử `initialData.items` có thông tin `stock_quantity`
       setItems(initialData.items);
     }
   }, [initialData, form, setItems, isImport]);
@@ -110,7 +119,7 @@ export function CreateWarehouseSlipForm({
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {isImport && (
+          {isImport ? (
             <FormField
               control={form.control}
               name="supplier_id"
@@ -139,12 +148,40 @@ export function CreateWarehouseSlipForm({
                 </FormItem>
               )}
             />
+          ) : (
+            <FormField
+              control={form.control}
+              name="reason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lý do xuất kho</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn lý do..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {reasonOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
           <FormField
             control={form.control}
             name="notes"
             render={({ field }) => (
-              <FormItem className={!isImport ? "md:col-span-2" : ""}>
+              <FormItem>
                 <FormLabel>Ghi chú</FormLabel>
                 <FormControl>
                   <Textarea
@@ -197,7 +234,6 @@ export function CreateWarehouseSlipForm({
                   <TableRow key={item.product_id}>
                     <TableCell>{item.product_name}</TableCell>
                     <TableCell>
-                      {/* ++ THAY ĐỔI: Bọc Input trong FormField để hiển thị lỗi ++ */}
                       <FormField
                         control={form.control}
                         name={`items.${index}.quantity`}
@@ -209,8 +245,11 @@ export function CreateWarehouseSlipForm({
                                 min={1}
                                 {...field}
                                 onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value) || 1)
+                                  updateItem(item.product_id, {
+                                    quantity: parseInt(e.target.value) || 1,
+                                  })
                                 }
+                                value={item.quantity}
                               />
                             </FormControl>
                             <FormMessage />

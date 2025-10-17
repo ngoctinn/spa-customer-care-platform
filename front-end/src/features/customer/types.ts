@@ -5,6 +5,7 @@ export interface PurchasedService {
   service_id: string;
   quantity: number;
   purchase_invoice_id: string;
+  numberOfGuests?: number;
 }
 
 export interface NotificationSettings {
@@ -39,6 +40,7 @@ export interface Customer {
   notification_settings?: NotificationSettings;
   loyalty_points?: number;
   debt_amount?: number;
+  credit_limit: number;
   joined_date?: Date;
   is_deleted?: boolean;
   created_at?: Date;
