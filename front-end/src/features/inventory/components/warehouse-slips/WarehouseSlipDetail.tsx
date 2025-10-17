@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/table";
 import { WarehouseSlip } from "../../types";
 import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
+import { useStaff } from "@/features/staff/hooks/useStaff";
 
 interface WarehouseSlipDetailProps {
   slip: WarehouseSlip | null;
@@ -34,9 +36,15 @@ export default function WarehouseSlipDetail({
   isOpen,
   onClose,
 }: WarehouseSlipDetailProps) {
+  const { data: staffList = [] } = useStaff();
+  const staffNameMap = useMemo(() => {
+    return new Map(staffList.map((staff) => [staff.user.id, staff.full_name]));
+  }, [staffList]);
   if (!slip) return null;
 
   const isImport = slip.type === "IMPORT";
+
+  const creatorName = staffNameMap.get(slip.user.id) || slip.user.email;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -59,7 +67,7 @@ export default function WarehouseSlipDetail({
             </div>
             <div>
               <p className="text-muted-foreground">Người tạo</p>
-              <p className="font-medium">{slip.user.full_name}</p>
+              <p className="font-medium">{creatorName}</p>{" "}
             </div>
             {isImport && slip.supplier && (
               <div>

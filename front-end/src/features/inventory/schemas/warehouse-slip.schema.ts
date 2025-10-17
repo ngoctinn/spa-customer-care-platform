@@ -1,4 +1,3 @@
-// src/features/inventory/schemas/warehouse-slip.schema.ts
 import { z } from "zod";
 
 const slipItemSchema = z.object({
@@ -25,7 +24,6 @@ export const exportSlipSchema = z
       .array(slipItemSchema)
       .min(1, "Phiếu phải có ít nhất một sản phẩm."),
   })
-  // ++ THAY ĐỔI: Thêm logic refine để kiểm tra tồn kho ++
   .superRefine((data, ctx) => {
     data.items.forEach((item, index) => {
       if (item.quantity > item.stock_quantity) {

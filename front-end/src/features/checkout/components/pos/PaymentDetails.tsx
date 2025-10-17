@@ -101,17 +101,15 @@ export function PaymentDetails() {
 
   const { total, customer } = usePosStore();
 
-  const [pointsToUse, setPointsToUse] = useState(0);
-  const [discountFromPoints, setDiscountFromPoints] = useState(0);
+  const discountFromPoints = watch("discountFromPoints") || 0;
+  const prepaidCardDiscount = watch("prepaidCardDiscount") || 0;
 
-  // State cho thẻ trả trước
   const [prepaidCardCode, setPrepaidCardCode] = useState("");
-  const [prepaidCardDiscount, setPrepaidCardDiscount] = useState(0);
   const [isApplyingCard, setIsApplyingCard] = useState(false);
 
   const { data: loyaltySettings } = useLoyaltySettings();
-  const pointsPerVnd = loyaltySettings?.points_per_vnd || 0; // Tỷ lệ VND / 1 điểm
-  const vndPerPoint = pointsPerVnd > 0 ? 1 / pointsPerVnd : 0; // Giá trị 1 điểm
+  const pointsPerVnd = loyaltySettings?.points_per_vnd || 0;
+  const vndPerPoint = pointsPerVnd > 0 ? 1 / pointsPerVnd : 0;
 
   const watchedPayments = watch("payments") as PaymentRecord[];
   const amountPaid =
@@ -120,49 +118,48 @@ export function PaymentDetails() {
       0
     ) + prepaidCardDiscount;
 
-  // Tính toán lại tổng tiền sau khi trừ các loại giảm giá
   const finalTotal = total - discountFromPoints;
   const remainingAmount = finalTotal - amountPaid;
 
-  // ++ LOGIC KIỂM TRA HẠN MỨC TÍN DỤNG ++
   const isCreditLimitExceeded = useMemo(() => {
     if (!customer) return false;
 
     const debtPayment = watchedPayments.find((p) => p.method === "debt");
-    if (!debtPayment) {
-      clearErrors("payments"); // Xóa lỗi nếu không còn ghi nợ
+    const debtPaymentIndex = watchedPayments.findIndex(
+      (p) => p.method === "debt"
+    );
+
+    if (!debtPayment || debtPaymentIndex === -1) {
+      clearErrors(`payments`); // Xóa tất cả lỗi trong mảng payments nếu không có ghi nợ
       return false;
     }
 
-    const newDebtAmount = debtPayment.amount;
+    const newDebtAmount = Math.max(0, remainingAmount);
     const currentDebt = customer.debt_amount || 0;
     const creditLimit = customer.credit_limit || 0;
 
     const willExceed = currentDebt + newDebtAmount > creditLimit;
 
     if (willExceed) {
-      const debtPaymentIndex = watchedPayments.findIndex(
-        (p) => p.method === "debt"
-      );
+      const maxAllowedDebt = Math.max(0, creditLimit - currentDebt);
       setError(`payments.${debtPaymentIndex}.amount`, {
         type: "manual",
-        message: `Vượt hạn mức tín dụng! (Tối đa: ${(
-          creditLimit - currentDebt
-        ).toLocaleString("vi-VN")}đ)`,
+        message: `Vượt hạn mức! (Tối đa: ${maxAllowedDebt.toLocaleString(
+          "vi-VN"
+        )}đ)`,
       });
     } else {
-      clearErrors("payments");
+      clearErrors(`payments.${debtPaymentIndex}.amount`);
     }
 
     return willExceed;
-  }, [watchedPayments, customer, clearErrors, setError]);
+  }, [watchedPayments, customer, remainingAmount, clearErrors, setError]);
 
   // Khởi tạo dòng thanh toán đầu tiên
   useEffect(() => {
     if (fields.length === 0) {
       append({ method: "cash", amount: finalTotal > 0 ? finalTotal : 0 });
     } else {
-      // Cập nhật số tiền cho dòng thanh toán đầu tiên nếu tổng tiền thay đổi
       const newAmount =
         finalTotal -
         watchedPayments
@@ -187,10 +184,9 @@ export function PaymentDetails() {
       );
       return;
     }
-
-    setPointsToUse(points);
-    setDiscountFromPoints(discountValue);
-    setValue("pointsToRedeem", points); // Gửi số điểm lên server
+    // ++ ADDED ++: Lưu giá trị discount vào form
+    setValue("pointsToRedeem", points);
+    setValue("discountFromPoints", discountValue);
     toast.success(
       `Đã áp dụng giảm giá ${discountValue.toLocaleString("vi-VN")}đ từ điểm.`
     );
@@ -207,8 +203,8 @@ export function PaymentDetails() {
         card_code: prepaidCardCode,
         total_amount: finalTotal,
       });
-      setPrepaidCardDiscount(result.applicable_amount);
-      setValue("prepaidCardCode", prepaidCardCode); // Gửi mã thẻ lên server
+      setValue("prepaidCardCode", prepaidCardCode);
+      setValue("prepaidCardDiscount", result.applicable_amount);
       toast.success(
         `Đã áp dụng ${result.applicable_amount.toLocaleString(
           "vi-VN"
@@ -235,7 +231,7 @@ export function PaymentDetails() {
           <RewardPointsInput
             availablePoints={customer.loyalty_points ?? 0}
             onApplyPoints={handleApplyPoints}
-            vndPerPoint={vndPerPoint} // Truyền tỷ lệ quy đổi
+            vndPerPoint={vndPerPoint}
           />
         </>
       )}
@@ -305,9 +301,13 @@ export function PaymentDetails() {
       {amountPaid > 0 && (
         <div className="flex justify-between text-sm pt-4">
           <span className="text-muted-foreground">
-            {remainingAmount >= 0 ? "Còn lại" : "Tiền thừa"}
+            {remainingAmount >= 0 ? "Còn lại" : "Tiền thừa trả khách"}
           </span>
-          <span className="font-medium">
+          <span
+            className={`font-medium ${
+              remainingAmount < 0 ? "text-success font-bold text-base" : ""
+            }`}
+          >
             {Math.abs(remainingAmount).toLocaleString("vi-VN")}đ
           </span>
         </div>

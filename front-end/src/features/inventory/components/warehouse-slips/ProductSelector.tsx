@@ -1,4 +1,3 @@
-// src/features/inventory/components/warehouse-slips/ProductSelector.tsx
 "use client";
 
 import * as React from "react";
@@ -19,12 +18,14 @@ import {
 } from "@/components/ui/popover";
 import { useProducts } from "@/features/product/hooks/useProducts";
 import { Product } from "@/features/product/types";
+import { cn } from "@/lib/utils";
 
 interface ProductSelectorProps {
   onSelect: (product: Product) => void;
+  isImport: boolean;
 }
 
-export function ProductSelector({ onSelect }: ProductSelectorProps) {
+export function ProductSelector({ onSelect, isImport }: ProductSelectorProps) {
   const [open, setOpen] = React.useState(false);
   const { data: products = [], isLoading } = useProducts();
 
@@ -55,9 +56,14 @@ export function ProductSelector({ onSelect }: ProductSelectorProps) {
                     onSelect(product);
                     setOpen(false);
                   }}
+                  disabled={!isImport && product.stock <= 0}
+                  className={cn(
+                    !isImport &&
+                      product.stock <= 0 &&
+                      "text-muted-foreground italic"
+                  )}
                 >
                   <Check className={"mr-2 h-4 w-4 opacity-0"} />
-                  {/* Cập nhật hiển thị */}
                   <span>
                     {product.name}{" "}
                     <span className="text-muted-foreground">

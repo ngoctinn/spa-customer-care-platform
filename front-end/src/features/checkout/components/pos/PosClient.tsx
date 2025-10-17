@@ -20,8 +20,8 @@ import { PosActions } from "./PosActions";
 import { XCircle } from "lucide-react";
 import { useCreateInvoice } from "@/features/checkout/hooks/usePos";
 import { PaymentMethod } from "@/features/checkout/types";
+import { useLoyaltySettings } from "@/features/loyalty/hooks/useLoyalty"; // ++ ADDED ++
 
-// Schema cho một dòng thanh toán
 const paymentRecordSchema = z.object({
   method: z.custom<PaymentMethod>((val) => !!val, {
     message: "Vui lòng chọn phương thức.",
@@ -29,7 +29,6 @@ const paymentRecordSchema = z.object({
   amount: z.number().min(0, "Số tiền không hợp lệ."),
 });
 
-// Schema chính cho toàn bộ form thanh toán
 const posFormSchema = z.object({
   payments: z
     .array(paymentRecordSchema)
@@ -37,6 +36,8 @@ const posFormSchema = z.object({
   notes: z.string().optional(),
   pointsToRedeem: z.number().optional(),
   prepaidCardCode: z.string().optional(),
+  discountFromPoints: z.number().optional(),
+  prepaidCardDiscount: z.number().optional(),
 });
 
 type PosFormValues = z.infer<typeof posFormSchema>;
@@ -60,6 +61,10 @@ export function PosClient() {
     defaultValues: {
       payments: [],
       notes: "",
+      pointsToRedeem: 0,
+      prepaidCardCode: "",
+      discountFromPoints: 0,
+      prepaidCardDiscount: 0,
     },
   });
 
@@ -94,15 +99,33 @@ export function PosClient() {
     content: () => receiptRef.current,
   });
 
+  // ++ REFACTORED ++: Tách logic xử lý submit và thông báo tiền thừa
   const handleSubmit = form.handleSubmit((data) => {
     createInvoiceMutation.mutate(data, {
       onSuccess: () => {
-        toast.success("Thanh toán thành công!", {
+        const totalPaid = data.payments.reduce((sum, p) => sum + p.amount, 0);
+        const discountAmount =
+          (data.discountFromPoints || 0) + (data.prepaidCardDiscount || 0);
+        const finalTotal = total - discountAmount;
+        const changeDue = totalPaid - finalTotal;
+
+        let toastMessage = "Thanh toán thành công!";
+        if (changeDue > 0) {
+          toastMessage += ` Vui lòng trả lại khách ${changeDue.toLocaleString(
+            "vi-VN"
+          )}đ.`;
+        }
+
+        toast.success(toastMessage, {
           action: {
             label: "In Hóa Đơn",
             onClick: handlePrint,
           },
+          duration: 10000,
         });
+
+        clear();
+        form.reset();
       },
     });
   });
@@ -132,7 +155,7 @@ export function PosClient() {
             <XCircle className="mr-2 h-4 w-4" />
             Hủy bỏ
           </Button>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || !form.formState.isValid}>
             {isPending ? "Đang xử lý..." : "Hoàn tất Thanh toán"}
           </Button>
         </div>

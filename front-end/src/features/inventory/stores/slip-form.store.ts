@@ -1,9 +1,7 @@
-// src/features/inventory/stores/slip-form.store.ts
 import { create } from "zustand";
 import { SlipItem } from "@/features/inventory/types";
 import { Product } from "@/features/product/types";
 
-// ++ BỔ SUNG: Mở rộng SlipItem để chứa thông tin tồn kho ++
 export interface SlipItemWithStock extends SlipItem {
   stock_quantity: number;
 }
@@ -30,7 +28,6 @@ export const useSlipFormStore = create<SlipFormState>((set) => ({
       if (existingItem) {
         return state;
       }
-      // ++ THAY ĐỔI: Thêm stock_quantity khi tạo item mới ++
       const newItem: SlipItemWithStock = {
         product_id: product.id,
         product_name: product.name,
@@ -51,14 +48,10 @@ export const useSlipFormStore = create<SlipFormState>((set) => ({
       ),
     })),
   clearItems: () => set({ items: [] }),
-  // ++ THAY ĐỔI: Xử lý khi set lại items (ví dụ: lúc edit)
   setItems: (items) =>
     set({
       items: items.map((item) => ({
         ...item,
-        // Giả định stock_quantity sẽ cần được lấy từ một nguồn khác khi edit,
-        // ở đây ta tạm gán bằng quantity để tránh lỗi,
-        // logic lấy tồn kho đúng sẽ nằm ở component.
         stock_quantity: (item as any).stock_quantity || item.quantity,
       })),
     }),
