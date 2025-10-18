@@ -4,7 +4,10 @@
 import { PageHeader } from "@/components/common/PageHeader";
 import { CreateWarehouseSlipForm } from "@/features/inventory/components/warehouse-slips/CreateWarehouseSlipForm";
 import { ImportSlipFormValues } from "@/features/inventory/schemas/warehouse-slip.schema";
-import { useWarehouseSlipMutations } from "@/features/inventory/hooks/useWarehouseSlips";
+import {
+  useWarehouseSlipById,
+  useWarehouseSlipMutations,
+} from "@/features/inventory/hooks/useWarehouseSlips";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getWarehouseSlipById } from "@/features/inventory/apis/warehouse-slip.api";
@@ -15,11 +18,7 @@ export default function EditImportSlipPage() {
   const params = useParams();
   const slipId = params.slipId as string;
 
-  const { data: slip, isLoading } = useQuery({
-    queryKey: ["warehouseSlips", slipId],
-    queryFn: () => getWarehouseSlipById(slipId),
-    enabled: !!slipId,
-  });
+  const { data: slip, isLoading } = useWarehouseSlipById(slipId);
 
   const { updateMutation } = useWarehouseSlipMutations();
 
@@ -48,7 +47,7 @@ export default function EditImportSlipPage() {
         type="IMPORT"
         onSubmit={handleSubmit}
         isSubmitting={updateMutation.isPending}
-        initialData={slip}
+        initialData={slip || undefined}
       />
     </>
   );

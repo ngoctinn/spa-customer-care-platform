@@ -1,7 +1,6 @@
 "use client";
 import { getPrimaryImageUrl } from "@/lib/image-utils";
-import { useQuery } from "@tanstack/react-query";
-import { getProductById } from "@/features/product/api/product.api";
+import { useProductById } from "@/features/product/hooks/useProducts";
 import { ReviewList } from "@/features/review/components/ReviewList";
 import { notFound } from "next/navigation";
 import { useState, useEffect, use } from "react";
@@ -23,10 +22,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     data: product,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["product", id],
-    queryFn: () => getProductById(id),
-  });
+  } = useProductById(id);
 
   const primaryImageUrl = getPrimaryImageUrl(
     product?.images,

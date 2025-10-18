@@ -242,12 +242,22 @@ const DebtHistoryList = ({ customerId }: { customerId: string }) => {
   );
 };
 
+import { useServices } from "@/features/service/hooks/useServices";
+
 const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
-  const { data: allAppointments = [], isLoading } = useAppointments();
+  const { data: allAppointments = [], isLoading: isLoadingAppointments } = useAppointments();
+  const { data: services = [], isLoading: isLoadingServices } = useServices();
+
+  const serviceMap = useMemo(() => {
+    return new Map(services.map((s) => [s.id, s.name]));
+  }, [services]);
+
   const appointments = allAppointments
     .filter((apt) => apt.customer_id === customerId)
     .slice(0, 5);
-  if (isLoading) return <p>Đang tải lịch hẹn...</p>;
+
+  if (isLoadingAppointments || isLoadingServices) return <p>Đang tải lịch hẹn...</p>;
+
   return (
     <Card>
       <CardHeader>
@@ -273,7 +283,7 @@ const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
               appointments.map((apt) => (
                 <TableRow key={apt.id}>
                   <TableCell className="font-medium">
-                    {apt.service_id}
+                    {serviceMap.get(apt.service_id) || apt.service_id}
                   </TableCell>
                   <TableCell>
                     {new Date(apt.start_time).toLocaleDateString("vi-VN")}

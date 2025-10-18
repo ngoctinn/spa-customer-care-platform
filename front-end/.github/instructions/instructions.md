@@ -1,4 +1,4 @@
-## ⚙️ Hướng Dẫn Toàn Diện Cho AI: Clean Code, React/Next.js & Comment Tiếng Việt
+## ⚙️ Hướng Dẫn Toàn Diện Cho AI: Clean Code, React/Next.js & Comment Tiếng Việt (Phiên bản chi tiết)
 
 **Mục tiêu cốt lõi:** Luôn tạo ra code **sạch (Clean Code)**, tuân thủ nghiêm ngặt các quy ước của dự án React/Next.js này, và sử dụng **tiếng Việt** để comment code một cách ngắn gọn, rõ ràng, và có ý nghĩa.
 
@@ -35,14 +35,65 @@ Khi viết code cho dự án này, **BẮT BUỘC** tuân thủ các quy tắc s
 
 4.  **Quản Lý Trạng Thái (State Management):**
     *   **Server State (Dữ liệu từ API):** **BẮT BUỘC** sử dụng **React Query (TanStack Query)**.
-        *   Logic fetch và mutate dữ liệu phải được đóng gói trong các custom hooks trong thư mục `features/[feature-name]/hooks/`. Ví dụ: `useProducts`, `useUpdateService`.
+        *   Logic fetch và mutate dữ liệu phải được đóng gói trong các custom hooks trong thư mục `features/[feature-name]/hooks/`.
+        *   **Ví dụ: Custom Hook cho việc lấy dữ liệu (Query) - Trích từ `src/features/appointment/hooks/useAppointments.ts`**
+            ```typescript
+            // Hook để lấy danh sách lịch hẹn
+            export const useAppointments = () => {
+              return useQuery<Appointment[]>({
+                queryKey: ["appointments"],
+                queryFn: getAppointments,
+              });
+            };
+            ```
+        *   **Ví dụ: Custom Hook cho việc tạo/cập nhật dữ liệu (Mutation) - Trích từ `src/features/appointment/hooks/useAppointments.ts`**
+            ```typescript
+            // Hook để cập nhật lịch hẹn
+            export const useUpdateAppointment = () => {
+              const queryClient = useQueryClient();
+              return useMutation({
+                mutationFn: ({
+                  id,
+                  data,
+                }: {
+                  id: string;
+                  data: Partial<Appointment> | Partial<AppointmentFormValues>;
+                }) => updateAppointment(id, data),
+                onSuccess: () => {
+                  toast.success("Cập nhật lịch hẹn thành công!");
+                  queryClient.invalidateQueries({ queryKey: ["appointments"] });
+                },
+                onError: (error) => {
+                  toast.error("Cập nhật thất bại", { description: error.message });
+                },
+              });
+            };
+            ```
     *   **Client State (Trạng thái phía giao diện):**
         *   Sử dụng **Zustand** cho các trạng thái phức tạp, được chia sẻ giữa nhiều component (ví dụ: giỏ hàng, trạng thái POS).
         *   Sử dụng `useState` hoặc `useReducer` của React cho các trạng thái đơn giản, cục bộ trong một component.
 
 5.  **Styling:**
-    *   **BẮT BUỘC** sử dụng **Tailwind CSS** và tiện ích `cn()` từ `@/lib/utils` để kết hợp các class.
-    *   **TRÁNH** sử dụng inline styles (`style={{ ... }}`) trừ khi thuộc tính đó là động và không thể áp dụng bằng class của Tailwind (ví dụ: `transform`, màu sắc động từ API).
+    *   **BẮT BUỘC** sử dụng **Tailwind CSS** và tiện ích `cn()` từ `@/lib/utils` để kết hợp các class một cách có điều kiện.
+    *   **TRÁNH** sử dụng inline styles (`style={{ ... }}`) trừ khi thuộc tính đó là động.
+    *   **Ví dụ: Sử dụng `cn()` để áp dụng class có điều kiện - Trích từ `src/features/staff/components/columns.tsx`**
+        ```tsx
+        // Cell để hiển thị trạng thái hoạt động của nhân viên
+        cell: ({ row }) => {
+          const isActive = row.getValue("is_active");
+          return (
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full",
+                  isActive ? "bg-success" : "bg-muted"
+                )}
+              />
+              <span>{isActive ? "Hoạt động" : "Tạm ngưng"}</span>
+            </div>
+          );
+        },
+        ```
 
 6.  **Imports:**
     *   Mỗi `import` trên một dòng riêng.
@@ -56,7 +107,7 @@ Khi viết code cho dự án này, **BẮT BUỘC** tuân thủ các quy tắc s
 | Loại Comment | Yêu Cầu Thực Hiện Bằng Tiếng Việt | Ghi Chú |
 | :--- | :--- | :--- |
 | **JSDoc** | Bắt buộc mô tả **Chức năng chính**, **Tham số (`@param`)** cho props, và **Giá trị trả về (`@returns`)** của các component và custom hook phức tạp. | Sử dụng cú pháp JSDoc `/** ... */` và Tiếng Việt chuẩn. |
-| **Giải Thích Logic** | Chỉ comment những đoạn code có **logic phức tạp** (ví dụ: thuật toán tính toán phức tạp, `useMemo` hoặc `useEffect` có logic khó hiểu) hoặc **cần giải thích LÝ DO** cho quyết định thiết kế. | **Hạn chế** comment code đã rõ ràng. |
+| **Giải Thích Logic** | Chỉ comment những đoạn code có **logic phức tạp** hoặc **cần giải thích LÝ DO** cho quyết định thiết kế. | **Hạn chế** comment code đã rõ ràng. |
 | **Định Dạng** | Comment phải **ngắn gọn**, **súc tích**, và **nằm trên dòng riêng** ngay trước dòng code mà nó giải thích. | Sử dụng `//` cho comment một dòng và `/* ... */` cho comment nhiều dòng. |
 | **Ghi Chú Công Việc** | Sử dụng **`// TODO:`** hoặc **`// FIXME:`** để đánh dấu những việc cần làm hoặc cần sửa lỗi sau này. | Giữ nguyên từ khóa tiếng Anh (`TODO`, `FIXME`). |
 

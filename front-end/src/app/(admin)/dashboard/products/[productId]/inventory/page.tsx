@@ -4,9 +4,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
-
-import { getProductById } from "@/features/product/api/product.api";
+import { useProductById } from "@/features/product/hooks/useProducts";
 import {
   stockAdjustmentSchema,
   StockAdjustmentFormValues,
@@ -40,11 +38,7 @@ export default function InventoryManagementPage({
   const [isStockFormOpen, setIsStockFormOpen] = useState(false);
 
   // Lấy dữ liệu sản phẩm chi tiết
-  const { data: product, isLoading: isLoadingProduct } = useQuery({
-    queryKey: ["product", productId],
-    queryFn: () => getProductById(productId),
-    enabled: !!productId,
-  });
+  const { data: product, isLoading: isLoadingProduct } = useProductById(productId);
 
   // Khởi tạo mutation và form
   const adjustStockMutation = useAdjustStock();

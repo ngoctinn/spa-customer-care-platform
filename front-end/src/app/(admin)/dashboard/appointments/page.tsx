@@ -162,16 +162,18 @@ export default function AppointmentsPage() {
   };
 
   const handleFormSubmit = (data: AppointmentFormValues) => {
-    const mutation = editingAppointment
-      ? updateAppointmentMutation
-      : addAppointmentMutation;
-    const mutationData = editingAppointment
-      ? { id: editingAppointment.id, data }
-      : data;
-
-    mutation.mutate(mutationData as any, {
-      onSuccess: () => setIsFormOpen(false),
-    });
+    if (editingAppointment) {
+      updateAppointmentMutation.mutate(
+        { id: editingAppointment.id, data },
+        {
+          onSuccess: () => setIsFormOpen(false),
+        }
+      );
+    } else {
+      addAppointmentMutation.mutate(data, {
+        onSuccess: () => setIsFormOpen(false),
+      });
+    }
   };
 
   const handleConfirmAction = () => {
