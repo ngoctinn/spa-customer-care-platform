@@ -6,17 +6,20 @@ import {
   logout as apiLogout,
 } from "@/features/auth/apis/auth_api";
 import { loginSchema } from "@/features/auth/schemas";
+import { useUser } from "@/features/auth/hooks/useUser";
 import { User } from "@/features/user/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
   createContext,
   ReactNode,
   useCallback,
   useContext,
-  useEffect,
-  useState,
 } from "react";
 import { z } from "zod";
+
+import { useUser } from "@/features/auth/hooks/useUser";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AuthContextType {
   user: User | null;
@@ -28,44 +31,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    const checkUserStatus = async () => {
-      try {
-        setIsLoading(true);
-        const userProfile = await fetchProfile();
-        setUser(userProfile);
-      } catch (error) {
-        console.error("Không thể lấy thông tin người dùng:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkUserStatus();
-  }, []);
+  const queryClient = useQueryClient();
+  const { data: user, isLoading, isError } = useUser();
 
   const login = async (values: z.infer<typeof loginSchema>) => {
     await apiLogin(values.email, values.password);
-    window.location.reload();
+    await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    router.push("/admin/dashboard");
   };
 
   const logout = useCallback(async () => {
-    setIsLoading(true);
     try {
       await apiLogout();
     } finally {
-      setUser(null);
-      window.location.href = "/auth/login";
+      queryClient.setQueryData(["user-profile"], null);
+      router.push("/auth/login");
     }
-  }, [router]);
+  }, [router, queryClient]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user: user ?? null, isLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -115,7 +115,6 @@ export default function CustomersPage() {
       toolbarProps={{
         searchColumnId: "full_name",
         searchPlaceholder: "Tìm theo tên hoặc SĐT...",
-        // @ts-ignore
         CustomActions: CustomToolbar,
       }}
     />

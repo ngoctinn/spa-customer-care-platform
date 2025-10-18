@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Table } from "@tanstack/react-table";
 import { UseFormReturn, FieldValues } from "react-hook-form";
 import React from "react";
 
@@ -35,6 +35,7 @@ export interface ResourcePageLayoutProps<
   toolbarProps?: {
     searchColumnId: string;
     searchPlaceholder: string;
+    CustomActions?: React.ComponentType<{ table: Table<T> }>;
     // Thêm các props khác cho toolbar nếu cần
   };
 

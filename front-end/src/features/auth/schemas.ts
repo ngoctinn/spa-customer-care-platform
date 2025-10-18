@@ -30,11 +30,7 @@ export const resetPasswordApiSchema = z.object({
 
 export const resetPasswordFormSchema = z
   .object({
-    password: z
-      .string()
-      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." })
-      // chứa ít nhât một số',
-      .regex(/[0-9]/, { message: "Mật khẩu phải chứa ít nhất một số." }),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -51,10 +47,7 @@ export const otpSchema = z.object({
 
 export const changePasswordSchema = z
   .object({
-    oldPassword: z
-      .string()
-      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." })
-      .regex(/[0-9]/, { message: "Mật khẩu phải chứa ít nhất một số." }),
+    oldPassword: passwordSchema,
     newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
