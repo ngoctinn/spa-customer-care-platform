@@ -47,6 +47,15 @@ export interface Customer {
   updated_at?: Date;
 }
 
+export interface DebtHistoryTransaction {
+  id: string;
+  type: "accrual" | "settlement";
+  amount: number;
+  related_invoice_id?: string;
+  new_balance: number;
+  created_at: string;
+}
+
 // Đơn giản hóa FullCustomerProfile để khớp với cấu trúc mới
 export type FullCustomerProfile = Customer & {
   loyalty_tier?: LoyaltyTier;

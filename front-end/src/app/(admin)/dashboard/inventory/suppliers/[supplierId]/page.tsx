@@ -75,14 +75,9 @@ const SupplierInfoCard = ({
 );
 
 const ImportHistoryTable = ({ supplierId }: { supplierId: string }) => {
-  const { data: slips = [], isLoading } = useQuery({
-    queryKey: ["warehouseSlips", { supplierId }],
-    queryFn: async () => {
-      const allSlips = await getWarehouseSlips();
-      return allSlips.filter(
-        (slip) => slip.type === "IMPORT" && slip.supplier?.id === supplierId
-      );
-    },
+  const { data: slips = [], isLoading } = useWarehouseSlips({
+    supplierId: supplierId,
+    type: "IMPORT",
   });
 
   if (isLoading) return <p>Đang tải lịch sử nhập hàng...</p>;

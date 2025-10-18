@@ -6,11 +6,17 @@ import {
   ExportSlipFormValues,
 } from "@/features/inventory/schemas/warehouse-slip.schema";
 
+import { buildQueryString } from "@/lib/queryString";
+
 /**
  * Lấy danh sách tất cả phiếu kho.
  */
-export async function getWarehouseSlips(): Promise<WarehouseSlip[]> {
-  return apiClient<WarehouseSlip[]>("/warehouse-slips");
+export async function getWarehouseSlips(params?: {
+  supplierId?: string;
+  type?: "IMPORT" | "EXPORT";
+}): Promise<WarehouseSlip[]> {
+  const query = buildQueryString(params);
+  return apiClient<WarehouseSlip[]>(`/warehouse-slips${query}`);
 }
 
 /**
