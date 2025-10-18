@@ -15,13 +15,15 @@ import { WarehouseSlip } from "@/features/inventory/types";
 
 const queryKey = ["warehouseSlips"];
 
-export const useWarehouseSlips = () => {
-  return useQuery<WarehouseSlip[]>({
-    queryKey,
-    queryFn: getWarehouseSlips,
+export const useWarehouseSlips = (params?: {
+  supplierId?: string;
+  type?: "IMPORT" | "EXPORT";
+}) => {
+  return useQuery<WarehouseSlip[]>({ 
+    queryKey: [...queryKey, params], 
+    queryFn: () => getWarehouseSlips(params), 
   });
 };
-
 export const useWarehouseSlipMutations = () => {
   const queryClient = useQueryClient();
 

@@ -45,23 +45,7 @@ import {
 } from "@/features/customer/hooks/useCustomerManagement";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 import { FullCustomerProfile } from "@/features/customer/types";
-import apiClient from "@/lib/apiClient";
-
-// --- Giả định các kiểu dữ liệu và API mới ---
-interface DebtHistoryTransaction {
-  id: string;
-  type: "accrual" | "settlement";
-  amount: number;
-  related_invoice_id?: string;
-  new_balance: number;
-  created_at: string;
-}
-
-const getDebtHistory = async (
-  customerId: string
-): Promise<DebtHistoryTransaction[]> => {
-  return apiClient(`/customers/${customerId}/debt-history`);
-};
+import { useDebtHistory } from "@/features/customer/hooks/useDebt";
 
 // --- Components for the Detail Page ---
 
@@ -194,10 +178,7 @@ const CustomerStats = ({
 
 // ++ COMPONENT MỚI: LỊCH SỬ CÔNG NỢ ++
 const DebtHistoryList = ({ customerId }: { customerId: string }) => {
-  const { data: history = [], isLoading } = useQuery({
-    queryKey: ["debtHistory", customerId],
-    queryFn: () => getDebtHistory(customerId),
-  });
+  const { data: history = [], isLoading } = useDebtHistory(customerId);
 
   if (isLoading) return <p>Đang tải lịch sử công nợ...</p>;
 

@@ -25,7 +25,7 @@ import { DateSelectArg } from "@fullcalendar/core";
 import { FullStaffProfile } from "@/features/staff/types";
 import { useEffect } from "react";
 import { toast } from "sonner";
-// import { createScheduleOverride } from "../api/schedule.api"; // Giả định bạn có hàm API này
+import { createScheduleOverride } from "../api/schedule.api"; // Giả định bạn có hàm API này
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const overrideSchema = z.object({
@@ -69,10 +69,9 @@ export default function ScheduleOverrideForm({
   }, [selection, form]);
 
   const createOverrideMutation = useMutation({
-    // mutationFn: createScheduleOverride, // Thay thế bằng hàm API thật
-    mutationFn: async (data: any) => {
-      console.log("Gửi API:", data);
-      return Promise.resolve();
+    mutationFn: (data: OverrideFormValues & { date: string }) => {
+      const { user_id, ...overrideData } = data;
+      return createScheduleOverride(user_id, overrideData);
     },
     onSuccess: () => {
       toast.success("Tạo sự kiện ghi đè thành công!");
@@ -90,10 +89,7 @@ export default function ScheduleOverrideForm({
       ...data,
       date: date,
     };
-    // createOverrideMutation.mutate(payload);
-    console.log("Submit payload:", payload);
-    toast.success("Tạo sự kiện ghi đè thành công!");
-    onClose();
+    createOverrideMutation.mutate(payload);
   };
 
   return (
