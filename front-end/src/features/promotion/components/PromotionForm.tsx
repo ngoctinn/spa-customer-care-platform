@@ -1,7 +1,17 @@
-// src/features/promotion/components/PromotionForm.tsx
+/**
+ * @file src/features/promotion/components/PromotionForm.tsx
+ * @description Form để thêm và chỉnh sửa khuyến mãi.
+ */
+
 "use client";
 
 import { useFormContext } from "react-hook-form";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   FormControl,
   FormField,
@@ -16,26 +26,82 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { PromotionFormValues } from "@/features/promotion/types";
 
-export default function PromotionForm() {
-  const { control } = useFormContext();
+export function PromotionForm() {
+  const { control } = useFormContext<PromotionFormValues>();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 py-2 pb-4">
       <FormField
         control={control}
-        name="title"
+        name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Tiêu đề khuyến mãi</FormLabel>
+            <FormLabel>Tên khuyến mãi</FormLabel>
             <FormControl>
-              <Input placeholder="VD: Giảm giá mùa hè" {...field} />
+              <Input placeholder="V.d: Giảm giá 30/4" {...field} />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="discount_percentage"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Phần trăm giảm giá</FormLabel>
+            <FormControl>
+              <Input type="number" placeholder="V.d: 20" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="date_range"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Thời gian hiệu lực</FormLabel>
+            <Popover>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full pl-3 text-left font-normal",
+                      !field.value.from && "text-muted-foreground"
+                    )}
+                  >
+                    {field.value.from ? (
+                      <>
+                        {format(field.value.from, "dd/MM/yyyy")} -{" "}
+                        {field.value.to ? format(field.value.to, "dd/MM/yyyy") : "..."}
+                      </>
+                    ) : (
+                      <span>Chọn ngày</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={field.value.from}
+                  selected={{ from: field.value.from, to: field.value.to }}
+                  onSelect={(range) => {
+                    if (range) {
+                      field.onChange(range);
+                    }
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
             <FormMessage />
           </FormItem>
         )}
@@ -45,10 +111,11 @@ export default function PromotionForm() {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Mô tả (Tùy chọn)</FormLabel>
+            <FormLabel>Mô tả (tùy chọn)</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Mô tả chi tiết về chương trình..."
+                placeholder="Mô tả chi tiết về chương trình khuyến mãi..."
+                className="resize-none"
                 {...field}
               />
             </FormControl>
@@ -56,103 +123,6 @@ export default function PromotionForm() {
           </FormItem>
         )}
       />
-      <FormField
-        control={control}
-        name="discount_percent"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Tỷ lệ giảm giá (%)</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="start_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Ngày bắt đầu</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Chọn ngày</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name="end_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Ngày kết thúc</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Chọn ngày</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
     </div>
   );
 }

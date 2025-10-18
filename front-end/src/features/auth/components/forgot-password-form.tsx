@@ -4,9 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Loader2, Mail, MailCheck } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -28,8 +27,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { forgotPasswordSchema } from "@/features/auth/schemas";
 
+import { useForgotPassword } from "@/features/auth/hooks/useForgotPassword";
+
 export const ForgotPasswordForm = () => {
-  const [isPending, startTransition] = useTransition();
+  const { mutate: forgotPassword, isPending } = useForgotPassword();
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
@@ -41,20 +42,8 @@ export const ForgotPasswordForm = () => {
   });
 
   const onSubmit = (values: z.infer<typeof forgotPasswordSchema>) => {
-    startTransition(async () => {
-      try {
-        // await forgotPassword(values.email);
-        toast.success("Yêu cầu đã được gửi đi!", {
-          description: "Vui lòng kiểm tra email để đặt lại mật khẩu.",
-        });
-        setIsSubmitted(true);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("Gửi yêu cầu thất bại. Vui lòng thử lại.");
-        }
-      }
+    forgotPassword(values.email, {
+      onSuccess: () => setIsSubmitted(true),
     });
   };
 

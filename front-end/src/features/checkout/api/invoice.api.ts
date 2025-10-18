@@ -18,6 +18,7 @@ interface CreateOrderPayload {
   payment_method: string;
   shipping_address?: ShippingAddress;
   notes?: string;
+  prepaid_card_code?: string;
 }
 /**
  * Gọi API backend để tạo một hóa đơn/đơn hàng mới.

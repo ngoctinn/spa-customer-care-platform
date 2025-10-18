@@ -106,6 +106,7 @@ const navGroups: NavGroup[] = [
         ],
       },
       { href: "/dashboard/treatments", label: "Liệu trình", icon: Sparkles },
+      { href: "/dashboard/promotions", label: "Khuyến Mãi", icon: Tag },
     ],
   },
   {

@@ -1,6 +1,4 @@
-// src/components/common/data-table/data-table-toolbar.tsx
-"use client";
-
+import React from "react";
 import { Table } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

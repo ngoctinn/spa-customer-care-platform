@@ -1,38 +1,54 @@
-// src/features/promotion/hooks/usePromotionManagement.ts
+/**
+ * @file src/features/promotion/hooks/usePromotionManagement.ts
+ * @description Hook để quản lý logic CRUD cho khuyến mãi.
+ */
+
 import { useResourceManagement } from "@/features/management-pages/hooks/useResourceManagement";
-import { usePromotions } from "./usePromotions";
-import { Promotion } from "../types";
-import { PromotionFormValues, promotionFormSchema } from "../schemas";
+import { Promotion, PromotionFormValues } from "@/features/promotion/types";
+import { PromotionSchema } from "@/features/promotion/schemas";
 import {
-  addPromotion,
+  usePromotions,
+  createPromotion,
   updatePromotion,
   deletePromotion,
-} from "../api/promotion.api";
+  QUERY_KEY_PROMOTIONS,
+} from "@/features/promotion/api";
 
-export function usePromotionManagement() {
+/**
+ * @function usePromotionManagement
+ * @description Hook tổng hợp, sử dụng useResourceManagement để cung cấp tất cả logic cần thiết
+ * cho trang quản lý khuyến mãi.
+ */
+export const usePromotionManagement = () => {
   return useResourceManagement<Promotion, PromotionFormValues>({
-    queryKey: ["promotions"],
+    queryKey: [QUERY_KEY_PROMOTIONS],
     useDataHook: usePromotions,
-    addFn: addPromotion,
+    addFn: createPromotion,
     updateFn: updatePromotion,
     deleteFn: deletePromotion,
-    formSchema: promotionFormSchema,
+    formSchema: PromotionSchema,
     defaultFormValues: {
-      title: "",
+      name: "",
       description: "",
-      discount_percent: 10,
-      start_date: new Date(),
-      end_date: new Date(new Date().setDate(new Date().getDate() + 7)),
+      discount_percentage: 0,
+      date_range: {
+        from: new Date(),
+        to: new Date(),
+      },
     },
     getEditFormValues: (promotion) => ({
-      ...promotion,
-      start_date: new Date(promotion.start_date),
-      end_date: new Date(promotion.end_date),
+      name: promotion.name,
+      description: promotion.description || "",
+      discount_percentage: promotion.discount_percentage,
+      date_range: {
+        from: new Date(promotion.start_date),
+        to: new Date(promotion.end_date),
+      },
     }),
     customMessages: {
-      addSuccess: "Thêm khuyến mãi thành công!",
+      addSuccess: "Tạo khuyến mãi thành công!",
       updateSuccess: "Cập nhật khuyến mãi thành công!",
-      deleteSuccess: "Đã xóa khuyến mãi!",
+      deleteSuccess: "Xóa khuyến mãi thành công!",
     },
   });
-}
+};
