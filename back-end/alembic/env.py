@@ -1,72 +1,50 @@
 from logging.config import fileConfig
+import sys
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
-
 from alembic import context
 
-import os
-import sys
+# Thêm dự án vào sys.path để import các module tùy chỉnh
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.core.config import settings
-
-# Thêm thư mục gốc của dự án vào sys.path để có thể import các module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from sqlmodel import SQLModel
-from app.models.users_model import User, Role, Permission, UserRole, RolePermission
-from app.models.base_model import BaseUUIDModel
-from app.models.services_model import Service
-from app.models.products_model import Product
-from app.models.catalog_model import Category, Image
-from app.models.association_tables import (
-    ServiceCategoryLink,
-    ProductCategoryLink,
-    ProductImageLink,
-    ServiceImageLink,
-    TreatmentPlanImageLink,
-)
-from app.models.customers_model import Customer
-from app.models.treatment_plans_model import TreatmentPlan, TreatmentPlanStep
-from app.models.staff_model import StaffProfile, StaffSchedule, StaffServiceLink
-
-
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# Lấy Alembic Config object
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
+# Thiết lập logging từ tệp cấu hình
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Import settings và metadata từ ứng dụng FastAPI
+from src.core.config import settings
+from sqlmodel import SQLModel
+
+# Import tất cả các model để Alembic có thể phát hiện chúng
+# ⚠️ Khi thêm module/model mới, phải thêm import ở đây!
+from src.modules.auth.models import (
+    User,
+    RefreshToken,
+    VerificationToken,
+    ResetPasswordToken,
+)
+from src.modules.customers.models import Customer
+from src.modules.media.models import MediaFile
+from src.modules.catalog import models
+
+# Đặt target_metadata từ ứng dụng FastAPI (dùng để autogenerate)
 target_metadata = SQLModel.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
-
-# Cập nhật chuỗi kết nối từ biến môi trường
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Đặt sqlalchemy.url từ settings (lấy từ .env)
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
+    """Chạy migrations ở chế độ 'offline' (không cần kết nối DB).
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    Chế độ này chỉ cấu hình context với URL, không tạo Engine.
+    Dùng để sinh ra SQL migrations mà không thực thi trực tiếp.
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -81,20 +59,29 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Chạy migrations ở chế độ 'online'.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
+    Trong trường hợp này, chúng tôi tạo Engine và liên kết nó với context.
     """
+    # Lấy cấu hình SQLAlchemy từ tệp ini
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+
+    # Tạo connectable từ cấu hình
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
+    # Thực hiện migrations
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,  # So sánh kiểu dữ liệu
+            compare_server_default=True,  # So sánh server defaults
+        )
 
         with context.begin_transaction():
             context.run_migrations()
