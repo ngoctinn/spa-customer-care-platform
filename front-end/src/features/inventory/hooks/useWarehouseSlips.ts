@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getWarehouseSlips,
+  getWarehouseSlipById,
   createWarehouseSlip,
   updateWarehouseSlip,
   deleteWarehouseSlip,
@@ -22,6 +23,18 @@ export const useWarehouseSlips = (params?: {
   return useQuery<WarehouseSlip[]>({ 
     queryKey: [...queryKey, params], 
     queryFn: () => getWarehouseSlips(params), 
+  });
+};
+
+/**
+ * Hook để lấy thông tin chi tiết một phiếu kho bằng ID
+ * @param id ID của phiếu kho
+ */
+export const useWarehouseSlipById = (id: string | null) => {
+  return useQuery<WarehouseSlip | null>({
+    queryKey: [...queryKey, id],
+    queryFn: () => (id ? getWarehouseSlipById(id) : null),
+    enabled: !!id, // Chỉ fetch khi có id
   });
 };
 export const useWarehouseSlipMutations = () => {

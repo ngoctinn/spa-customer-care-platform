@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getProducts,
+  getProductById,
   addProduct,
   updateProduct,
   deleteProduct,
@@ -19,6 +20,20 @@ export const useProducts = () => {
     queryFn: () => getProducts(),
     retry: 1,
     staleTime: 60 * 1000,
+  });
+
+  return { data, isLoading, isError, error };
+};
+
+/**
+ * Hook để lấy thông tin chi tiết một sản phẩm bằng ID
+ * @param id ID của sản phẩm
+ */
+export const useProductById = (id: string | null) => {
+  const { data, isLoading, isError, error } = useQuery<Product | null>({
+    queryKey: ["products", id],
+    queryFn: () => (id ? getProductById(id) : null),
+    enabled: !!id, // Chỉ fetch khi có id
   });
 
   return { data, isLoading, isError, error };
