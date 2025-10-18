@@ -127,6 +127,7 @@ export function ResourcePageLayout<
         columns={columnsWithActions}
         data={data}
         toolbarProps={{
+          ...toolbarProps,
           searchColumnId: toolbarProps?.searchColumnId || "name",
           searchPlaceholder:
             toolbarProps?.searchPlaceholder || `Lọc theo tên ${entityName}...`,

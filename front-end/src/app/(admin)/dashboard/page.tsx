@@ -5,24 +5,13 @@ import { StatCard } from "@/features/dashboard/components/StatCard";
 import { RevenueChart } from "@/features/dashboard/components/RevenueChart";
 import { UpcomingAppointments } from "@/features/dashboard/components/UpcomingAppointments";
 import { DollarSign, Users, CreditCard, Activity } from "lucide-react";
-import { useAppointments } from "@/features/appointment/hooks/useAppointments";
-import { useCustomers } from "@/features/customer/hooks/useCustomers";
 import { FullPageLoader } from "@/components/ui/spinner";
+import { useDashboardStats } from "@/features/dashboard/hooks/useDashboardStats";
 
 export default function DashboardPage() {
-  const { data: appointments = [], isLoading: isLoadingAppointments } =
-    useAppointments();
-  const { data: customers = [], isLoading: isLoadingCustomers } =
-    useCustomers();
+  const { data: stats, isLoading } = useDashboardStats();
 
-  const isLoading = isLoadingAppointments || isLoadingCustomers;
-
-  // Tính toán các chỉ số
-  const totalRevenue = 1234567000; // Giữ dữ liệu giả lập hoặc thay bằng API
-  const totalCustomers = customers.length;
-  const totalAppointments = appointments.length;
-
-  if (isLoading) {
+  if (isLoading || !stats) {
     return <FullPageLoader text="Đang tải dữ liệu tổng quan..." />;
   }
 
@@ -32,28 +21,34 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <StatCard
           title="Tổng doanh thu"
-          value={`${new Intl.NumberFormat("vi-VN").format(totalRevenue)} ₫`}
-          description="+20.1% so với tháng trước"
+          value={`${new Intl.NumberFormat("vi-VN").format(
+            stats.total_revenue
+          )} ₫`}
+          description={`${
+            stats.revenue_change_percentage >= 0 ? "+" : ""
+          }${stats.revenue_change_percentage}% so với tháng trước`}
           icon={DollarSign}
         />
         <StatCard
           title="Tổng khách hàng"
-          value={`+${totalCustomers}`}
+          value={`+${stats.total_customers}`}
           description="Tổng số khách hàng trong hệ thống"
           icon={Users}
           iconColor="text-success"
         />
         <StatCard
           title="Tổng lịch hẹn"
-          value={`${totalAppointments}`}
+          value={`${stats.total_appointments}`}
           description="Bao gồm tất cả các trạng thái"
           icon={CreditCard}
           iconColor="text-warning"
         />
         <StatCard
           title="Hoạt động"
-          value="+573"
-          description="+201 kể từ giờ trước"
+          value={`+${stats.activity_count}`}
+          description={`${
+            stats.activity_change_count >= 0 ? "+" : ""
+          }${stats.activity_change_count} kể từ giờ trước`}
           icon={Activity}
           iconColor="text-info"
         />
