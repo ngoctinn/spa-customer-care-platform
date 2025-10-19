@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { FormDialog } from "@/components/common/FormDialog";
 import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
-import { CustomerFormValues } from "@/features/customer/hooks/useCustomerManagement";
+import { CustomerFormValues } from "@/features/customer/schemas";
 
 export function CustomerSelector() {
   const [open, setOpen] = useState(false);

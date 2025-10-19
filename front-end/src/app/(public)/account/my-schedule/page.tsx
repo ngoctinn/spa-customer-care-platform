@@ -81,7 +81,7 @@ export default function MySchedulePage() {
     if (
       !selectedAppointmentForReview ||
       !currentUserProfile ||
-      !selectedAppointmentForReview.technician_id
+      !selectedAppointmentForReview.assigned_staff_ids
     ) {
       toast.error("Thiếu thông tin để gửi đánh giá.");
       return;
@@ -90,7 +90,7 @@ export default function MySchedulePage() {
     const reviewData: NewReviewData = {
       appointment_id: selectedAppointmentForReview.id,
       customer_id: currentUserProfile.id,
-      technician_id: selectedAppointmentForReview.technician_id,
+      technician_id: selectedAppointmentForReview.assigned_staff_ids[0], // Giả định đánh giá cho kỹ thuật viên đầu tiên
       item_id: selectedAppointmentForReview.service_id,
       item_type: "service", // Giả định review cho service
       rating: values.rating,

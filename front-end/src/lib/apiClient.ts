@@ -16,7 +16,10 @@ export class ApiError<T = unknown> extends Error {
 }
 
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: {
+  resolve: (value: unknown) => void;
+  reject: (reason?: any) => void;
+}[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -33,7 +36,7 @@ async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const originalRequest = async (token: string | null) => {
+  const originalRequest = async (token: string | null): Promise<T> => {
     const { headers, body, ...restOptions } = options;
 
     const defaultHeaders: HeadersInit = {
@@ -69,12 +72,11 @@ async function apiClient<T>(
     }
 
     if (!response.ok) {
-      // --- START: LOGIC SỬA LỖI ---
-      const isAuthEndpoint = endpoint.startsWith("/auth/login") || endpoint.startsWith("/auth/refresh");
+      const isAuthEndpoint =
+        endpoint.startsWith("/auth/login") ||
+        endpoint.startsWith("/auth/refresh");
 
-      // Chỉ thử refresh token nếu lỗi 401 KHÔNG đến từ chính các endpoint auth
       if (response.status === 401 && !isAuthEndpoint) {
-      // --- END: LOGIC SỬA LỖI ---
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
@@ -97,10 +99,6 @@ async function apiClient<T>(
         } catch (refreshError: any) {
           processQueue(refreshError, null);
           tokenStore.clearToken();
-          // QUAN TRỌNG: Gỡ bỏ chuyển hướng cứng để phá vỡ vòng lặp
-          // if (typeof window !== "undefined") {
-          //   window.location.href = "/auth/login";
-          // }
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

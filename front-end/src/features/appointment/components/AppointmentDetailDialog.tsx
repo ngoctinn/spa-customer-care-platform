@@ -55,13 +55,18 @@ export function AppointmentDetailDialog({
   // Lấy danh sách tất cả nhân viên
   const { data: allStaff = [] } = useStaff();
 
-  // TÌM KIẾM: Tìm thông tin các nhân viên được gán
+  // TỐI ƯU HÓA: Sử dụng Map để tra cứu nhân viên hiệu quả hơn
+  const staffMap = useMemo(() => {
+    return new Map(allStaff.map((staff) => [staff.id, staff]));
+  }, [allStaff]);
+
   const assignedStaff = useMemo(() => {
-    if (!appointment || !allStaff.length) return [];
-    return allStaff.filter((staff) =>
-      appointment.assigned_staff_ids.includes(staff.id)
-    );
-  }, [appointment, allStaff]);
+    if (!appointment || !staffMap.size) return [];
+    // Sử dụng map.get() cho tra cứu O(1)
+    return appointment.assigned_staff_ids
+      .map((id) => staffMap.get(id))
+      .filter((staff): staff is NonNullable<typeof staff> => !!staff); // Lọc ra các giá trị undefined nếu không tìm thấy
+  }, [appointment, staffMap]);
 
   if (!appointment) return null;
 

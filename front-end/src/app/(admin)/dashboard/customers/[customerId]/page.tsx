@@ -39,15 +39,11 @@ import { StatCard } from "@/features/dashboard/components/StatCard";
 import { useCustomerById } from "@/features/customer/hooks/useCustomers";
 import { useAppointments } from "@/features/appointment/hooks/useAppointments";
 import { useInvoices } from "@/features/checkout/hooks/useInvoices";
-import {
-  useCustomerManagement,
-  CustomerFormValues,
-} from "@/features/customer/hooks/useCustomerManagement";
+import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { useDebtHistory } from "@/features/customer/hooks/useDebt";
-
-// --- Components for the Detail Page ---
+import { CustomerFormValues } from "@/features/customer/schemas";
 
 const CustomerInfoCard = ({
   customer,
@@ -245,7 +241,8 @@ const DebtHistoryList = ({ customerId }: { customerId: string }) => {
 import { useServices } from "@/features/service/hooks/useServices";
 
 const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
-  const { data: allAppointments = [], isLoading: isLoadingAppointments } = useAppointments();
+  const { data: allAppointments = [], isLoading: isLoadingAppointments } =
+    useAppointments();
   const { data: services = [], isLoading: isLoadingServices } = useServices();
 
   const serviceMap = useMemo(() => {
@@ -256,7 +253,8 @@ const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
     .filter((apt) => apt.customer_id === customerId)
     .slice(0, 5);
 
-  if (isLoadingAppointments || isLoadingServices) return <p>Đang tải lịch hẹn...</p>;
+  if (isLoadingAppointments || isLoadingServices)
+    return <p>Đang tải lịch hẹn...</p>;
 
   return (
     <Card>

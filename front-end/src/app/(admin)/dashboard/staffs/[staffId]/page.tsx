@@ -23,7 +23,7 @@ import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 import { useStaffById } from "@/features/staff/hooks/useStaff";
 import { useStaffManagement } from "@/features/staff/hooks/useStaffManagement";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateStaffServices } from "@/features/staff/api/staff.api"; // -- SỬA: Bỏ import updateStaffStatus --
+import { updateStaffServices } from "@/features/staff/api/staff.api";
 import {
   staffServicesSchema,
   StaffServicesFormValues,

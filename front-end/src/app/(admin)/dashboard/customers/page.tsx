@@ -9,13 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
 
 import { ResourcePageLayout } from "@/features/management-pages/ResourcePageLayout";
-import {
-  useCustomerManagement,
-  CustomerFormValues,
-} from "@/features/customer/hooks/useCustomerManagement";
+import { useCustomerManagement } from "@/features/customer/hooks/useCustomerManagement";
 import { FullCustomerProfile } from "@/features/customer/types";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 import { Table } from "@tanstack/react-table";
+import { CustomerFormValues } from "@/features/customer/schemas";
 
 export default function CustomersPage() {
   const router = useRouter();

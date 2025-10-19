@@ -2,17 +2,9 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import listPlugin from "@fullcalendar/list";
-import {
-  EventClickArg,
-  EventContentArg,
-  DateSelectArg,
-} from "@fullcalendar/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { EventClickArg, DateSelectArg } from "@fullcalendar/core";
+import { toast } from "sonner";
 import {
   getAdminSchedules,
   approveSchedule,
@@ -23,30 +15,10 @@ import { useStaff } from "@/features/staff/hooks/useStaff";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FullPageLoader } from "@/components/ui/spinner";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Check, X, Clock, LogIn, LogOut } from "lucide-react";
-import { FlexibleSchedule, TimeEntry } from "@/features/work-schedules/types";
-import { Badge } from "@/components/ui/badge";
-
-const statusColors = {
-  pending: "bg-warning",
-  approved: "bg-success",
-  rejected: "bg-destructive",
-};
-
-// ++ BẠN SẼ TẠO COMPONENT NÀY Ở BƯỚC 2 ++
-// import ScheduleOverrideForm from "@/features/work-schedules/components/ScheduleOverrideForm";
-// import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FlexibleSchedule } from "@/features/work-schedules/types";
+import { ScheduleCalendar } from "@/features/work-schedules/components/ScheduleCalendar";
+import { ApprovalDialog } from "@/features/work-schedules/components/ApprovalDialog";
+import { statusColors } from "@/features/work-schedules/constants";
 
 export default function ScheduleManagementPage() {
   const queryClient = useQueryClient();
@@ -57,12 +29,6 @@ export default function ScheduleManagementPage() {
   const [selectedEvent, setSelectedEvent] = useState<FlexibleSchedule | null>(
     null
   );
-  const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
-
-  // ++ STATE MỚI CHO OVERRIDE FORM ++
-  const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
-  const [overrideSelection, setOverrideSelection] =
-    useState<DateSelectArg | null>(null);
 
   const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
   const { data: schedules = [], isLoading: isLoadingSchedules } = useQuery({
@@ -73,63 +39,46 @@ export default function ScheduleManagementPage() {
         dateRange.end.toISOString()
       ),
   });
+  // Giả định getTimeEntries đã được triển khai để lấy tất cả time entries
   const { data: timeEntries = [], isLoading: isLoadingTimeEntries } = useQuery({
-    queryKey: ["allTimeEntries"], // Lấy tất cả time entries
+    queryKey: ["allTimeEntries"],
     queryFn: getTimeEntries,
   });
 
   const staffMap = useMemo(
-    () => new Map(staffList.map((s) => [s.id, s.full_name])),
+    () => new Map(staffList.map((s) => [s.user.id, s.full_name])),
     [staffList]
   );
 
-  const timeEntryMap = useMemo(() => {
-    return new Map<string, TimeEntry>();
-  }, [timeEntries]);
-
   const calendarEvents = useMemo(() => {
-    return schedules.map((schedule) => {
-      const timeEntry = timeEntryMap.get(schedule.id);
-      let timeStatus = null;
-      if (schedule.status === "approved") {
-        if (timeEntry?.check_out_time) {
-          timeStatus = "checked-out";
-        } else if (timeEntry?.check_in_time) {
-          timeStatus = "checked-in";
-        } else {
-          timeStatus = "not-checked-in";
-        }
-      }
+    return schedules.map((schedule) => ({
+      id: schedule.id,
+      title: staffMap.get(schedule.user_id) || "Không rõ",
+      start: new Date(schedule.start_time),
+      end: new Date(schedule.end_time),
+      backgroundColor: statusColors[schedule.status],
+      borderColor: statusColors[schedule.status],
+      extendedProps: { ...schedule },
+    }));
+  }, [schedules, staffMap]);
 
-      return {
-        id: schedule.id,
-        title: staffMap.get(schedule.user_id) || "Không rõ",
-        start: new Date(schedule.start_time),
-        end: new Date(schedule.end_time),
-        backgroundColor: statusColors[schedule.status],
-        borderColor: statusColors[schedule.status],
-        extendedProps: { ...schedule, timeStatus },
-      };
-    });
-  }, [schedules, staffMap, timeEntryMap]);
-
-  const approveMutation = useMutation({
+  const { mutate: approve, isPending: isApproving } = useMutation({
     mutationFn: approveSchedule,
     onSuccess: () => {
       toast.success("Đã duyệt ca làm việc.");
       queryClient.invalidateQueries({ queryKey: ["adminSchedules"] });
-      setIsApprovalDialogOpen(false);
+      setSelectedEvent(null);
     },
     onError: (error) =>
       toast.error("Duyệt thất bại:", { description: error.message }),
   });
 
-  const rejectMutation = useMutation({
+  const { mutate: reject, isPending: isRejecting } = useMutation({
     mutationFn: rejectSchedule,
     onSuccess: () => {
-      toast.success("Đã từ chối ca làm việc.");
+      toast.info("Đã từ chối ca làm việc.");
       queryClient.invalidateQueries({ queryKey: ["adminSchedules"] });
-      setIsApprovalDialogOpen(false);
+      setSelectedEvent(null);
     },
     onError: (error) =>
       toast.error("Từ chối thất bại:", { description: error.message }),
@@ -139,38 +88,13 @@ export default function ScheduleManagementPage() {
     const schedule = clickInfo.event.extendedProps as FlexibleSchedule;
     if (schedule.status === "pending") {
       setSelectedEvent(schedule);
-      setIsApprovalDialogOpen(true);
     }
   };
 
-  const handleSelect = (selectInfo: DateSelectArg) => {
-    setOverrideSelection(selectInfo);
-    setIsOverrideDialogOpen(true);
-  };
+  const isLoading =
+    isLoadingStaff || isLoadingSchedules || isLoadingTimeEntries;
 
-  const renderEventContent = (eventInfo: EventContentArg) => {
-    const { timeStatus } = eventInfo.event.extendedProps;
-    return (
-      <div className="p-1 w-full overflow-hidden">
-        <b>{eventInfo.timeText}</b>
-        <p className="whitespace-nowrap overflow-hidden text-ellipsis">
-          {eventInfo.event.title}
-        </p>
-        {timeStatus === "checked-in" && (
-          <Badge variant="outline" className="mt-1 bg-green-100 text-green-800">
-            <LogIn className="h-3 w-3 mr-1" /> Đã vào
-          </Badge>
-        )}
-        {timeStatus === "checked-out" && (
-          <Badge variant="outline" className="mt-1">
-            <LogOut className="h-3 w-3 mr-1" /> Đã về
-          </Badge>
-        )}
-      </div>
-    );
-  };
-
-  if (isLoadingStaff || isLoadingSchedules || isLoadingTimeEntries) {
+  if (isLoading) {
     return <FullPageLoader text="Đang tải dữ liệu lịch làm việc..." />;
   }
 
@@ -182,100 +106,25 @@ export default function ScheduleManagementPage() {
       />
       <Card>
         <CardContent className="p-4">
-          <FullCalendar
-            plugins={[
-              dayGridPlugin,
-              timeGridPlugin,
-              interactionPlugin,
-              listPlugin,
-            ]}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            initialView="timeGridWeek"
+          <ScheduleCalendar
             events={calendarEvents}
-            eventClick={handleEventClick}
-            eventContent={renderEventContent}
-            locale="vi"
-            buttonText={{
-              today: "Hôm nay",
-              month: "Tháng",
-              week: "Tuần",
-              day: "Ngày",
-            }}
-            allDaySlot={false}
-            datesSet={(arg) => {
-              setDateRange({ start: arg.start, end: arg.end });
-            }}
-            selectable={true}
-            selectMirror={true}
-            select={handleSelect}
+            onEventClick={handleEventClick}
+            onDateSelect={(info) => console.log("selected ", info)}
+            onDatesSet={(range) => setDateRange(range)}
           />
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={isApprovalDialogOpen}
-        onOpenChange={setIsApprovalDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận Ca làm việc</AlertDialogTitle>
-            <AlertDialogDescription>
-              <p>
-                Nhân viên:{" "}
-                <strong>{staffMap.get(selectedEvent?.user_id || "")}</strong>
-              </p>
-              <p>
-                Thời gian:{" "}
-                <strong>
-                  {selectedEvent?.start_time &&
-                    new Date(selectedEvent.start_time).toLocaleString(
-                      "vi-VN"
-                    )}{" "}
-                  -{" "}
-                  {selectedEvent?.end_time &&
-                    new Date(selectedEvent.end_time).toLocaleString("vi-VN")}
-                </strong>
-              </p>
-              Bạn muốn duyệt hay từ chối ca làm việc này?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={() => rejectMutation.mutate(selectedEvent!.id)}
-              disabled={rejectMutation.isPending}
-            >
-              <X className="mr-2 h-4 w-4" /> Từ chối
-            </Button>
-            <Button
-              onClick={() => approveMutation.mutate(selectedEvent!.id)}
-              disabled={approveMutation.isPending}
-            >
-              <Check className="mr-2 h-4 w-4" /> Duyệt
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* ++ DIALOG MỚI CHO FORM GHI ĐÈ LỊCH ++
-      <Dialog open={isOverrideDialogOpen} onOpenChange={setIsOverrideDialogOpen}>
-          <DialogContent>
-              <DialogHeader>
-                  <DialogTitle>Tạo Sự kiện Ghi đè</DialogTitle>
-              </DialogHeader>
-              <ScheduleOverrideForm 
-                  selection={overrideSelection}
-                  staffList={staffList}
-                  onClose={() => setIsOverrideDialogOpen(false)}
-              />
-          </DialogContent>
-      </Dialog>
-      */}
+      <ApprovalDialog
+        isOpen={!!selectedEvent}
+        onOpenChange={(open) => !open && setSelectedEvent(null)}
+        schedule={selectedEvent}
+        staffName={staffMap.get(selectedEvent?.user_id || "") || ""}
+        onApprove={() => selectedEvent && approve(selectedEvent.id)}
+        onReject={() => selectedEvent && reject(selectedEvent.id)}
+        isApproving={isApproving}
+        isRejecting={isRejecting}
+      />
     </>
   );
 }

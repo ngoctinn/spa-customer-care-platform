@@ -43,8 +43,11 @@ export async function createAppointment(
 /**
  * Lấy danh sách tất cả lịch hẹn (cho admin)
  */
-export async function getAppointments(): Promise<Appointment[]> {
-  return apiClient<Appointment[]>("/appointments");
+export async function getAppointments(params?: {
+  customer_id?: string;
+}): Promise<Appointment[]> {
+  const query = buildQueryString(params);
+  return apiClient<Appointment[]>(`/appointments${query}`);
 }
 
 /**

@@ -1,25 +1,25 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { isWithinInterval, subMinutes } from "date-fns";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { FullPageLoader } from "@/components/ui/spinner";
 
-import { 
-  submitFlexibleSchedule, 
-  getTimeEntries, 
-  checkIn, 
-  checkOut, 
-  getMySchedules 
+import {
+  submitFlexibleSchedule,
+  getTimeEntries,
+  checkIn,
+  checkOut,
+  getMySchedules,
 } from "@/features/work-schedules/api/schedule.api";
 import { useCurrentStaffProfile } from "@/features/staff/hooks/useCurrentStaffProfile";
 import { useWorkSchedule } from "@/features/work-schedules/hooks/useWorkSchedule";
 
 import CheckInPanel from "@/features/work-schedules/components/CheckInPanel";
 import ScheduleRegistrationForm from "@/features/work-schedules/components/ScheduleRegistrationForm";
+import { useCheckInStatus } from "@/features/work-schedules/hooks/useCheckInStatus";
 
 export default function EmployeeSchedulePage() {
   const queryClient = useQueryClient();
@@ -88,26 +88,10 @@ export default function EmployeeSchedulePage() {
       toast.error("Check-out thất bại", { description: error.message }),
   });
 
-  // Memoized Logic
-  const activeTimeEntry = useMemo(
-    () => timeEntries.find((entry) => !entry.check_out_time),
-    [timeEntries]
+  const { activeTimeEntry, availableScheduleForCheckIn } = useCheckInStatus(
+    mySchedules,
+    timeEntries
   );
-
-  const availableScheduleForCheckIn = useMemo(() => {
-    const now = new Date();
-    return mySchedules.find((schedule) => {
-      const startTime = new Date(schedule.start_time);
-      const endTime = new Date(schedule.end_time);
-      const checkInWindow = { start: subMinutes(startTime, 15), end: endTime };
-
-      return (
-        schedule.status === "approved" &&
-        !timeEntries.some((entry) => entry.schedule_id === schedule.id) &&
-        isWithinInterval(now, checkInWindow)
-      );
-    });
-  }, [mySchedules, timeEntries]);
 
   if (isLoadingStaff || isLoadingSchedule) {
     return <FullPageLoader text="Đang tải dữ liệu lịch làm việc..." />;
@@ -117,7 +101,7 @@ export default function EmployeeSchedulePage() {
     <div className="space-y-6">
       <PageHeader title="Lịch làm việc & Chấm công của tôi" />
 
-      <CheckInPanel 
+      <CheckInPanel
         currentTime={currentTime}
         activeTimeEntry={activeTimeEntry}
         availableScheduleForCheckIn={availableScheduleForCheckIn}
@@ -125,7 +109,7 @@ export default function EmployeeSchedulePage() {
         checkOutMutation={checkOutMutation}
       />
 
-      <ScheduleRegistrationForm 
+      <ScheduleRegistrationForm
         workSchedule={workSchedule}
         mySchedules={mySchedules}
         submissionMutation={submissionMutation}

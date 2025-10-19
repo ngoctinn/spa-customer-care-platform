@@ -9,8 +9,7 @@ import {
   useWarehouseSlipMutations,
 } from "@/features/inventory/hooks/useWarehouseSlips";
 import { FullPageLoader } from "@/components/ui/spinner";
-import { useRouter } from "next/router";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export default function EditExportSlipPage() {
   const router = useRouter();

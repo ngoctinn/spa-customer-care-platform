@@ -17,7 +17,9 @@ export const columns: ColumnDef<Promotion>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Tên Khuyến Mãi" />
     ),
-    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("name")}</div>
+    ),
   },
   {
     accessorKey: "discount_percentage",
@@ -33,21 +35,20 @@ export const columns: ColumnDef<Promotion>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Ngày Bắt Đầu" />
     ),
-    cell: ({ row }) => format(new Date(row.getValue("start_date")), "dd/MM/yyyy"),
+    cell: ({ row }) =>
+      format(new Date(row.getValue("start_date")), "dd/MM/yyyy"),
   },
   {
     accessorKey: "end_date",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Ngày Kết Thúc" />
     ),
-    cell: ({ row }) => format(new Date(row.getValue(
-      "end_date"
-    )), "dd/MM/yyyy"),
+    cell: ({ row }) => format(new Date(row.getValue("end_date")), "dd/MM/yyyy"),
   },
   {
     accessorKey: "is_active",
     header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Trạng Thái" />
+      <DataTableColumnHeader column={column} title="Trạng Thái" />
     ),
     cell: ({ row }) => {
       const isActive = row.getValue("is_active");
@@ -58,7 +59,7 @@ export const columns: ColumnDef<Promotion>[] = [
       );
     },
     filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id))
+      return value.includes(row.getValue(id));
     },
   },
 ];

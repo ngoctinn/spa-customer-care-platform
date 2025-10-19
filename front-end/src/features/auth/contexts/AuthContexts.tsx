@@ -1,4 +1,3 @@
-// src/features/auth/contexts/AuthContexts.tsx
 "use client";
 
 import { createContext, ReactNode, useCallback, useContext } from "react";
@@ -6,7 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
-import { login as apiLogin, logout as apiLogout } from "@/features/auth/apis/auth_api";
+import {
+  login as apiLogin,
+  logout as apiLogout,
+} from "@/features/auth/apis/auth_api";
 import { loginSchema } from "@/features/auth/schemas";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { User } from "@/features/user/types";
@@ -26,13 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { data: user, isLoading } = useUser();
 
-  const login = async (values: z.infer<typeof loginSchema>) => {
+  const login = async (values: z.infer<typeof loginSchema>): Promise<void> => {
     const { access_token } = await apiLogin(values.email, values.password);
     tokenStore.setToken(access_token);
-    // Invalidate and then explicitly re-fetch the user profile to ensure it's fresh
     await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-    // Chuyển hướng đến dashboard sau khi fetch profile thành công
-    // (logic này nằm trong component gọi hàm login)
     router.push("/dashboard");
   };
 
@@ -42,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       tokenStore.clearToken();
       queryClient.setQueryData(["user-profile"], null);
-      // Xóa tất cả các query cache khác để đảm bảo dữ liệu sạch
       await queryClient.clear();
       router.push("/auth/login");
     }
@@ -50,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
+      // @ts-ignore
       value={{ user: user ?? null, isLoading, login, logout }}
     >
       {children}

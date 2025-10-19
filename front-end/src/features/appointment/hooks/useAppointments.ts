@@ -17,10 +17,11 @@ import { FullStaffProfile } from "@/features/staff/types";
 const queryKey = ["appointments"];
 
 // Hook để lấy danh sách lịch hẹn
-export const useAppointments = () => {
+export const useAppointments = (params?: { customer_id?: string }) => {
   return useQuery<Appointment[]>({
-    queryKey: queryKey,
-    queryFn: getAppointments,
+    queryKey: [...queryKey, params],
+    queryFn: () => getAppointments(params),
+    enabled: !params?.customer_id || !!params.customer_id, // Bật query nếu không có params hoặc có customer_id
   });
 };
 

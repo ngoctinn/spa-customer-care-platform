@@ -1,52 +1,78 @@
-// src/features/promotion/api/promotion.api.ts
-import { Promotion } from "@/features/promotion/types";
-import { PromotionFormValues } from "@/features/promotion/schemas";
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/lib/apiClient";
+import { Promotion, PromotionFormValues } from "@/features/promotion/types";
+
+const PROMOTION_API_ENDPOINT = "/promotions";
+export const QUERY_KEY_PROMOTIONS = "promotions";
 
 /**
- * Lấy danh sách tất cả khuyến mãi
+ * @function getPromotions
+ * @description Lấy danh sách tất cả khuyến mãi.
  */
-export async function getPromotions(): Promise<Promotion[]> {
-  return apiClient<Promotion[]>("/promotions");
-}
+export const getPromotions = async (): Promise<Promotion[]> => {
+  return apiClient<Promotion[]>(PROMOTION_API_ENDPOINT);
+};
 
 /**
- * Thêm một khuyến mãi mới
- * @param promotionData Dữ liệu khuyến mãi từ form
+ * @function createPromotion
+ * @description Tạo một khuyến mãi mới.
  */
-export async function addPromotion(
-  promotionData: PromotionFormValues
-): Promise<Promotion> {
-  return apiClient<Promotion>("/promotions", {
+export const createPromotion = async (
+  data: PromotionFormValues
+): Promise<Promotion> => {
+  const payload = {
+    ...data,
+    start_date: data.date_range.from.toISOString(),
+    end_date: data.date_range.to.toISOString(),
+  };
+  return apiClient<Promotion>(PROMOTION_API_ENDPOINT, {
     method: "POST",
-    body: JSON.stringify(promotionData),
+    body: JSON.stringify(payload),
   });
-}
+};
 
 /**
- * Cập nhật một khuyến mãi
- * @param id ID của khuyến mãi
- * @param data Dữ liệu cập nhật
+ * @function updatePromotion
+ * @description Cập nhật một khuyến mãi.
  */
-export async function updatePromotion({
+export const updatePromotion = async ({
   id,
   data,
 }: {
   id: string;
   data: Partial<PromotionFormValues>;
-}): Promise<Promotion> {
-  return apiClient<Promotion>(`/promotions/${id}`, {
+}): Promise<Promotion> => {
+  const payload = data.date_range
+    ? {
+        ...data,
+        start_date: data.date_range.from.toISOString(),
+        end_date: data.date_range.to.toISOString(),
+      }
+    : data;
+
+  return apiClient<Promotion>(`${PROMOTION_API_ENDPOINT}/${id}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-}
+};
 
 /**
- * Xóa một khuyến mãi
- * @param id ID của khuyến mãi
+ * @function deletePromotion
+ * @description Xóa một khuyến mãi.
  */
-export async function deletePromotion(id: string): Promise<void> {
-  return apiClient<void>(`/promotions/${id}`, {
+export const deletePromotion = async (id: string): Promise<void> => {
+  return apiClient<void>(`${PROMOTION_API_ENDPOINT}/${id}`, {
     method: "DELETE",
   });
-}
+};
+
+/**
+ * @function usePromotions
+ * @description Hook để lấy danh sách tất cả khuyến mãi từ server.
+ */
+export const usePromotions = () => {
+  return useQuery<Promotion[], Error>({
+    queryKey: [QUERY_KEY_PROMOTIONS],
+    queryFn: getPromotions,
+  });
+};

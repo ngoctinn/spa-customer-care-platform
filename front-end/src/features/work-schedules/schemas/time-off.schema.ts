@@ -3,8 +3,8 @@ import { z } from "zod";
 
 export const timeOffRequestSchema = z
   .object({
-    start_time: z.coerce.date(),
-    end_time: z.coerce.date(),
+    start_time: z.date(),
+    end_time: z.date(),
     reason: z.string().min(10, "Lý do nghỉ phải có ít nhất 10 ký tự."),
   })
   .refine((data) => data.end_time > data.start_time, {

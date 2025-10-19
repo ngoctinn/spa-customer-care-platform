@@ -102,7 +102,9 @@ export default function ScheduleListView(props: ScheduleListViewProps) {
           {upcomingAppointments.length > 0 ? (
             upcomingAppointments.map((app) => {
               const service = services.find((s) => s.id === app.service_id);
-              const technician = staff.find((t) => t.id === app.technician_id);
+              const technician = staff.find(
+                (t) => t.id === app.assigned_staff_ids?.[0]
+              );
               if (!service) return null;
 
               return (
@@ -130,7 +132,9 @@ export default function ScheduleListView(props: ScheduleListViewProps) {
           {historyItems.length > 0 ? (
             historyItems.map((app) => {
               const service = services.find((s) => s.id === app.service_id);
-              const technician = staff.find((t) => t.id === app.technician_id);
+              const technician = staff.find(
+                (t) => t.id === app.assigned_staff_ids?.[0]
+              );
               const hasReviewed = reviews.some(
                 (r) => r.appointment_id === app.id
               );

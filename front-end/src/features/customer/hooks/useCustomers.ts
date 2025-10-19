@@ -6,11 +6,11 @@ import {
   updateCustomerById,
   deactivateCustomer,
   getCustomerById,
-  addCustomer, // ++ IMPORT HÀM MỚI ++
+  addCustomer,
 } from "@/features/customer/api/customer.api";
 import { FullCustomerProfile } from "@/features/customer/types";
 import { useCrudMutations } from "@/features/management-pages/hooks/useCrudMutations";
-import { CustomerFormValues } from "./useCustomerManagement";
+import { CustomerFormValues } from "../schemas";
 
 const queryKey = ["customers"];
 

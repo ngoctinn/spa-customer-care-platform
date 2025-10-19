@@ -1,11 +1,9 @@
 // src/features/customer-schedules/components/ScheduleCalendarView.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-// --- IMPORT ĐÃ REFACTOR ---
 import { Appointment } from "@/features/appointment/types";
-import { ScheduleDataProps } from "@/features/customer-schedules/types";
 import InteractiveCalendar from "@/features/customer-schedules/components/InteractiveCalendar";
 import AppointmentCard from "@/features/customer-schedules/components/AppointmentCard";
 import ActionRequiredList from "@/features/customer-schedules/components/ActionRequiredList";
@@ -32,27 +30,49 @@ export default function ScheduleCalendarView(props: ScheduleCalendarViewProps) {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
-  // --- LOGIC ĐÃ REFACTOR ---
-  // Lấy thông tin chi tiết cho lịch hẹn được chọn
-  const selectedService = services.find(
-    (s) => s.id === selectedAppointment?.service_id
+  const servicesMap = useMemo(
+    () => new Map(services.map((s) => [s.id, s])),
+    [services]
   );
-  const selectedTechnician = staff.find(
-    (t) => t.id === selectedAppointment?.technician_id
+  const staffMap = useMemo(() => new Map(staff.map((t) => [t.id, t])), [staff]);
+  const reviewsMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    reviews.forEach((r) => map.set(r.appointment_id, true));
+    return map;
+  }, [reviews]);
+  const treatmentsMap = useMemo(
+    () => new Map(treatments.map((p) => [p.id, p])),
+    [treatments]
   );
-  const hasReviewed = selectedAppointment
-    ? reviews.some((r) => r.appointment_id === selectedAppointment.id)
-    : false;
-  const treatmentPackage = selectedAppointment?.treatment_package_id
-    ? treatments.find(
-        (pkg) => pkg.id === selectedAppointment.treatment_package_id
-      )
-    : undefined;
-  const treatmentPlan = treatmentPackage
-    ? treatmentPlans.find(
-        (plan) => plan.id === treatmentPackage.treatment_plan_id
-      )
-    : undefined;
+  const treatmentPlansMap = useMemo(
+    () => new Map(treatmentPlans.map((p) => [p.id, p])),
+    [treatmentPlans]
+  );
+
+  const selectedService = useMemo(() => {
+    if (!selectedAppointment) return undefined;
+    return servicesMap.get(selectedAppointment.service_id);
+  }, [servicesMap, selectedAppointment]);
+
+  const selectedTechnician = useMemo(() => {
+    if (!selectedAppointment?.assigned_staff_ids?.[0]) return undefined;
+    return staffMap.get(selectedAppointment.assigned_staff_ids[0]);
+  }, [staffMap, selectedAppointment]);
+
+  const hasReviewed = useMemo(() => {
+    if (!selectedAppointment) return false;
+    return reviewsMap.has(selectedAppointment.id);
+  }, [reviewsMap, selectedAppointment]);
+
+  const treatmentPackage = useMemo(() => {
+    if (!selectedAppointment?.treatment_package_id) return undefined;
+    return treatmentsMap.get(selectedAppointment.treatment_package_id);
+  }, [treatmentsMap, selectedAppointment]);
+
+  const treatmentPlan = useMemo(() => {
+    if (!treatmentPackage) return undefined;
+    return treatmentPlansMap.get(treatmentPackage.treatment_plan_id);
+  }, [treatmentPlansMap, treatmentPackage]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full flex-grow">

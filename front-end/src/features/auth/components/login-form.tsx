@@ -2,14 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Loader2,
-  Mail,
-  Send,
-} from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2, Mail, Send } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -76,7 +69,7 @@ export const LoginForm = () => {
       toast.success("Đã gửi lại email xác thực!", {
         description: "Vui lòng kiểm tra hộp thư của bạn.",
       });
-      setNeedsVerification(false); // Ẩn thông báo sau khi gửi thành công
+      setNeedsVerification(false);
     } catch (err) {
       toast.error("Gửi lại thất bại", {
         description:
@@ -92,11 +85,11 @@ export const LoginForm = () => {
     setNeedsVerification(false);
     startTransition(async () => {
       try {
-        const user = await login(values);
+        await login(values);
         toast.success("Đăng nhập thành công!", {
-          description: `Chào mừng bạn đã quay trở lại, ${user.email}.`,
+          description: `Chào mừng bạn đã quay trở lại, ${values.email}.`,
         });
-        router.push("/dashboard");
+        // Việc chuyển hướng đã được xử lý bên trong hàm login của AuthContext
       } catch (err) {
         if (err instanceof ApiError && err.status === 403) {
           setNeedsVerification(true);
@@ -136,7 +129,7 @@ export const LoginForm = () => {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Tài khoản chưa kích hoạt</AlertTitle>
-                <AlertDescription asChild>
+                <AlertDescription>
                   <div className="flex flex-col items-start">
                     <span>
                       Vui lòng kiểm tra email để xác thực tài khoản của bạn.

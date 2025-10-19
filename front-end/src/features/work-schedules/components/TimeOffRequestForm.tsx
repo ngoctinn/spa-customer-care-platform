@@ -10,16 +10,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 export default function TimeOffRequestForm() {
@@ -34,11 +24,26 @@ export default function TimeOffRequestForm() {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Thời gian bắt đầu</FormLabel>
-              {/* Kết hợp Calendar và Input Time */}
-              <Input
-                type="datetime-local"
-                onChange={(e) => field.onChange(new Date(e.target.value))}
-              />
+              <FormControl>
+                <Input
+                  type="datetime-local"
+                  value={
+                    field.value
+                      ? new Date(
+                          field.value.getTime() -
+                            field.value.getTimezoneOffset() * 60000
+                        )
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      field.onChange(new Date(e.target.value));
+                    }
+                  }}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -49,10 +54,26 @@ export default function TimeOffRequestForm() {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Thời gian kết thúc</FormLabel>
-              <Input
-                type="datetime-local"
-                onChange={(e) => field.onChange(new Date(e.target.value))}
-              />
+              <FormControl>
+                <Input
+                  type="datetime-local"
+                  value={
+                    field.value
+                      ? new Date(
+                          field.value.getTime() -
+                            field.value.getTimezoneOffset() * 60000
+                        )
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      field.onChange(new Date(e.target.value));
+                    }
+                  }}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -1,4 +1,3 @@
-// src/features/management-pages/hooks/useCrudMutations.ts
 import { useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
@@ -11,14 +10,13 @@ type UpdateFunc<TVariables> = (variables: {
 }) => Promise<any>;
 type DeleteFunc = (id: string) => Promise<void>;
 
-// ++ SỬA LỖI: Bổ sung các thuộc tính ...Error ++
 interface CustomMessages {
   addSuccess?: string;
-  addError?: string; // Add this line
+  addError?: string;
   updateSuccess?: string;
-  updateError?: string; // Add this line
+  updateError?: string;
   deleteSuccess?: string;
-  deleteError?: string; // Add this line
+  deleteError?: string;
 }
 
 export function useCrudMutations<
