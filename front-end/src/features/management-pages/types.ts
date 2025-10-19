@@ -42,4 +42,9 @@ export interface ResourcePageLayoutProps<
   // --- Logic & Form ---
   useManagementHook: () => UseManagementHookResult<T, TFormValues>;
   FormComponent: React.ComponentType; // Component Form để thêm/sửa
+  renderRowActions?: (
+    item: T,
+    onEdit: (item: T) => void,
+    onDelete: (item: T) => void
+  ) => React.ReactNode;
 }

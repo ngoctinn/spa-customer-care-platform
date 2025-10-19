@@ -59,9 +59,8 @@ export async function getAdminSchedules(
   startDate: string,
   endDate: string
 ): Promise<FlexibleSchedule[]> {
-  return apiClient<FlexibleSchedule[]>(
-    `/schedules/admin?date_range=${startDate},${endDate}`
-  );
+  const query = buildQueryString({ start_date: startDate, end_date: endDate });
+  return apiClient<FlexibleSchedule[]>(`/schedules/admin${query}`);
 }
 
 /**
@@ -134,7 +133,7 @@ export async function getMySchedules(
   endDate: string
 ): Promise<FlexibleSchedule[]> {
   const query = buildQueryString({ start_date: startDate, end_date: endDate });
-  return apiClient<FlexibleSchedule[]>(`/api/schedules/my-schedules${query}`);
+  return apiClient<FlexibleSchedule[]>(`/schedules/my-schedules${query}`);
 }
 
 /**

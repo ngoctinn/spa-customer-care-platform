@@ -8,7 +8,7 @@ export const useUser = () => {
     queryKey: ["user-profile"],
     queryFn: fetchProfile,
     staleTime: Infinity,
-    cacheTime: Infinity,
+    gcTime: Infinity,
     retry: false,
   });
 };

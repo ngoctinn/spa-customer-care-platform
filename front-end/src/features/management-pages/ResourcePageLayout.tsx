@@ -2,10 +2,9 @@
 
 import React from "react";
 import { FieldValues } from "react-hook-form";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 
-// --- Import các component từ UI Kit ---
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/data-table/data-table";
 import { Button } from "@/components/ui/button";
@@ -18,12 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// --- Import các kiểu đã định nghĩa ---
 import { ResourcePageLayoutProps } from "@/features/management-pages/types";
 
-// Component Actions cho mỗi dòng, được layout tự quản lý
-const RowActions = <T extends { id: string }>({
+const DefaultRowActions = <T extends { id: string }>({
   item,
   onEdit,
   onDelete,
@@ -55,7 +51,6 @@ const RowActions = <T extends { id: string }>({
   </DropdownMenu>
 );
 
-// --- Component Layout Chính ---
 export function ResourcePageLayout<
   T extends { id: string; name?: string },
   TFormValues extends FieldValues
@@ -67,8 +62,8 @@ export function ResourcePageLayout<
   useManagementHook,
   FormComponent,
   toolbarProps,
+  renderRowActions, // REFACTOR: Add renderRowActions prop
 }: ResourcePageLayoutProps<T, TFormValues>) {
-  // Gọi hook quản lý được truyền vào để lấy tất cả state và logic
   const {
     data,
     isLoading,
@@ -86,22 +81,28 @@ export function ResourcePageLayout<
     handleConfirmDelete,
   } = useManagementHook();
 
-  // Tự động thêm cột "Actions" vào cuối bảng
   const columnsWithActions = React.useMemo<ColumnDef<T>[]>(
     () => [
       ...propColumns,
       {
         id: "actions",
-        cell: ({ row }) => (
-          <RowActions
-            item={row.original}
-            onEdit={handleOpenEditForm}
-            onDelete={handleOpenDeleteDialog}
-          />
-        ),
+        cell: ({ row }: { row: Row<T> }) =>
+          renderRowActions ? (
+            renderRowActions(
+              row.original,
+              handleOpenEditForm,
+              handleOpenDeleteDialog
+            )
+          ) : (
+            <DefaultRowActions
+              item={row.original}
+              onEdit={handleOpenEditForm}
+              onDelete={handleOpenDeleteDialog}
+            />
+          ),
       },
     ],
-    [propColumns, handleOpenEditForm, handleOpenDeleteDialog]
+    [propColumns, handleOpenEditForm, handleOpenDeleteDialog, renderRowActions]
   );
 
   if (isLoading) {
@@ -110,7 +111,6 @@ export function ResourcePageLayout<
 
   return (
     <>
-      {/* --- Tiêu đề trang & Nút Thêm Mới --- */}
       <PageHeader
         title={title}
         description={description}
@@ -122,7 +122,6 @@ export function ResourcePageLayout<
         }
       />
 
-      {/* --- Bảng Dữ Liệu --- */}
       <DataTable
         columns={columnsWithActions}
         data={data}
@@ -134,7 +133,6 @@ export function ResourcePageLayout<
         }}
       />
 
-      {/* --- Dialog Form Thêm/Sửa --- */}
       <FormDialog
         isOpen={isFormOpen}
         onClose={handleCloseForm}
@@ -149,7 +147,6 @@ export function ResourcePageLayout<
         <FormComponent />
       </FormDialog>
 
-      {/* --- Dialog Xác Nhận Xóa --- */}
       <ConfirmationModal
         isOpen={!!itemToDelete}
         onClose={handleCloseDeleteDialog}

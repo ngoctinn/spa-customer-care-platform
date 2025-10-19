@@ -20,50 +20,44 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Component RowActions tùy chỉnh cho trang Roles
-const RoleRowActions = ({
-  item,
-  onEdit,
-  onDelete,
-}: {
-  item: Role;
-  onEdit: (item: Role) => void;
-  onDelete: (item: Role) => void;
-}) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="h-8 w-8 p-0">
-        <MoreHorizontal className="h-4 w-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
-      <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-      <DropdownMenuItem asChild>
-        <Link href={`/dashboard/roles/${item.id}`}>
-          <Shield className="mr-2 h-4 w-4" />
-          Phân quyền
-        </Link>
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onEdit(item)}>
-        <Edit className="mr-2 h-4 w-4" />
-        Sửa thông tin
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        className="text-destructive"
-        onClick={() => onDelete(item)}
-        disabled={(item.users_count ?? 0) > 0}
-      >
-        <Trash2 className="mr-2 h-4 w-4" />
-        Xóa
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
-
 export default function RolesPage() {
   const managementHook = useRoleManagement();
 
-  // Định nghĩa cột trong component để có thể truyền các handlers từ hook
+  const renderCustomRowActions = (
+    item: Role,
+    onEdit: (item: Role) => void,
+    onDelete: (item: Role) => void
+  ) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/roles/${item.id}`}>
+            <Shield className="mr-2 h-4 w-4" />
+            Phân quyền
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(item)}>
+          <Edit className="mr-2 h-4 w-4" />
+          Sửa thông tin
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => onDelete(item)}
+          disabled={(item.users_count ?? 0) > 0}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Xóa
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const roleColumns = useMemo<ColumnDef<Role>[]>(
     () => [
       {
@@ -88,18 +82,8 @@ export default function RolesPage() {
         header: "Số người dùng",
         cell: ({ row }) => row.original.users_count ?? 0,
       },
-      {
-        id: "actions",
-        cell: ({ row }) => (
-          <RoleRowActions
-            item={row.original}
-            onEdit={managementHook.handleOpenEditForm}
-            onDelete={managementHook.handleOpenDeleteDialog}
-          />
-        ),
-      },
     ],
-    [managementHook.handleOpenEditForm, managementHook.handleOpenDeleteDialog]
+    []
   );
 
   return (
@@ -114,6 +98,7 @@ export default function RolesPage() {
         searchColumnId: "name",
         searchPlaceholder: "Tìm theo tên vai trò...",
       }}
+      renderRowActions={renderCustomRowActions}
     />
   );
 }

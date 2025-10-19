@@ -31,7 +31,9 @@ export default function AppointmentDetailPanel({
   onWriteReview,
 }: AppointmentDetailPanelProps) {
   const service = services.find((s) => s.id === appointment.service_id);
-  const technician = staff.find((t) => t.id === appointment.technician_id);
+  const technician = staff.find(
+    (t) => t.id === appointment.assigned_staff_ids?.[0]
+  );
 
   if (!service) return null;
 

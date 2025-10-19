@@ -1,7 +1,6 @@
 import { FullCustomerProfile } from "@/features/customer/types";
 import apiClient from "@/lib/apiClient";
-import { CustomerFormValues } from "../hooks/useCustomerManagement";
-
+import { CustomerFormValues } from "../schemas";
 /**
  * Lấy danh sách tất cả khách hàng
  */

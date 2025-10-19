@@ -58,6 +58,36 @@ const navLinks = [
   { href: "/about", label: "Giới thiệu" },
 ];
 
+// REFACTOR: SearchInput component
+const SearchInput = () => {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    const params = new URLSearchParams({ q: searchQuery.trim() });
+    router.push(`/search?${params.toString()}`);
+  };
+
+  return (
+    <form
+      onSubmit={handleSearchSubmit}
+      className="relative flex-1 md:flex-none"
+    >
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Input
+        type="search"
+        placeholder="Tìm kiếm..."
+        className="w-full md:w-64 pl-9"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+    </form>
+  );
+};
+
 export function Header() {
   const { setTheme, theme } = useTheme();
   const handleThemeToggle = () => {
@@ -69,16 +99,7 @@ export function Header() {
   const { data: customerProfile } = useCustomerProfile();
 
   const { items } = useCartStore();
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = React.useState("");
 
-  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!searchQuery.trim()) return; // Không tìm kiếm nếu input rỗng
-
-    const params = new URLSearchParams({ q: searchQuery.trim() });
-    router.push(`/search?${params.toString()}`);
-  };
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -167,19 +188,7 @@ export function Header() {
         <div className="flex-1" />
 
         <div className="flex items-center gap-4">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative flex-1 md:flex-none"
-          >
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Tìm kiếm..."
-              className="w-full md:w-64 pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
+          <SearchInput />
 
           <Button className="hidden md:flex items-center gap-2">
             <Link href="/booking" className="flex items-center gap-2">

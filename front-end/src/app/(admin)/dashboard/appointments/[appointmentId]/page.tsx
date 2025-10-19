@@ -136,7 +136,7 @@ export default function AppointmentDetailPage() {
 
   // Fetch related data
   const { data: customer } = useCustomerById(appointment?.customer_id || "");
-  const { data: technician } = useStaffById(appointment?.technician_id || "");
+  const { data: technician } = useStaffById(appointment?. assigned_staff_ids[0] || "");
   const { data: service } = useServiceById(appointment?.service_id || "");
 
   if (isLoadingAppt) {

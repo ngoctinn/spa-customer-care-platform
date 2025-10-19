@@ -1,3 +1,4 @@
+// src/features/checkout/components/pos/PaymentDetails.tsx
 "use client";
 
 import { useFormContext, useFieldArray } from "react-hook-form";
@@ -21,14 +22,13 @@ import { usePosStore } from "@/features/checkout/stores/pos-store";
 import PriceInput from "@/components/common/PriceInput";
 import { PaymentMethod, PaymentRecord } from "@/features/checkout/types";
 import { RewardPointsInput } from "@/features/checkout/components/RewardPointsInput";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { useLoyaltySettings } from "@/features/loyalty/hooks/useLoyalty";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2, AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { applyPrepaidCard } from "@/features/prepaid-card/api/prepaid-card.api";
-import { Label } from "@/components/ui/label";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { PrepaidCardInput } from "./PrepaidCardInput";
+import { OrderSummary } from "./OrderSummary";
 
 const paymentMethods: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "Tiền mặt" },
@@ -103,9 +103,6 @@ export function PaymentDetails() {
 
   const discountFromPoints = watch("discountFromPoints") || 0;
   const prepaidCardDiscount = watch("prepaidCardDiscount") || 0;
-
-  const [prepaidCardCode, setPrepaidCardCode] = useState("");
-  const [isApplyingCard, setIsApplyingCard] = useState(false);
 
   const { data: loyaltySettings } = useLoyaltySettings();
   const pointsPerVnd = loyaltySettings?.points_per_vnd || 0;
@@ -184,7 +181,6 @@ export function PaymentDetails() {
       );
       return;
     }
-    // ++ ADDED ++: Lưu giá trị discount vào form
     setValue("pointsToRedeem", points);
     setValue("discountFromPoints", discountValue);
     toast.success(
@@ -192,38 +188,14 @@ export function PaymentDetails() {
     );
   };
 
-  const handleApplyPrepaidCard = async () => {
-    if (!prepaidCardCode.trim()) {
-      toast.warning("Vui lòng nhập mã thẻ.");
-      return;
-    }
-    setIsApplyingCard(true);
-    try {
-      const result = await applyPrepaidCard({
-        card_code: prepaidCardCode,
-        total_amount: finalTotal,
-      });
-      setValue("prepaidCardCode", prepaidCardCode);
-      setValue("prepaidCardDiscount", result.applicable_amount);
-      toast.success(
-        `Đã áp dụng ${result.applicable_amount.toLocaleString(
-          "vi-VN"
-        )}đ từ thẻ trả trước.`
-      );
-    } catch (error: any) {
-      toast.error("Áp dụng thẻ thất bại", { description: error.message });
-    } finally {
-      setIsApplyingCard(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <Separator />
-      <div className="flex justify-between font-bold text-lg">
-        <span>Tổng cộng</span>
-        <span>{total.toLocaleString("vi-VN")}đ</span>
-      </div>
+      <OrderSummary
+        total={total}
+        discountFromPoints={discountFromPoints}
+        prepaidCardDiscount={prepaidCardDiscount}
+        finalTotal={finalTotal}
+      />
 
       {customer && (customer.loyalty_points ?? 0) > 0 && (
         <>
@@ -236,46 +208,7 @@ export function PaymentDetails() {
         </>
       )}
 
-      {discountFromPoints > 0 && (
-        <div className="flex justify-between text-sm font-medium text-destructive">
-          <span>Giảm giá từ điểm</span>
-          <span>-{discountFromPoints.toLocaleString("vi-VN")}đ</span>
-        </div>
-      )}
-
-      {/* Khu vực thẻ trả trước */}
-      <Separator />
-      <div className="space-y-2">
-        <Label>Thẻ trả trước / Quà tặng</Label>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Nhập mã thẻ..."
-            value={prepaidCardCode}
-            onChange={(e) => setPrepaidCardCode(e.target.value)}
-            disabled={isApplyingCard || prepaidCardDiscount > 0}
-          />
-          <Button
-            type="button"
-            onClick={handleApplyPrepaidCard}
-            disabled={isApplyingCard || prepaidCardDiscount > 0}
-          >
-            {isApplyingCard ? "Đang..." : "Áp dụng"}
-          </Button>
-        </div>
-        {prepaidCardDiscount > 0 && (
-          <div className="flex justify-between text-sm font-medium text-destructive">
-            <span>Giảm giá từ thẻ</span>
-            <span>-{prepaidCardDiscount.toLocaleString("vi-VN")}đ</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-between font-bold text-lg text-primary">
-        <span>Khách cần trả</span>
-        <span>
-          {(finalTotal > 0 ? finalTotal : 0).toLocaleString("vi-VN")}đ
-        </span>
-      </div>
+      <PrepaidCardInput finalTotal={finalTotal} />
 
       <Separator />
       <div className="space-y-3">

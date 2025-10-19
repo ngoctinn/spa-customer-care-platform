@@ -20,7 +20,6 @@ import { PosActions } from "./PosActions";
 import { XCircle } from "lucide-react";
 import { useCreateInvoice } from "@/features/checkout/hooks/usePos";
 import { PaymentMethod } from "@/features/checkout/types";
-import { useLoyaltySettings } from "@/features/loyalty/hooks/useLoyalty"; // ++ ADDED ++
 
 const paymentRecordSchema = z.object({
   method: z.custom<PaymentMethod>((val) => !!val, {
@@ -44,13 +43,19 @@ type PosFormValues = z.infer<typeof posFormSchema>;
 
 export function PosClient() {
   const searchParams = useSearchParams();
-  const appointmentId = searchParams.get("appointmentId");
+  const appointmentIdParam = searchParams.get("appointmentId");
 
-  const { setCustomer, addItem, clear, setAppointmentId, receiptRef, total } =
-    usePosStore();
+  const {
+    setCustomer,
+    addItem,
+    clear,
+    setAppointmentId: setPosAppointmentId,
+    receiptRef,
+    total,
+  } = usePosStore();
 
   const { data: appointment, isLoading: isLoadingAppointment } =
-    useAppointmentById(appointmentId!);
+    useAppointmentById(appointmentIdParam!);
   const { data: appointmentCustomer, isLoading: isLoadingCustomer } =
     useCustomerById(appointment?.customer_id || "");
   const { data: appointmentService, isLoading: isLoadingService } =
@@ -72,9 +77,10 @@ export function PosClient() {
 
   useEffect(() => {
     if (appointment && appointmentCustomer && appointmentService) {
-      clear();
-      setCustomer(appointmentCustomer);
-      addItem({
+      const store = usePosStore.getState();
+      store.clear();
+      store.setCustomer(appointmentCustomer);
+      store.addItem({
         id: appointmentService.id,
         name: appointmentService.name,
         price: appointmentService.price,
@@ -82,24 +88,15 @@ export function PosClient() {
         type: "service",
         appointment_id: appointment.id,
       });
-      setAppointmentId(appointment.id);
+      store.setAppointmentId(appointment.id);
     }
-  }, [
-    appointment,
-    appointmentCustomer,
-    appointmentService,
-    clear,
-    setCustomer,
-    addItem,
-    setAppointmentId,
-  ]);
+  }, [appointment, appointmentCustomer, appointmentService]);
 
   const handlePrint = useReactToPrint({
-    // @ts-ignore - This is the correct property for modern react-to-print versions.
+    // @ts-ignore
     content: () => receiptRef.current,
   });
 
-  // ++ REFACTORED ++: Tách logic xử lý submit và thông báo tiền thừa
   const handleSubmit = form.handleSubmit((data) => {
     createInvoiceMutation.mutate(data, {
       onSuccess: () => {

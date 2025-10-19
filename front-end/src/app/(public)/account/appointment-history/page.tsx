@@ -83,7 +83,7 @@ export default function AppointmentHistoryPage() {
     if (
       !selectedAppointmentForReview ||
       !customer ||
-      !selectedAppointmentForReview.technician_id
+      !selectedAppointmentForReview.assigned_staff_ids
     ) {
       toast.error("Thiếu thông tin để gửi đánh giá.");
       return;
@@ -92,7 +92,7 @@ export default function AppointmentHistoryPage() {
     const reviewData: NewReviewData = {
       appointment_id: selectedAppointmentForReview.id,
       customer_id: customer.id,
-      technician_id: selectedAppointmentForReview.technician_id,
+      technician_id: selectedAppointmentForReview.assigned_staff_ids[0], // Giả định đánh giá cho kỹ thuật viên đầu tiên
       item_id: selectedAppointmentForReview.service_id,
       item_type: "service",
       rating: values.rating,
@@ -123,7 +123,7 @@ export default function AppointmentHistoryPage() {
               {historyAppointments.map((apt) => {
                 const service = services.find((s) => s.id === apt.service_id);
                 const technician = staff.find(
-                  (t) => t.id === apt.technician_id
+                  (t) => t.id === apt.assigned_staff_ids?.[0]
                 );
                 const hasReviewed = reviews.some(
                   (r) => r.appointment_id === apt.id

@@ -8,135 +8,128 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import { EventClickArg, EventDropArg, DateSelectArg } from "@fullcalendar/core";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  ColumnDef,
+  ColumnFiltersState,
+} from "@tanstack/react-table";
+import { toast } from "sonner";
 
 import {
   useAppointments,
-  useAddAppointmentAdmin,
   useUpdateAppointment,
 } from "@/features/appointment/hooks/useAppointments";
 import { useCustomers } from "@/features/customer/hooks/useCustomers";
 import { useServices } from "@/features/service/hooks/useServices";
 import { useStaff } from "@/features/staff/hooks/useStaff";
+import { useAppointmentModals } from "@/features/appointment/hooks/useAppointmentModals";
+
 import { FullPageLoader } from "@/components/ui/spinner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  appointmentFormSchema,
-  AppointmentFormValues,
-} from "@/features/appointment/schemas";
 import { FormDialog } from "@/components/common/FormDialog";
 import AppointmentForm from "@/features/appointment/components/AppointmentForm";
-import { Appointment, AppointmentStatus } from "@/features/appointment/types";
 import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppointmentDetailDialog } from "@/features/appointment/components/AppointmentDetailDialog";
-import { DataTableFacetedFilter } from "@/components/common/data-table/data-table-faceted-filter";
-import { toast } from "sonner";
-import { getFacetedUniqueValues } from "@tanstack/react-table";
-
-import { useAppointmentFilters } from "@/features/appointment/hooks/useAppointmentFilters";
-
-
+import { AppointmentFilters } from "@/features/appointment/components/AppointmentFilters";
+import { Appointment, AppointmentStatus } from "@/features/appointment/types";
 
 const statusColors: Record<AppointmentStatus, string> = {
-
   upcoming: "hsl(var(--primary))",
-
   completed: "hsl(var(--success))",
-
   cancelled: "hsl(var(--destructive))",
-
   "checked-in": "hsl(var(--info))",
-
   "in-progress": "hsl(var(--warning))",
-
   "no-show": "hsl(var(--muted-foreground))",
-
   paused: "hsl(var(--warning))",
-
 };
 
-
+// --- TÁI CẤU TRÚC: Định nghĩa cột cho react-table ---
+const columns: ColumnDef<Appointment>[] = [
+  { accessorKey: "service_id" },
+  { accessorKey: "status" },
+  {
+    accessorKey: "assigned_staff_ids",
+    filterFn: (row, id, value) => {
+      return value.includes(row.original.assigned_staff_ids[0]);
+    },
+  },
+];
 
 export default function AppointmentsPage() {
-
+  // --- Dữ liệu & Hooks ---
   const { data: appointments = [], isLoading: isLoadingAppointments } =
-
     useAppointments();
-
   const { data: customers = [], isLoading: isLoadingCustomers } =
-
     useCustomers();
-
   const { data: services = [], isLoading: isLoadingServices } = useServices();
-
   const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
-
-
-
-  const addAppointmentMutation = useAddAppointmentAdmin();
-
   const updateAppointmentMutation = useUpdateAppointment();
 
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-
-  const [editingAppointment, setEditingAppointment] =
-
-    useState<Appointment | null>(null);
-
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-  const [selectedAppointment, setSelectedAppointment] =
-
-    useState<Appointment | null>(null);
-
-  const [actionToConfirm, setActionToConfirm] = useState<{
-
-    type: "check-in" | "cancel";
-
-    appointmentId: string;
-
-  } | null>(null);
-
-
-
-  const { mockTable, filteredAppointments } = useAppointmentFilters(appointments);
-
-
-
-  const form = useForm<AppointmentFormValues>({
-
-    resolver: zodResolver(appointmentFormSchema),
-
+  // --- TÁI CẤU TRÚC: Sử dụng useReactTable ---
+  const table = useReactTable({
+    data: appointments,
+    columns,
+    state: {
+      columnFilters,
+    },
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  const {
+    form,
+    isFormOpen,
+    editingAppointment,
+    isSubmitting,
+    isDetailOpen,
+    selectedAppointment,
+    actionToConfirm,
+    handleOpenForm,
+    handleCloseForm,
+    handleFormSubmit,
+    handleOpenDetail,
+    handleCloseDetail,
+    handleOpenConfirmDialog,
+    handleCloseConfirmDialog,
+    handleConfirmAction,
+  } = useAppointmentModals();
+
+  // --- Logic & Callbacks ---
   const calendarEvents = useMemo(() => {
     const customerMap = new Map(customers.map((c) => [c.id, c]));
     const serviceMap = new Map(services.map((s) => [s.id, s]));
 
-    return filteredAppointments.map((apt) => ({
+    // --- TÁI CẤU TRÚC: Lấy dữ liệu đã lọc từ table instance ---
+    const filteredRows = table.getRowModel().rows;
+    const filteredData = filteredRows.map((row) => row.original);
+
+    return filteredData.map((apt) => ({
       id: apt.id,
-      title:
-        (customerMap.get(apt.customer_id)?.full_name ||
-          apt.guest_name ||
-          "Khách vãng lai") +
-        ` - ${serviceMap.get(apt.service_id)?.name || "Dịch vụ"}`,
+      title: `${customerMap.get(apt.customer_id)?.full_name || "Khách"} - ${
+        serviceMap.get(apt.service_id)?.name || "Dịch vụ"
+      }`,
       start: new Date(apt.start_time),
       end: new Date(apt.end_time),
       extendedProps: { ...apt },
       backgroundColor: statusColors[apt.status],
       borderColor: statusColors[apt.status],
     }));
-  }, [filteredAppointments, customers, services]);
+  }, [table.getRowModel().rows, customers, services]);
 
   const handleEventClick = (clickInfo: EventClickArg) => {
-    setSelectedAppointment(clickInfo.event.extendedProps as Appointment);
-    setIsDetailOpen(true);
+    handleOpenDetail(clickInfo.event.extendedProps as any);
   };
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
@@ -154,49 +147,10 @@ export default function AppointmentsPage() {
   };
 
   const handleSelect = (selectInfo: DateSelectArg) => {
-    form.reset({
-      start_time: selectInfo.start,
-    });
-    setEditingAppointment(null);
-    setIsFormOpen(true);
+    handleOpenForm(null, selectInfo.start);
   };
 
-  const handleFormSubmit = (data: AppointmentFormValues) => {
-    if (editingAppointment) {
-      updateAppointmentMutation.mutate(
-        { id: editingAppointment.id, data },
-        {
-          onSuccess: () => setIsFormOpen(false),
-        }
-      );
-    } else {
-      addAppointmentMutation.mutate(data, {
-        onSuccess: () => setIsFormOpen(false),
-      });
-    }
-  };
-
-  const handleConfirmAction = () => {
-    if (!actionToConfirm) return;
-    const { type, appointmentId } = actionToConfirm;
-    const newStatus = type === "check-in" ? "checked-in" : "cancelled";
-
-    updateAppointmentMutation.mutate(
-      { id: appointmentId, data: { status: newStatus } },
-      {
-        onSuccess: () => {
-          toast.success(
-            `Đã ${
-              type === "check-in" ? "check-in" : "hủy"
-            } lịch hẹn thành công.`
-          );
-          setIsDetailOpen(false);
-          setActionToConfirm(null);
-        },
-      }
-    );
-  };
-
+  // --- Render ---
   const isLoading =
     isLoadingAppointments ||
     isLoadingCustomers ||
@@ -207,52 +161,25 @@ export default function AppointmentsPage() {
     return <FullPageLoader text="Đang tải dữ liệu lịch hẹn..." />;
   }
 
-  const technicianOptions = staffList.map((s) => ({
-    label: s.full_name,
-    value: s.id,
-  }));
-  const serviceOptions = services.map((s) => ({ label: s.name, value: s.id }));
-  const statusOptions = [
-    { label: "Sắp tới", value: "upcoming" },
-    { label: "Hoàn thành", value: "completed" },
-    { label: "Đã hủy", value: "cancelled" },
-    { label: "Đã check-in", value: "checked-in" },
-    { label: "Đang tiến hành", value: "in-progress" },
-    { label: "Không đến", value: "no-show" },
-  ];
-
   return (
     <>
       <PageHeader
         title="Quản lý Lịch hẹn"
         description="Xem, tạo và quản lý tất cả lịch hẹn của khách hàng."
         actionNode={
-          <Button onClick={() => setIsFormOpen(true)}>
+          <Button onClick={() => handleOpenForm()}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Tạo lịch hẹn mới
           </Button>
         }
       />
 
-      <Card className="mb-4">
-        <CardContent className="p-2 flex flex-wrap items-center gap-2">
-          <DataTableFacetedFilter
-            column={mockTable.getColumn("technician")}
-            title="Kỹ thuật viên"
-            options={technicianOptions}
-          />
-          <DataTableFacetedFilter
-            column={mockTable.getColumn("service")}
-            title="Dịch vụ"
-            options={serviceOptions}
-          />
-          <DataTableFacetedFilter
-            column={mockTable.getColumn("status")}
-            title="Trạng thái"
-            options={statusOptions}
-          />
-        </CardContent>
-      </Card>
+      {/* --- TÁI CẤU TRÚC: Truyền table instance thật --- */}
+      <AppointmentFilters
+        table={table}
+        staffList={staffList}
+        services={services}
+      />
 
       <Card>
         <CardContent className="p-4">
@@ -290,33 +217,26 @@ export default function AppointmentsPage() {
 
       <AppointmentDetailDialog
         isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
+        onClose={handleCloseDetail}
         appointment={selectedAppointment}
-        onCheckIn={(id) =>
-          setActionToConfirm({ type: "check-in", appointmentId: id })
-        }
-        onCancel={(id) =>
-          setActionToConfirm({ type: "cancel", appointmentId: id })
-        }
+        onCheckIn={(id) => handleOpenConfirmDialog("check-in", id)}
+        onCancel={(id) => handleOpenConfirmDialog("cancel", id)}
       />
 
       <FormDialog
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={handleCloseForm}
         title={editingAppointment ? "Chỉnh sửa lịch hẹn" : "Tạo lịch hẹn mới"}
         form={form}
         onFormSubmit={handleFormSubmit}
-        isSubmitting={
-          addAppointmentMutation.isPending ||
-          updateAppointmentMutation.isPending
-        }
+        isSubmitting={isSubmitting}
       >
         <AppointmentForm />
       </FormDialog>
 
       <ConfirmationModal
         isOpen={!!actionToConfirm}
-        onClose={() => setActionToConfirm(null)}
+        onClose={handleCloseConfirmDialog}
         onConfirm={handleConfirmAction}
         title={`Xác nhận ${
           actionToConfirm?.type === "check-in" ? "Check-in" : "Hủy lịch"
