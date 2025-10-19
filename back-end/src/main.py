@@ -37,4 +37,4 @@ app.include_router(auth_router)
 app.include_router(customers_router)
 app.include_router(media_router)
 app.include_router(catalog_router)
-app.include_router(admin_router) # Thêm router cho admin
+app.include_router(admin_router)  # Thêm router cho admin

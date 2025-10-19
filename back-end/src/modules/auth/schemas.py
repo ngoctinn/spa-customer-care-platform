@@ -17,6 +17,9 @@ class PermissionCreate(PermissionBase):
 class PermissionRead(PermissionBase):
     id: int
 
+    class Config:
+        from_attributes = True
+
 class PermissionUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -34,6 +37,9 @@ class RoleUpdate(BaseModel):
 
 class RoleRead(RoleBase):
     id: int
+
+    class Config:
+        from_attributes = True
 
 class RoleReadWithPermissions(RoleRead):
     permissions: List[PermissionRead] = []

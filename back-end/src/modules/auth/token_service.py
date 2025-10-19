@@ -58,6 +58,9 @@ def initiate_email_verification(db: Session, user_id: int) -> bool:
         db, user_id=user_id, token=vtoken, expires_at=expires_at
     )
 
+    # Commit thay đổi để token mới được lưu vào DB
+    db.commit()
+
     # Gửi email
     return send_verification_email(user.email, vtoken)
 
@@ -77,23 +80,32 @@ def confirm_email(db: Session, token: str) -> dict:
     """
     vt = crud.get_verification_token(db, token)
     if not vt:
-        raise ValueError("Link không hợp lệ hoặc đã hết hạn")
+        # Token không tìm thấy, có thể đã được sử dụng hoặc không hợp lệ.
+        # Không thể biết người dùng là ai từ token đã bị xóa.
+        raise ValueError("Link không hợp lệ hoặc đã được sử dụng.")
 
-    # Kiểm tra token chưa hết hạn
+    # Kiểm tra token đã hết hạn chưa
     if is_token_expired(vt.expires_at):
         crud.delete_verification_token(db, token)
-        raise ValueError("Link không hợp lệ hoặc đã hết hạn")
+        raise ValueError("Link xác minh đã hết hạn. Vui lòng yêu cầu gửi lại.")
 
-    # Cập nhật user
     user = db.get(User, vt.user_id)
     if not user:
-        raise ValueError("Người dùng không tồn tại")
+        # Trường hợp hiếm gặp: người dùng bị xóa sau khi token được tạo
+        raise ValueError("Người dùng không tồn tại.")
 
+    # Kiểm tra nếu người dùng đã được kích hoạt
+    if user.is_active:
+        # Xóa token vì không còn cần thiết
+        crud.delete_verification_token(db, token)
+        raise ValueError("Tài khoản này đã được xác minh từ trước.")
+
+    # Kích hoạt người dùng
     user.is_active = True
     db.add(user)
     db.commit()
 
-    # Xóa token
+    # Xóa token đã sử dụng
     crud.delete_verification_token(db, token)
 
     return {"message": "Email xác minh thành công", "email": user.email}

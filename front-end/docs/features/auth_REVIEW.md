@@ -1,41 +1,65 @@
-# Đánh giá Code Feature: Xác thực (Authentication)
+# Đánh giá Code: Luồng Xác thực (Đăng ký/Đăng nhập)
+
+**ID Kế hoạch:** `0002_PLAN.md`
 
 ## 1. Tổng quan
 
-Nhìn chung, feature `auth` được xây dựng tốt, tuân thủ các quy ước của dự án và sử dụng các thư viện một cách hợp lý. Cấu trúc thư mục rõ ràng, code có khả năng đọc và bảo trì.
+Đánh giá này bao gồm toàn bộ luồng xác thực người dùng, từ giao diện (UX/UI) đến logic kỹ thuật phía front-end. Luồng này đã được refactor để triển khai cơ chế Access Token và Refresh Token tự động, dựa trên kế hoạch kỹ thuật đã đề ra.
 
-**Điểm mạnh:**
+Nhìn chung, tính năng được triển khai rất tốt, tuân thủ chặt chẽ kế hoạch và các quy ước của dự án. Logic xử lý token phức tạp đã được trừu tượng hóa một cách hiệu quả, và giao diện người dùng sạch sẽ, hiện đại.
 
-*   **Cấu trúc tốt:** Code được tổ chức logic theo đúng cấu trúc `features` của dự án.
-*   **Quản lý State hiệu quả:** Sử dụng `React Query` cho server state (`useChangePassword`) và `Context API` (`AuthProvider`) cho global client state là một cách tiếp cận tốt.
-*   **Validation mạnh mẽ:** Tận dụng `Zod` và `React Hook Form` để xác thực form một cách nhất quán.
-*   **Trải nghiệm người dùng:** Các form có xử lý trạng thái loading, success, error rõ ràng, cung cấp phản hồi tốt cho người dùng.
+---
 
-## 2. Phát hiện & Đề xuất Cải thiện
+## 2. Đánh giá UX/UI và Thẩm mỹ
 
-### 2.1. Vấn đề Logic & Kiến trúc
+### Điểm mạnh
 
-| File | Vấn đề | Đề xuất | Mức độ ưu tiên |
-| :--- | :--- | :--- | :--- |
-| `features/auth/contexts/AuthContexts.tsx` | **Hard reload sau khi login/logout:** Hàm `login` gọi `window.location.reload()` và hàm `logout` gán `window.location.href`. Điều này làm gián đoạn trải nghiệm người dùng (SPA) và không cần thiết. | Sử dụng `router.push()` của Next.js để điều hướng. Sau khi login thành công, thay vì reload, hãy gọi lại `fetchProfile` để cập nhật `user` state, React sẽ tự động render lại UI. | **Cao** |
-| `features/auth/contexts/AuthContexts.tsx` | **Fetch profile trong `useEffect`:** Việc fetch thông tin người dùng trong `useEffect` sẽ được thực thi mỗi khi `AuthProvider` được mount, có thể dẫn đến việc gọi API không cần thiết khi chuyển trang. | Chuyển logic `fetchProfile` vào một custom hook `useUser` sử dụng `useQuery` của React Query. Cấu hình `staleTime: Infinity` để chỉ fetch một lần và lấy dữ liệu từ cache trong suốt phiên làm việc. | **Trung bình** |
-| `features/auth/apis/auth_api.ts` | **Sự không nhất quán của `apiClient`:** Một số hàm (`login`, `fetchProfile`) đang dùng `fetch` trực tiếp, trong khi các hàm khác trong dự án (`changePassword`, `register`) lại dùng `apiClient`. | Thống nhất sử dụng `apiClient` cho tất cả các lệnh gọi API. Điều này giúp tập trung logic xử lý lỗi, interceptor và header vào một nơi duy nhất. | **Trung bình** |
-| `features/auth/components/forgot-password-form.tsx` | **Logic `onSubmit` bị comment:** Hàm `forgotPassword` trong form quên mật khẩu đang bị comment lại, khiến tính năng không hoạt động. | Implement logic gọi API `forgotPassword` đã được định nghĩa trong `password.api.ts` và đưa vào hook `useForgotPassword` để quản lý mutation. | **Cao** |
+-   **Thiết kế Tối giản, Hiện đại:** Giao diện các form (đăng nhập, đăng ký, quên mật khẩu) rất sạch sẽ, tập trung vào chức năng chính và nhất quán với phong cách chung của bộ component `shadcn/ui`.
+-   **Phản hồi Người dùng Tức thì:** Việc sử dụng Zod cho validation giúp cung cấp phản hồi lỗi ngay lập tức dưới mỗi ô input, giúp người dùng dễ dàng sửa lỗi.
+-   **Trải nghiệm Mượt mà:** Các trạng thái chờ (loading) trên nút bấm và việc sử dụng `toast` cho các thông báo thành công/thất bại tạo ra một trải nghiệm người dùng mượt mà, chuyên nghiệp.
+-   **Luồng Logic Rõ ràng:** Mỗi bước trong quy trình (đăng ký, xác minh, đăng nhập) đều có trang riêng biệt và thông báo hướng dẫn rõ ràng, giúp người dùng không bị bối rối.
+-   **Sử dụng Icon Hiệu quả:** Các icon như `Mail`, `Eye`, `EyeOff` được đặt hợp lý trong các ô input, giúp tăng tính trực quan và dễ sử dụng.
 
-### 2.2. Tái cấu trúc & Hiệu suất
+### Điểm có thể Cải thiện
 
-| File | Vấn đề | Đề xuất | Mức độ ưu tiên |
-| :--- | :--- | :--- | :--- |
-| `features/auth/schemas.ts` | **Lặp lại logic validation mật khẩu:** `resetPasswordFormSchema` và `changePasswordSchema` đều định nghĩa lại logic kiểm tra độ dài và ký tự của mật khẩu. | Tạo một `passwordSchema` chung có thể tái sử dụng trong `lib/schemas.ts` và import vào các schema khác. Điều này tuân thủ nguyên tắc DRY. | **Thấp** |
-| `features/auth/apis/auth_api.ts` | **Hàm `safeRequest` chưa hiệu quả:** Hàm này chỉ `console.warn` và không ném lỗi, khiến phía gọi không biết được request có thật sự thất bại hay không. | Sửa đổi `safeRequest` để nó `throw new Error` hoặc trả về một object có cấu trúc `{ success: boolean, error?: Error }` để bên gọi có thể xử lý. Tuy nhiên, khi đã thống nhất dùng `apiClient`, hàm này có thể không còn cần thiết. | **Thấp** |
-| `features/auth/components/login-form.tsx`, `register-form.tsx`, `reset-password-form.tsx` | **Lặp lại UI cho việc hiển thị/ẩn mật khẩu:** Logic và icon cho việc `show/hide password` được lặp lại ở nhiều form. | Tạo một component `PasswordInput` chung (nếu chưa có) hoặc đưa logic này vào `Input` component hiện tại để có thể tái sử dụng. Component `PasswordInput` trong `common` đã có nhưng chưa xử lý logic này. | **Thấp** |
+-   **Trải nghiệm Chuyển trang:** Sau khi đăng nhập thành công, người dùng được chuyển hướng ngay lập tức. Có thể cân nhắc thêm một spinner toàn màn hình ngắn (khoảng 0.5-1 giây) sau khi nhấn nút "Đăng nhập" cho đến khi trang dashboard được render hoàn toàn. Điều này sẽ làm cho quá trình chuyển đổi có cảm giác liền mạch hơn.
 
-### 2.3. Phong cách Code & Chất lượng
+---
 
-| File | Vấn đề | Đề xuất | Mức độ ưu tiên |
-| :--- | :--- | :--- | :--- |
-| `features/auth/apis/auth_api.ts` | **Comment không nhất quán:** Comment trong hàm `login` (`// Không cần return response.json() nữa...`) mâu thuẫn với việc code vẫn `return response.json()`. | Xóa bỏ comment hoặc chỉnh sửa code để đồng bộ với comment. Nếu token được xử lý hoàn toàn qua httpOnly cookie, hàm `login` nên trả về `Promise<void>`. | **Thấp** |
+## 3. Đánh giá Kỹ thuật và Logic
 
-## 3. Kết luận
+### 3.1. Triển khai Kế hoạch
 
-Feature `auth` có nền tảng tốt. Các đề xuất trên tập trung vào việc cải thiện trải nghiệm người dùng (loại bỏ hard reload), tăng tính nhất quán và khả năng tái sử dụng code. Ưu tiên hàng đầu là sửa lại luồng xử lý sau khi `login` và `logout` và implement đầy đủ tính năng "quên mật khẩu".
+-   **Mức độ tuân thủ:** **Xuất sắc.** Kế hoạch kỹ thuật trong `0002_PLAN.md` đã được triển khai chính xác.
+    -   `src/lib/tokenStore.ts` đã được tạo để quản lý access token.
+    -   `src/lib/apiClient.ts` đã được cập nhật với logic tự động làm mới token khi gặp lỗi `401` và cơ chế hàng đợi để xử lý các request đồng thời.
+    -   Các hàm trong `src/features/auth/apis/auth_api.ts` đã được điều chỉnh để khớp với endpoint và payload mới.
+    -   `AuthContext` đã được tái cấu trúc để sử dụng `tokenStore` và tập trung vào việc cung cấp state, tách biệt khỏi các tác vụ UI (chuyển trang, thông báo).
+
+### 3.2. Lỗi và Vấn đề Logic
+
+-   **Không tìm thấy lỗi logic nghiêm trọng.** Luồng xử lý lỗi `401` -> `refresh` -> `retry` trong `apiClient` đã được triển khai một cách chặt chẽ, bao gồm cả việc xử lý trường hợp refresh token cũng hết hạn.
+-   Luồng đăng nhập/đăng xuất giờ đây quản lý token và state một cách tuần tự, giải quyết được các vấn đề về race condition đã được xác định trước đó.
+
+### 3.3. Kiến trúc & Quy ước Dự án
+
+-   **Cấu trúc file:** Hoàn toàn tuân thủ. Toàn bộ logic xác thực được đóng gói gọn gàng trong `src/features/auth` với sự phân chia rõ ràng giữa `apis`, `components`, `contexts`, `hooks`, và `schemas`.
+-   **Quản lý State:**
+    -   **Server State:** Thông tin người dùng (`user-profile`) được quản lý tốt bằng React Query và hook `useUser`.
+    -   **Client State:** Việc tạo ra `tokenStore` là một giải pháp kiến trúc tốt, giúp `apiClient` (một module non-React) có thể truy cập vào access token mà không cần thông qua Context hay props, tránh được nhiều sự phức tạp.
+
+### 3.4. Tái cấu trúc và Hiệu suất
+
+-   **Component Quá Lớn:** Không có. Các component form như `LoginForm`, `RegisterForm` đều có kích thước hợp lý và chỉ tập trung vào một nhiệm vụ duy nhất.
+-   **Tái sử dụng:** Logic xác thực cốt lõi được tập trung trong `AuthContext` và `apiClient`, giúp dễ dàng bảo trì và tái sử dụng. Các component UI như `PasswordInput` cũng được tái sử dụng hiệu quả.
+-   **Hiệu suất Render:** Việc sử dụng `useTransition` trong các form là một điểm cộng, giúp UI không bị "đơ" trong khi chờ xử lý logic bất đồng bộ.
+
+### 3.5. Phong cách Code & Chất lượng
+
+-   **Typing:** Code sử dụng TypeScript rất tốt, các kiểu dữ liệu được định nghĩa rõ ràng và Zod schemas đảm bảo an toàn dữ liệu đầu vào.
+-   **Styling:** Tuân thủ nghiêm ngặt việc sử dụng component từ `shadcn/ui` và tiện ích `cn()`.
+-   **Khả năng tiếp cận (Accessibility):** Các form được xây dựng bằng các component của `shadcn/ui` (`Form`, `FormItem`, `FormLabel`...) đảm bảo các thuộc tính `htmlFor`, `aria-invalid` được áp dụng đúng cách, tốt cho accessibility.
+
+## 4. Tổng kết
+
+Đây là một bản refactor chất lượng cao, giải quyết được một vấn đề kỹ thuật phức tạp (refresh token) một cách thanh lịch và hiệu quả. Cả về mặt giao diện lẫn logic, luồng xác thực mới đều rất mạnh mẽ, an toàn và tuân thủ tốt các tiêu chuẩn hiện đại cũng như quy ước của dự án.

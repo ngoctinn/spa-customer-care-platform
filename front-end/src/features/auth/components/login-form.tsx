@@ -2,9 +2,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Loader2,
+  Mail,
+  Send,
+} from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { FcGoogle } from "react-icons/fc";
@@ -30,20 +37,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/contexts/AuthContexts";
 import { loginSchema } from "@/features/auth/schemas";
+import { ApiError } from "@/lib/apiClient";
+import { resendVerificationEmail } from "@/features/auth/apis/verify.api";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const LoginForm = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
-  const searchParams = useSearchParams();
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
-  useEffect(() => {
-    const googleError = searchParams.get("error");
-    if (googleError) {
-      setError("Đăng nhập với Google thất bại. Vui lòng thử lại.");
-    }
-  }, [searchParams]);
+  const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -54,16 +61,46 @@ export const LoginForm = () => {
     mode: "onChange",
   });
 
+  useEffect(() => {
+    const googleError = searchParams.get("error");
+    if (googleError) {
+      setError("Đăng nhập với Google thất bại. Vui lòng thử lại.");
+    }
+  }, [searchParams]);
+
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    try {
+      const email = form.getValues("email");
+      await resendVerificationEmail(email);
+      toast.success("Đã gửi lại email xác thực!", {
+        description: "Vui lòng kiểm tra hộp thư của bạn.",
+      });
+      setNeedsVerification(false); // Ẩn thông báo sau khi gửi thành công
+    } catch (err) {
+      toast.error("Gửi lại thất bại", {
+        description:
+          err instanceof Error ? err.message : "Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     setError(null);
+    setNeedsVerification(false);
     startTransition(async () => {
       try {
-        await login(values);
+        const user = await login(values);
         toast.success("Đăng nhập thành công!", {
-          description: "Chào mừng bạn đã quay trở lại.",
+          description: `Chào mừng bạn đã quay trở lại, ${user.email}.`,
         });
+        router.push("/dashboard");
       } catch (err) {
-        if (err instanceof Error) {
+        if (err instanceof ApiError && err.status === 403) {
+          setNeedsVerification(true);
+        } else if (err instanceof Error) {
           setError(err.message);
         } else {
           setError("Đã xảy ra lỗi không xác định. Vui lòng thử lại.");
@@ -89,10 +126,38 @@ export const LoginForm = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <CardContent className="space-y-4">
             {error && (
-              <div className="flex items-center gap-x-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <p>{error}</p>
-              </div>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Đăng nhập thất bại</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {needsVerification && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Tài khoản chưa kích hoạt</AlertTitle>
+                <AlertDescription asChild>
+                  <div className="flex flex-col items-start">
+                    <span>
+                      Vui lòng kiểm tra email để xác thực tài khoản của bạn.
+                    </span>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="p-0 h-auto mt-2 text-destructive font-semibold"
+                      onClick={handleResendVerification}
+                      disabled={isResending}
+                    >
+                      {isResending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="mr-2 h-4 w-4" />
+                      )}
+                      Gửi lại email xác thực
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
             )}
             <FormField
               control={form.control}
@@ -145,17 +210,16 @@ export const LoginForm = () => {
                           <AlertCircle className="h-4 w-4 text-destructive" />
                         ) : showPassword ? (
                           <EyeOff
-                            className="h-4 w-4 text-muted-foreground"
+                            className="h-4 w-4 text-muted-foreground cursor-pointer"
                             onClick={() => setShowPassword(false)}
                           />
                         ) : (
                           <Eye
-                            className="h-4 w-4 text-muted-foreground"
+                            className="h-4 w-4 text-muted-foreground cursor-pointer"
                             onClick={() => setShowPassword(true)}
                           />
                         )
                       }
-                      // ✅ ĐÃ XÓA CLASS `animate-shake` TẠI ĐÂY
                     />
                   </FormControl>
                   <FormMessage />
