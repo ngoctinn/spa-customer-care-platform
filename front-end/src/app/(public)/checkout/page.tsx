@@ -132,7 +132,6 @@ export default function CheckoutPage() {
           ? (shippingData as ShippingAddress)
           : undefined,
         notes: shippingData.notes,
-        // @ts-ignore - Bổ sung thuộc tính vào payload
         prepaid_card_code:
           prepaidCardDiscount > 0 ? prepaidCardCode : undefined,
       });

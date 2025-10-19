@@ -45,23 +45,7 @@ import {
 } from "@/features/customer/hooks/useCustomerManagement";
 import CustomerFormFields from "@/features/customer/components/CustomerFormFields";
 import { FullCustomerProfile } from "@/features/customer/types";
-import apiClient from "@/lib/apiClient";
-
-// --- Giả định các kiểu dữ liệu và API mới ---
-interface DebtHistoryTransaction {
-  id: string;
-  type: "accrual" | "settlement";
-  amount: number;
-  related_invoice_id?: string;
-  new_balance: number;
-  created_at: string;
-}
-
-const getDebtHistory = async (
-  customerId: string
-): Promise<DebtHistoryTransaction[]> => {
-  return apiClient(`/customers/${customerId}/debt-history`);
-};
+import { useDebtHistory } from "@/features/customer/hooks/useDebt";
 
 // --- Components for the Detail Page ---
 
@@ -194,10 +178,7 @@ const CustomerStats = ({
 
 // ++ COMPONENT MỚI: LỊCH SỬ CÔNG NỢ ++
 const DebtHistoryList = ({ customerId }: { customerId: string }) => {
-  const { data: history = [], isLoading } = useQuery({
-    queryKey: ["debtHistory", customerId],
-    queryFn: () => getDebtHistory(customerId),
-  });
+  const { data: history = [], isLoading } = useDebtHistory(customerId);
 
   if (isLoading) return <p>Đang tải lịch sử công nợ...</p>;
 
@@ -261,12 +242,22 @@ const DebtHistoryList = ({ customerId }: { customerId: string }) => {
   );
 };
 
+import { useServices } from "@/features/service/hooks/useServices";
+
 const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
-  const { data: allAppointments = [], isLoading } = useAppointments();
+  const { data: allAppointments = [], isLoading: isLoadingAppointments } = useAppointments();
+  const { data: services = [], isLoading: isLoadingServices } = useServices();
+
+  const serviceMap = useMemo(() => {
+    return new Map(services.map((s) => [s.id, s.name]));
+  }, [services]);
+
   const appointments = allAppointments
     .filter((apt) => apt.customer_id === customerId)
     .slice(0, 5);
-  if (isLoading) return <p>Đang tải lịch hẹn...</p>;
+
+  if (isLoadingAppointments || isLoadingServices) return <p>Đang tải lịch hẹn...</p>;
+
   return (
     <Card>
       <CardHeader>
@@ -292,7 +283,7 @@ const RecentAppointmentsList = ({ customerId }: { customerId: string }) => {
               appointments.map((apt) => (
                 <TableRow key={apt.id}>
                   <TableCell className="font-medium">
-                    {apt.service_id}
+                    {serviceMap.get(apt.service_id) || apt.service_id}
                   </TableCell>
                   <TableCell>
                     {new Date(apt.start_time).toLocaleDateString("vi-VN")}

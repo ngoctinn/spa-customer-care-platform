@@ -109,8 +109,8 @@ function MergeClient() {
       "note",
     ];
     fieldsToMerge.forEach((field) => {
-      const key = field as keyof typeof finalOverrides;
-      (finalOverrides as any)[key] = fieldOverrides[key] ?? mainProfile[key];
+      (finalOverrides as any)[field] =
+        fieldOverrides[field] ?? mainProfile[field];
     });
 
     mergeMutation({

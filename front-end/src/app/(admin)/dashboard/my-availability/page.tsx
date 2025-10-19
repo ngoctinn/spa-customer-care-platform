@@ -1,32 +1,39 @@
-// src/app/(admin)/dashboard/my-availability/page.tsx
+"use client";
+
+import { useMemo } from "react";
 import { ScheduleForm } from "@/features/event-types/components/ScheduleForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Định nghĩa kiểu dữ liệu cho một 'availability' để đảm bảo an toàn kiểu
-type Availability = {
-  dayOfWeek:
-    | "monday"
-    | "tuesday"
-    | "wednesday"
-    | "thursday"
-    | "friday"
-    | "saturday"
-    | "sunday";
-  startTime: string;
-  endTime: string;
-};
+import { useCurrentStaffProfile } from "@/features/staff/hooks/useCurrentStaffProfile";
+import { useWorkSchedule } from "@/features/work-schedules/hooks/useWorkSchedule";
+import { FullPageLoader } from "@/components/ui/spinner";
+import { DAYS_OF_WEEK_IN_ORDER } from "@/data/constants";
 
 export default function SchedulePage() {
-  // Dữ liệu giả lập, thay thế cho việc gọi database
-  const schedule: { timezone: string; availabilities: Availability[] } = {
-    timezone: "Asia/Ho_Chi_Minh",
-    availabilities: [
-      // SỬA LỖI: Đảm bảo các giá trị dayOfWeek khớp với kiểu dữ liệu mong đợi
-      { dayOfWeek: "monday", startTime: "09:00", endTime: "17:00" },
-      { dayOfWeek: "tuesday", startTime: "09:00", endTime: "17:00" },
-      { dayOfWeek: "wednesday", startTime: "10:00", endTime: "16:00" },
-    ],
-  };
+  const { staffProfile, isLoading: isLoadingProfile } = useCurrentStaffProfile();
+  const { data: workSchedule, isLoading: isLoadingSchedule } = useWorkSchedule(
+    staffProfile?.user.id || ""
+  );
+
+  const scheduleForForm = useMemo(() => {
+    if (!workSchedule) return undefined;
+
+    const availabilities = workSchedule
+      .filter((day) => day.is_active && day.start_time && day.end_time)
+      .map((day) => ({
+        dayOfWeek: DAYS_OF_WEEK_IN_ORDER[day.day_of_week - 1],
+        startTime: day.start_time!.substring(0, 5), // HH:mm:ss -> HH:mm
+        endTime: day.end_time!.substring(0, 5),
+      }));
+
+    return {
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      availabilities,
+    };
+  }, [workSchedule]);
+
+  if (isLoadingProfile || isLoadingSchedule) {
+    return <FullPageLoader text="Đang tải lịch làm việc..." />;
+  }
 
   return (
     <Card className="max-w-md mx-auto">
@@ -34,7 +41,13 @@ export default function SchedulePage() {
         <CardTitle>Lịch làm việc cá nhân</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScheduleForm schedule={schedule} />
+        {scheduleForForm ? (
+          <ScheduleForm schedule={scheduleForForm} />
+        ) : (
+          <p className="text-muted-foreground text-center">
+            Không tìm thấy thông tin lịch làm việc.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

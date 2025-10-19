@@ -28,7 +28,10 @@ export interface FacetedFilterOption {
 }
 
 interface DataTableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>;
+  column?: Pick<
+    Column<TData, TValue>,
+    "getFacetedUniqueValues" | "getFilterValue" | "setFilterValue"
+  >;
   title?: string;
   options: FacetedFilterOption[];
 }

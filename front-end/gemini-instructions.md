@@ -9,7 +9,7 @@
 **Lệnh/Prompt Chi tiết:**
 
 ```
-Sử dụng các file sau đây làm ngữ cảnh cốt lõi cho mọi yêu cầu tiếp theo trong cuộc trò chuyện này: @front-end/.github/instructions/instructions.md Đây là file hướng dẫn Clean Code, React/Next.js và quy tắc comment tiếng Việt. BẮT BUỘC tuân thủ 100% các quy tắc trong file này. @front-end/docs/PRODUCT_BRIEF.md Đây là bản tóm tắt sản phẩm, mô tả mục tiêu và đối tượng người dùng. @front-end/docs/SYSTEM_CODE_REVIEW.md Đây là bản đánh giá toàn bộ codebase, giúp bạn hiểu các điểm mạnh và yếu của kiến trúc hiện tại.
+Sử dụng các file sau đây làm ngữ cảnh cốt lõi cho mọi yêu cầu tiếp theo trong cuộc trò chuyện này: @front-end/.github/instructions/instructions.md Đây là file hướng dẫn Clean Code, React/Next.js và quy tắc comment tiếng Việt. BẮT BUỘC tuân thủ 100% các quy tắc trong file này. @front-end/docs/PRODUCT_BRIEF.md Đây là bản tóm tắt sản phẩm, mô tả mục tiêu và đối tượng người dùng. __ Đây là bản đánh giá toàn bộ codebase, giúp bạn hiểu các điểm mạnh và yếu của kiến trúc hiện tại.
 ```
 
 **Hướng dẫn sử dụng:**

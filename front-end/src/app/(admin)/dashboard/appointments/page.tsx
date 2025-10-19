@@ -35,72 +35,85 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AppointmentDetailDialog } from "@/features/appointment/components/AppointmentDetailDialog";
 import { DataTableFacetedFilter } from "@/components/common/data-table/data-table-faceted-filter";
 import { toast } from "sonner";
+import { getFacetedUniqueValues } from "@tanstack/react-table";
+
+import { useAppointmentFilters } from "@/features/appointment/hooks/useAppointmentFilters";
+
+
 
 const statusColors: Record<AppointmentStatus, string> = {
+
   upcoming: "hsl(var(--primary))",
+
   completed: "hsl(var(--success))",
+
   cancelled: "hsl(var(--destructive))",
+
   "checked-in": "hsl(var(--info))",
+
   "in-progress": "hsl(var(--warning))",
+
   "no-show": "hsl(var(--muted-foreground))",
+
   paused: "hsl(var(--warning))",
+
 };
 
+
+
 export default function AppointmentsPage() {
+
   const { data: appointments = [], isLoading: isLoadingAppointments } =
+
     useAppointments();
+
   const { data: customers = [], isLoading: isLoadingCustomers } =
+
     useCustomers();
+
   const { data: services = [], isLoading: isLoadingServices } = useServices();
+
   const { data: staffList = [], isLoading: isLoadingStaff } = useStaff();
 
+
+
   const addAppointmentMutation = useAddAppointmentAdmin();
+
   const updateAppointmentMutation = useUpdateAppointment();
 
+
+
   const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [editingAppointment, setEditingAppointment] =
+
     useState<Appointment | null>(null);
+
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
   const [selectedAppointment, setSelectedAppointment] =
+
     useState<Appointment | null>(null);
+
   const [actionToConfirm, setActionToConfirm] = useState<{
+
     type: "check-in" | "cancel";
+
     appointmentId: string;
+
   } | null>(null);
 
-  const [filters, setFilters] = useState<{ [key: string]: string[] }>({
-    technician: [],
-    service: [],
-    status: [],
-  });
+
+
+  const { mockTable, filteredAppointments } = useAppointmentFilters(appointments);
+
+
 
   const form = useForm<AppointmentFormValues>({
+
     resolver: zodResolver(appointmentFormSchema),
+
   });
-
-  // Giả lập một `table` object để `DataTableFacetedFilter` hoạt động
-  const mockTable = {
-    getColumn: (columnId: string) => ({
-      getFilterValue: () => filters[columnId] || [],
-      setFilterValue: (value: string[] | undefined) => {
-        setFilters((prev) => ({ ...prev, [columnId]: value || [] }));
-      },
-    }),
-  };
-
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((apt) => {
-      const techMatch =
-        filters.technician.length === 0 ||
-        (apt.technician_id && filters.technician.includes(apt.technician_id));
-      const serviceMatch =
-        filters.service.length === 0 ||
-        filters.service.includes(apt.service_id);
-      const statusMatch =
-        filters.status.length === 0 || filters.status.includes(apt.status);
-      return techMatch && serviceMatch && statusMatch;
-    });
-  }, [appointments, filters]);
 
   const calendarEvents = useMemo(() => {
     const customerMap = new Map(customers.map((c) => [c.id, c]));
@@ -149,16 +162,18 @@ export default function AppointmentsPage() {
   };
 
   const handleFormSubmit = (data: AppointmentFormValues) => {
-    const mutation = editingAppointment
-      ? updateAppointmentMutation
-      : addAppointmentMutation;
-    const mutationData = editingAppointment
-      ? { id: editingAppointment.id, data }
-      : data;
-
-    mutation.mutate(mutationData as any, {
-      onSuccess: () => setIsFormOpen(false),
-    });
+    if (editingAppointment) {
+      updateAppointmentMutation.mutate(
+        { id: editingAppointment.id, data },
+        {
+          onSuccess: () => setIsFormOpen(false),
+        }
+      );
+    } else {
+      addAppointmentMutation.mutate(data, {
+        onSuccess: () => setIsFormOpen(false),
+      });
+    }
   };
 
   const handleConfirmAction = () => {
@@ -222,17 +237,17 @@ export default function AppointmentsPage() {
       <Card className="mb-4">
         <CardContent className="p-2 flex flex-wrap items-center gap-2">
           <DataTableFacetedFilter
-            column={mockTable.getColumn("technician") as any}
+            column={mockTable.getColumn("technician")}
             title="Kỹ thuật viên"
             options={technicianOptions}
           />
           <DataTableFacetedFilter
-            column={mockTable.getColumn("service") as any}
+            column={mockTable.getColumn("service")}
             title="Dịch vụ"
             options={serviceOptions}
           />
           <DataTableFacetedFilter
-            column={mockTable.getColumn("status") as any}
+            column={mockTable.getColumn("status")}
             title="Trạng thái"
             options={statusOptions}
           />
